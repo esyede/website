@@ -43,10 +43,6 @@ class Hash
         $hash = crypt($password, sprintf('$2y$%02d$', $cost).$salt);
 
         if (! is_string($hash) || 60 !== mb_strlen($hash, '8bit')) {
-            $hash = false;
-        }
-
-        if (! $hash) {
             throw new \Exception('Malformatted password hash result.');
         }
 
