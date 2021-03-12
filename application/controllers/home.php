@@ -5,28 +5,28 @@ defined('DS') or exit('No direct script access.');
 class Home_Controller extends Base_Controller
 {
     /**
-     * Current page name.
+     * Nama halaman saat ini.
      *
      * @var string
      */
     public $page;
 
     /**
-     * Text for tagline.
+     * Teks untuk tagline.
      *
      * @var string
      */
     public $tagline;
 
     /**
-     * Text/image for navbar brand.
+     * Teks untuk navbar brand.
      *
      * @var string
      */
     public $brand;
 
     /**
-     * Constructor.
+     * Konstruktor.
      */
     public function __construct()
     {
@@ -60,7 +60,7 @@ class Home_Controller extends Base_Controller
     /**
      * Handle GET /key.
      *
-     * @return string
+     * @return View
      */
     public function action_key()
     {
@@ -72,7 +72,7 @@ class Home_Controller extends Base_Controller
     /**
      * Handle GET /download.
      *
-     * @return Response
+     * @return Redrect
      */
     public function action_download()
     {
@@ -82,7 +82,7 @@ class Home_Controller extends Base_Controller
     /**
      * Handle GET /repositories[/category].
      *
-     * @return Response
+     * @return View|Response
      */
     public function action_repositories($name = null)
     {
