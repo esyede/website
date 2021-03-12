@@ -156,7 +156,8 @@ Jika hosting anda memperbolehkan upload file ke folder diatas document root, tar
 vendor anda disitu, lalu ubah konfigurasi `composer_autoload` anda menjadi seperti berikut:
 
 ```php
-'composer_autoload' => dirname(__DIR__).'/vendor/autoload.php',
+'composer_autoload' => dirname(path('base')).'/vendor/autoload.php',
 ```
 
-Dengan begitu, folder vendor anda tdak akan bisa diakses oleh publik.
+Dengan begitu, folder vendor anda tdak akan bisa diakses oleh publik dan anda tetap dapat
+menggunakan library yang anda install via composer.
