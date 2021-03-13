@@ -11,7 +11,7 @@
 - [Route Grouping](#route-grouping)
 - [Named Route](#named-route)
 - [Routing Paket](#routing-paket)
-- [Controller Routing](#controller-routing)
+- [Routing Controller](#routing-controller)
 - [Route Testing via CLI](#route-testing-via-cli)
 
 <!-- /MarkdownTOC -->
@@ -350,8 +350,8 @@ Route::get('(:package)/password', function () {
 ```
 
 
-<a id="controller-routing"></a>
-## Controller Routing
+<a id="routing-controller"></a>
+## Routing Controller
 
 Controller menyediakan cara lain untuk mengelola logika aplikasi anda. Jika anda belum paham dengan
 controller, silahkan baca [dokumentasi tentang controller](/docs/controllers) sebelum lanjut ke bagian ini.
