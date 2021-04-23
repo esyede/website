@@ -47,8 +47,19 @@ $input = Input::all();
 
 ```php
 $rules = [
-	'name'  => 'required|max:50',
-	'email' => 'required|email|unique:users',
+    'name'  => 'required|max:50',
+    'email' => 'required|email|unique:users',
+];
+```
+
+Selain menggunakan karakter `|` (pipe) sebagai pemisah, anda juga dapat menuliskannya
+dengan sintaks. Dengan begitu rule validasi anda akan lebih mudah dibaca dan dipahami
+oleh pengembang lain:
+
+```php
+$rules = [
+  'name'  => ['required', 'max:50'],
+  'email' => ['required', 'email', 'unique:users'],
 ];
 ```
 
@@ -59,7 +70,7 @@ $rules = [
 $validation = Validator::make($input, $rules);
 
 if ($validation->fails()) {
-	return $validation->errors;
+    return $validation->errors;
 }
 ```
 
@@ -255,7 +266,7 @@ menggunakan sintaks array untuk menghindari error pada regexnya. Contohnya seper
 
 ```php
 $rules = [
-	'username' => ['required', 'max:20', 'match:/[a-zA-Z0-9]+/'],
+    'username' => ['required', 'max:20', 'match:/[a-zA-Z0-9]+/'],
 ];
 ```
 
@@ -449,7 +460,7 @@ pengambilan pesan error:
 
 ```php
 if ($validation->errors->has('email')) {
-	// Atribut e-mail memiliki error..
+    // Atribut e-mail memiliki error..
 }
 ```
 
@@ -505,17 +516,17 @@ Mudah saja. Mari kita telusuri skenario umum berikut. Kami akan menentukan dua r
 
 ```php
 Route::get('register', function () {
-	return View::make('register');
+    return View::make('register');
 });
 
 Route::post('register', function () {
-	$rules = [ ... ]; // rule validasi
+    $rules = [ ... ]; // rule validasi
 
-	$validation = Validator::make(Input::all(), $rules);
+    $validation = Validator::make(Input::all(), $rules);
 
-	if ($validation->fails()) {
-		return Redirect::to('register')->with_errors($validation);
-	}
+    if ($validation->fails()) {
+        return Redirect::to('register')->with_errors($validation);
+    }
 });
 ```
 
@@ -574,7 +585,7 @@ kustom untuk atribut dan rule tertentu. Pasti bisa dong!
 
 ```php
 $messages = [
-	'required' => 'The :attribute field is required.',
+    'required' => 'The :attribute field is required.',
 ];
 
 $validation = Validator::make(Input::get(), $rules, $messages);
@@ -595,10 +606,10 @@ membuat pesan error kustom:
 
 ```php
 $messages = [
-	'same' => 'Bilah :attribute dan :other harus cocok.',
-	'size' => 'Bilah :attribute ukurannya harus diisi tepat :size.',
-	'between' => 'Bilah :attribute harus diisi antara :min - :max.',
-	'in'  => 'Bilah :attribute harus berisi salah satu dari: :values',
+    'same' => 'Bilah :attribute dan :other harus cocok.',
+    'size' => 'Bilah :attribute ukurannya harus diisi tepat :size.',
+    'between' => 'Bilah :attribute harus diisi antara :min - :max.',
+    'in'  => 'Bilah :attribute harus berisi salah satu dari: :values',
 ];
 ```
 
@@ -610,7 +621,7 @@ seperti ini:
 
 ```php
 $messages = [
-	'email_required' => 'We need to know your e-mail address!',
+    'email_required' => 'We need to know your e-mail address!',
 ];
 ```
 
@@ -628,7 +639,7 @@ file bahasa validasi:
 
 ```php
 'custom' => [
-	'email_required' => 'We need to know your e-mail address!',
+    'email_required' => 'We need to know your e-mail address!',
 ]
 ```
 
@@ -659,7 +670,7 @@ Berikut adalah tampilan rule validasi kustom anda saat dipanggil:
 
 ```php
 $rules = [
-	'attitude' => 'required|humble',
+    'attitude' => 'required|humble',
 ];
 ```
 
@@ -668,7 +679,7 @@ baik dalam array seperti ini:
 
 ```php
 $messages = [
-	'humble' => 'Anda harus selalu rendah hati!',
+    'humble' => 'Anda harus selalu rendah hati!',
 ];
 
 $validator = Validator::make(Input::get(), $rules, $messages);
@@ -713,7 +724,7 @@ direktori `application/libraries/` anda:
 ```php
 class Validator extends \System\Validator
 {
-	// ..
+    // ..
 }
 ```
 
