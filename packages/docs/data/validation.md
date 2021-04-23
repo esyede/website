@@ -258,7 +258,7 @@ Rule `'match'` memvalidasi bahwa value sebuah atribut cocok dengan pola regular 
 #### Validasi bahwa value sebuah atribut cocok dengan pola regular expression tertentu:
 
 ```php
-'username' => 'match:/[a-zA-Z0-9]+/';
+'username' => 'match:/[a-zA-Z0-9]+/',
 ```
 
 Ketika anda menggunakan rule `'match'` ini secara kompleks, sangat direkomendasikan untuk
