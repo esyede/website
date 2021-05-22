@@ -542,10 +542,6 @@ var data = [
         "url": "models#autoloading"
     },
     {
-        "title": "Praktik Terbaik",
-        "url": "models#praktik-terbaik"
-    },
-    {
         "title": "Membuat Paket",
         "url": "packages#membuat-paket"
     },
@@ -594,6 +590,18 @@ var data = [
         "url": "requests#helper-lainnya"
     },
     {
+        "title": "Routing Dasar",
+        "url": "routing#routing-dasar"
+    },
+    {
+        "title": "Route Redirect",
+        "url": "routing#route-redirect"
+    },
+    {
+        "title": "Route View",
+        "url": "routing#route-view"
+    },
+    {
         "title": "URI Wildcard",
         "url": "routing#uri-wildcard"
     },
@@ -636,31 +644,6 @@ var data = [
     {
         "title": "Route Testing via CLI",
         "url": "routing#route-testing-via-cli"
-    },
-
-    {
-        "title": "Capitalization, Etc.",
-        "url": "strings#capitalization-etc"
-    },
-    {
-        "title": "Word & Character Limiting",
-        "url": "strings#word--character-limiting"
-    },
-    {
-        "title": "Generating Random Strings",
-        "url": "strings#generating-random-strings"
-    },
-    {
-        "title": "Singular & Plural",
-        "url": "strings#singular--plural"
-    },
-    {
-        "title": "Slugs",
-        "url": "strings#slugs"
-    },
-    {
-        "title": "Lorem ipsum",
-        "url": "structure#lorem-ipsum"
     },
     {
         "title": "URL Ke Route",
@@ -821,7 +804,7 @@ var data = [
         "url": "views/forms#menambahkan-custom-element"
     },
     {
-        "title": "Binding Data Ke Views",
+        "title": "Binding Data Ke View",
         "url": "views#binding-data-ke-view"
     },
     {
