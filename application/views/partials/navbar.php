@@ -1,9 +1,9 @@
 <?php if (isset($announcement)):?>
 <div class="announcement">
-  <div class="container">
-	<div class="announcement-body">
-	  <p><?php echo $announcement;?></p>
-	</div>
+  <div class="container is-fluid">
+    <div class="announcement-body mt-6">
+      <p><?php echo $announcement;?></p>
+    </div>
   </div>
 </div>
 <?php endif;?>
@@ -24,7 +24,7 @@
 				<a class="navbar-item" href="<?php echo url('docs');?>">Dokumentasi</a>
 				<a class="navbar-item" href="<?php echo url('api');?>" target="_blank">API</a>
 				<a class="navbar-item" href="<?php echo url('repositories');?>">Repositori</a>
-				<a class="navbar-item" href="<?php echo url('forum');?>">Forum</a>
+				<a class="navbar-item" href="<?php echo url('forum');?>" target="_blank">Forum</a>
 				<a class="navbar-item" href="https://github.com/esyede/rakit" target="_blank">Github</a>
 			</div>
 		</div>
