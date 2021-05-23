@@ -5,17 +5,13 @@ defined('DS') or exit('No direct script access.');
 return [
     /*
     |--------------------------------------------------------------------------
-    | Validation Language Lines
+    | Validation Language
     |--------------------------------------------------------------------------
     |
-    | The following language lines contain the default error messages used
-    | by the validator class. Some of the rules contain multiple versions,
-    | such as the size (max, min, between) rules. These versions are used
-    | for different input types such as strings and files.
-    |
-    | These language lines may be easily changed to provide custom error
-    | messages in your application. Error messages for custom validation
-    | rules may also be added to this file.
+    | Baris - baris bahasa berikut berisi pesan error default yang digunakan
+    | oleh kelas Validator. Beberapa aturan berisi beberapa versi, seperti
+    | ukuran (max, min, between). Versi - versi ini digunakan untuk berbagai
+    | jenis input seperti string dan file.
     |
     */
 
@@ -75,16 +71,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Custom Validation Language Lines
+    | Custom Validation Language
     |--------------------------------------------------------------------------
     |
-    | Here you may specify custom validation messages for attributes using the
-    | convention 'attribute_rule' to name the lines. This helps keep your
-    | custom validation clean and tidy.
+    | Di sini anda dapat menentukan pesan validasi kuatom untuk atribut
+    | menggunakan konvensi 'atribut_rule'. Ini membantu menjaga validasi
+    | kustom anda tetap bersih dan rapi.
     |
-    | So, say you want to use a custom validation message when validating that
-    | the 'email' attribute is unique. Just add 'email_unique' to this array
-    | with your custom message. The Validator will handle the rest!
+    | Jadi, katakanlah anda ingin menggunakan pesan validasi kuatom ketika
+    | memvalidasi bahwa atribut 'email' itu unik.
+    | Cukup tambahkan 'email_unique' ke array ini dengan pesan kuatom anda.
     |
     */
 
@@ -92,16 +88,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Validation Attributes
+    | Validation Attribute
     |--------------------------------------------------------------------------
     |
-    | The following language lines are used to swap attribute place-holders
-    | with something more reader friendly such as 'E-Mail Address' instead
-    | of 'email'. Your users will thank you.
+    | Baris - baris bahasa berikut digunakan untuk menukar atribut placeholder
+    | dengan sesuatu yang lebih ramah pembaca seperti 'alamat email'
+    | alih-alih 'email' saja sehingga pesan error anda akan lebih informatif.
     |
-    | The Validator class will automatically search this array of lines it
-    | is attempting to replace the :attribute place-holder in messages.
-    | It's pretty slick. We think you'll like it.
+    | Kelas validator akan secara otomatis mencari array ini, lalu mengganti
+    | placeholder :attribute di dengan value kustom yang anda tentukan disini.
     |
     */
 

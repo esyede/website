@@ -8,18 +8,18 @@ return [
     | Date Language Lines
     |--------------------------------------------------------------------------
     |
-    | The following language lines are used by the date library
+    | Baris - baris bahasa brikut ini digunakan oleh library Date.
     |
     */
 
-    'from_now' => 'dari sekarang',
-    'ago' => 'yang lalu',
-    'before' => 'sebelumnya',
-    'after' => 'setelahnya',
     'second' => 'detik',
     'minute' => 'menit',
     'hour' => 'jam',
     'day' => 'hari',
+    'week' => 'minggu',
     'month' => 'bulan',
     'year' => 'tahun',
+    'decade' => 'dekade',
+    'past' => 'yang lalu',
+    'future' => 'dari sekarang',
 ];
