@@ -31,7 +31,7 @@
                     <small>
                     1. Login ke github dan edit file <a href="https://github.com/esyede/rakit/edit/master/repositories.json" target="_blank">repositories.json</a> untuk menambahkan data paket anda.<br>
                     2. Kirim pull request berupa perubahan yang anda buat tersebut.<br>
-                    3. Buat thread baru di subforum <a href="<?php echo url('forum').'/forum9-paket-library.html';?>" target="_blank">Paket & library</a> sesuai nama paket anda dan jelaskan detailnya.<br>
+                    3. Buat thread baru di subforum <a href="<?php echo url('forum').'/forum6-paket-library.html';?>" target="_blank">Paket & library</a> sesuai nama paket anda dan jelaskan detailnya.<br>
                     </small>
                 </p>
                 <p>Jika rilis versi baru:</p>
