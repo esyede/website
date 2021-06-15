@@ -18,15 +18,15 @@ class Stuff
     public static function populate()
     {
         static::$json = static::$json ? static::$json : path('base').'repositories.json';
-        static::$mtime = static::$mtime ? static::$mtime : File::modified(static::$json);
+        static::$mtime = static::$mtime ? static::$mtime : Storage::modified(static::$json);
         static::$packages = static::$packages
             ? static::$packages
-            : json_decode(File::get(static::$json), true);
+            : json_decode(Storage::get(static::$json), true);
     }
 
     public static function outdated()
     {
-        return File::modified(static::$json) > static::$mtime;
+        return Storage::modified(static::$json) > static::$mtime;
     }
 
     public static function categorize($array, $criteria)
