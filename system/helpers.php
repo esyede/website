@@ -12,7 +12,8 @@ if (! function_exists('e')) {
      */
     function e($value)
     {
-        return HTML::entities($value);
+        $encoding = Config::get('application.encoding', 'UTF-8');
+        return htmlentities($value, ENT_QUOTES, $encoding, false);
     }
 }
 
@@ -443,6 +444,22 @@ if (! function_exists('route')) {
     function route($name, $parameters = [])
     {
         return \System\URL::to_route($name, $parameters);
+    }
+}
+
+if (! function_exists('csrf_field')) {
+    /**
+     * Tambahkan hidden field untuk CSRF token.
+     *
+     * @param string $name
+     * @param array  $parameters
+     *
+     * @return string
+     */
+    function csrf_field()
+    {
+        return '<input type="hidden" name="'.\System\Session::TOKEN.
+            '" value="'.\System\Session::token().'">'.PHP_EOL;
     }
 }
 
