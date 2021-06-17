@@ -48,7 +48,7 @@ class Home_Controller extends Base_Controller
      */
     public function action_index()
     {
-        $view = View::make('home.index');
+        $view = view('home.index');
 
         $view->brand = $this->brand;
         $view->tagline = $this->tagline;
@@ -64,7 +64,7 @@ class Home_Controller extends Base_Controller
      */
     public function action_key()
     {
-        return View::make('home.key')
+        return view('home.key')
             ->with_page($this->page)
             ->with_key(Str::random(32));
     }
@@ -88,7 +88,7 @@ class Home_Controller extends Base_Controller
     {
         $perpage = 1;
         $verbatim = Stuff::packages();
-        $view = View::make('home.repositories');
+        $view = view('home.repositories');
 
         $view->brand = $this->brand;
         $view->tagline = $this->tagline;
