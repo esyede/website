@@ -76,7 +76,7 @@ class Home_Controller extends Base_Controller
      */
     public function action_download()
     {
-        return Redirect::to('https://github.com/esyede/rakit/archive/'.RAKIT_VERSION.'.zip');
+        return redirect('https://github.com/esyede/rakit/archive/'.RAKIT_VERSION.'.zip');
     }
 
     /**
