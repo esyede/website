@@ -34,6 +34,7 @@ return [
     'Curl' => 'System\Curl',
     'Date' => 'System\Date',
     'DB' => 'System\Database',
+    'Email' => 'System\Email',
     'Event' => 'System\Event',
     'Facile' => 'System\Database\Facile\Model',
     'Faker' => 'System\Foundation\Faker\Factory',
@@ -42,7 +43,7 @@ return [
     'Input' => 'System\Input',
     'Lang' => 'System\Lang',
     'Log' => 'System\Log',
-    'Mailer' => 'System\Mailer',
+    'Mailer' => 'System\Email\Drivers\Driver',
     'Markdown' => 'System\Markdown',
     'Memcached' => 'System\Memcached',
     'Middleware' => 'System\Routing\Middleware',
@@ -64,5 +65,5 @@ return [
     'Validator' => 'System\Validator',
     'View' => 'System\View',
 
-    // Tambahkan alias lain disini..
+    // ..
 ];
