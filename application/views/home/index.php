@@ -1,7 +1,7 @@
 <?php section_start('features');?>
 	<!-- features -->
 	<div class="divider is-white"></div>
-	<section class="section">
+	<section class="section"<?php echo isset($news) ? ' id="news"' : '' ?>>
 		<div class="tile is-ancestor">
 			<div class="tile is-vertical is-8">
 				<div class="tile">
