@@ -29,6 +29,8 @@ class Console
      */
     public static function run($arguments = [])
     {
+        $arguments = is_array($arguments) ? $arguments : [$arguments];
+
         if (! isset($arguments[0])) {
             $arguments[0] = 'help:run';
         }
