@@ -16,7 +16,7 @@ class Console
      * <code>
      *
      *      // Panggil command migrate
-     *      Console::run(['migrate']);
+     *      Console::run('migrate');
      *
      *      // Panggil command migrate dengan argumen tambahan
      *      Console::run(['migrate:rollback', 'nama-paket'])
