@@ -321,12 +321,14 @@ if (! function_exists('facile_to_json')) {
     function facile_to_json($models)
     {
         if ($models instanceof \System\Database\Facile\Model) {
-            return json_encode($models->to_array(), JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT);
+            $models = $models->to_array();
+        } else {
+            $models = array_map(function ($model) {
+                return $model->to_array();
+            }, $models);
         }
 
-        return json_encode(array_map(function ($model) {
-            return $model->to_array();
-        }, $models), JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT);
+        return json_encode($models, JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT);
     }
 }
 
