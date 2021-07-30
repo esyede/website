@@ -2,7 +2,7 @@
 	<div class="columns is-gapless">
 		<div class="column is-offset-one-half mt-6">
             <br>
-			<?php echo yield_content('pages_title');?>
+			@yield('pages_title')
 		</div>
 	</div>
 </div>

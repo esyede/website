@@ -10,12 +10,12 @@
         </div>
     </div>
 </footer>
-<script type="text/javascript" src="<?php echo asset('main/js/main.min.js?v='.RAKIT_VERSION);?>"></script>
+<script type="text/javascript" src="{{ asset('main/js/main.min.js?v='.RAKIT_VERSION) }}"></script>
 <script type="text/javascript">
     var news = document.getElementById('news');
     if (news != null) {
         bulmaToast.toast({
-            message: '<?php echo isset($news) ? '<small>'.$news.'</small>' : ''; ?>',
+            message: '{!! isset($news) ? '<small>'.$news.'</small>' : '' !!}',
             type: 'is-dark',
             duration: 7000,
             closeOnClick: true,

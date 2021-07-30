@@ -1,7 +1,9 @@
-<?php section_start('features');?>
+@layout('layouts.main')
+
+@section('features')
 	<!-- features -->
 	<div class="divider is-white"></div>
-	<section class="section"<?php echo isset($news) ? ' id="news"' : ''; ?>>
+	<section class="section"{!! isset($news) ? ' id="news"' : '' !!}>
 		<div class="tile is-ancestor">
 			<div class="tile is-vertical is-8">
 				<div class="tile">
@@ -79,8 +81,8 @@
 							Saatnya mulai mengembangkan aplikasi web dengan cara yang mudah!
 						</p>
 						<p>
-							<a href="<?php echo url('download');?>" class="button is-success">
-								Download <?php echo RAKIT_VERSION;?>
+							<a href="{{ url('download') }}" class="button is-success">
+								Download {{ RAKIT_VERSION }}
 							</a>
 							<br>
 							<br>
@@ -103,7 +105,7 @@
 							<span>Forum Diskusi</span>
 						</p>
 						<p>
-							Mengalami kesulitan untuk memulai? Atau ingin berbagi pemikiran? Mari berbincang dengan pengembang lain di <a href="<?php echo url('forum');?>" target="_blank">forum</a>
+							Mengalami kesulitan untuk memulai? Atau ingin berbagi pemikiran? Mari berbincang dengan pengembang lain di <a href="{{ url('forum') }}" target="_blank">forum</a>
 						</p>
 					</div>
 				</article>
@@ -111,9 +113,9 @@
 		</div>
 	</section>
 	<!-- /features -->
-<?php section_stop();?>
+@endsection
 
-<?php section_start('packages');?>
+@section('packages')
 	<!-- packages -->
 	<div class="divider is-white"></div>
 	<div class="container section has-text-centered has-background-light">
@@ -123,7 +125,7 @@
 				<p>Download dan bagikan paket anda bersama pengembang lain</p>
 				<br>
 				<div class="buttons is-block">
-					<a href="<?php echo url('repositories');?>" class="button is-success">
+					<a href="{{ url('repositories') }}" class="button is-success">
 						<span class="icon is-small">
 							<svg id="i-search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
 								<circle cx="12" cy="12" r="10" />
@@ -137,13 +139,11 @@
 		</div>
 	</div>
 	<!-- /packages -->
-<?php section_stop();?>
+@endsection
 
-<?php section_start('main');?>
-	<?php echo yield_content('features');?>
+@section('main')
+	@yield('features')
 	<div class="divider is-white"></div>
 	<div class="divider is-white"></div>
-	<?php echo yield_content('packages');?>
-<?php section_stop();?>
-
-<?php echo view('layouts.main')->with(get_defined_vars())->render();?>
+	@yield('packages')
+@endsection
