@@ -1,13 +1,3 @@
-@if (isset($announcement))
-<div class="announcement">
-  <div class="container is-fluid">
-    <div class="announcement-body mt-6">
-      <p>{!! $announcement !!}</p>
-    </div>
-  </div>
-</div>
-@endif
-
 <nav id="navbar" class="navbar is-fixed-top has-shadow" role="navigation" aria-label="main navigation">
 	<div class="container">
 		<div class="navbar-brand">
