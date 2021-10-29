@@ -1,12 +1,17 @@
-on:
-    push:
-        paths:
-            - '**.php'
-    pull_request:
-        paths:
-            - '**.php'
-
 name: phpcs
+
+on:
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - '**.php'
+ 
+  push:
+    branches:
+      - "master"
+    paths:
+      - '**.php'
 
 jobs:
     phpcs:
@@ -14,6 +19,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
               with:
+                token: ${{ secrets.PAT }}
                 ref: ${{ github.head_ref }}
 
             - name: check php version
@@ -22,7 +28,7 @@ jobs:
             - name: download phpcs
               run: wget -O phpcs.phar https://cs.symfony.com/download/php-cs-fixer-v2.phar
 
-            - name: Make PHP-CS-Fixer Executable
+            - name: make phpcs executable
               run: chmod +x phpcs.phar
 
             - name: apply coding style
@@ -33,4 +39,6 @@ jobs:
 
             - uses: stefanzweifel/git-auto-commit-action@v4
               with:
+                  ref: ${{ github.head_ref }}
                   commit_message: 'phpcs: apply coding style'
+                  commit_options: '--no-verify --signoff'
