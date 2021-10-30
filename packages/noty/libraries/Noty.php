@@ -7,12 +7,10 @@ class Noty
         return static::notify($message, 'success', $options);
     }
 
-
     public static function error($message, array $options = [])
     {
         return static::notify($message, 'error', $options);
     }
-
 
     public static function notify($message, $type, array $options = [])
     {

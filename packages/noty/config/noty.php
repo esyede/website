@@ -41,7 +41,7 @@ return [
 
     'docTitle' => [
         // There are two conditions for now: 'docVisible' & 'docHidden'. You can use one of them or both.
-        'conditions' => []
+        'conditions' => [],
     ],
 
     'modal' => false,
