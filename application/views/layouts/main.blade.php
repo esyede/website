@@ -13,5 +13,6 @@
 		<div class="divider is-white"></div>
 		<div class="divider is-white"></div>
 		@include('partials.footer')
+        @include('noty::noty')
 	</body>
 </html>

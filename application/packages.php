@@ -15,6 +15,7 @@ defined('DS') or exit('No direct script access.');
 
 return [
     'docs' => ['handles' => 'docs'],
+    'noty' => ['autoboot' => true],
 
     // Taruh array konfigurasi paket lain disini..
 

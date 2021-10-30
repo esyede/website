@@ -122,5 +122,5 @@ return [
     |
     */
 
-    'key' => '',
+    'key' => 'ALtOJd0woeGvXBLiJ5FDgaseHGkhi9wM',
 ];
