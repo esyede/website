@@ -9,4 +9,6 @@
 	<meta property="og:title" content="{{ $brand }} :: {{ $page }}">
 	<meta property="og:description" content="{{ $tagline }}">
 	<meta property="og:site_name" content="{{ $brand }} :: {{ $page }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
 </head>
