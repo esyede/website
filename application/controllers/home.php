@@ -67,12 +67,9 @@ class Home_Controller extends Base_Controller
      */
     public function action_key()
     {
-        Noty::error('Data berhasil disimpan');
-
-        return Redirect::back();
-        // return view('home.key')
-        //     ->with_page($this->page)
-        //     ->with_key(Str::random(32));
+        return view('home.key')
+            ->with_page($this->page)
+            ->with_key(Str::random(32));
     }
 
     /**
