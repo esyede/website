@@ -53,8 +53,8 @@ class Home_Controller extends Base_Controller
         $view->brand = $this->brand;
         $view->tagline = $this->tagline;
         $view->page = $this->page;
-        $view->news = 'Versi terbaru rakit (v0.9.8) telah siap diuji coba. '.
-            '<a href="'.url('forum/topic2-rakit-v098-siap-diuji-coba.html').'" target="_blank">'.
+        $view->news = 'Versi terbaru rakit (v0.9.9) telah siap diuji coba. '.
+            '<a href="'.url('forum/topic3-rakit-v099-siap-diuji-coba.html').'" target="_blank">'.
             'Baca selengkapnya..</a>';
 
         return $view;
