@@ -9,7 +9,7 @@ var data = [
     },
     {
         "title": "Username Default",
-        "url": "auth/config#username-default"
+        "url": "auth/config#Username-default"
     },
     {
         "title": "Model Otentikasi",
