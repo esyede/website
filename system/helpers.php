@@ -793,20 +793,13 @@ if (! function_exists('system_os')) {
          */
         function human_filesize($size, $precision = 2)
         {
-            $size = (int) $size;
+            $size = (float) $size;
             $precision = (int) $precision;
-
             $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-            $i = 0;
+            $power = ($size > 0) ? floor(log($size, 1024)) : 0;
+            $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
 
-            while (($size / 1024) > 0.9) {
-                $size = $size / 1024;
-                $si++;
-            }
-
-            $size = ($size < 0) ? ($size + (2.0 * (PHP_INT_MAX + 1))) : $size;
-
-            return round($size, $precision).' '.$units[$i];
+            return sprintf('%s %s', round($size / pow(1024, $power), $precision), $units[$power]);
         }
     }
 }
