@@ -205,7 +205,6 @@ class Blade
         $regex = '/\{\{\{\s*(.+?)\s*\}\}\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
             $ws = empty($matches[2]) ? '' : $matches[2].$matches[2];
-
             return '<?php echo e('.$compiler($matches[1]).') ?>'.$ws;
         }, $value);
 
@@ -213,7 +212,6 @@ class Blade
         $regex = '/\{\!!\s*(.+?)\s*!!\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
             $ws = empty($matches[2]) ? '' : $matches[2].$matches[2];
-
             return '<?php echo '.$compiler($matches[1]).' ?>'.$ws;
         }, $value);
 
@@ -221,10 +219,7 @@ class Blade
         $regex = '/(@)?\{\{\s*(.+?)\s*\}\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
             $ws = empty($matches[3]) ? '' : $matches[3].$matches[3];
-
-            return $matches[1]
-                ? substr($matches[0], 1)
-                : '<?php echo e('.$compiler($matches[2]).') ?>'.$ws;
+            return $matches[1] ? substr($matches[0], 1) : '<?php echo e('.$compiler($matches[2]).') ?>'.$ws;
         }, $value);
 
         return $value;
@@ -239,8 +234,7 @@ class Blade
      */
     protected static function compile_csrf($value)
     {
-        $csrf = '<input type="hidden" name="'.Session::TOKEN.'" value="'.Session::token().'">'.PHP_EOL;
-        return str_replace('@csrf', $csrf, $value);
+        return str_replace('@csrf', '<?php echo csrf_field() ?>', $value);
     }
 
     /**

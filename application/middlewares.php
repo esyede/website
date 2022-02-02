@@ -41,7 +41,7 @@ Route::middleware('after', function ($response) {
 
 Route::middleware('csrf', function () {
     if (Request::forged()) {
-        return Redirect::back()->with('error', 'Token mismatch.');
+        return Redirect::back()->with('error', 'Token mistmatch.');
     }
 });
 

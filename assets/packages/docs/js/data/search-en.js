@@ -1,26 +1,26 @@
 var data = [
     {
-        "title": "List Helper",
+        "title": "Helper List",
         "url": "arrays#list-helper"
     },
     {
-        "title": "Driver Otentikasi",
+        "title": "Authentication Driver",
         "url": "auth/config#driver-otentikasi"
     },
     {
-        "title": "Username Default",
-        "url": "auth/config#Username-default"
+        "title": "Default Username",
+        "url": "auth/config#username-default"
     },
     {
-        "title": "Model Otentikasi",
+        "title": "Authentication Model",
         "url": "auth/config#model-otentikasi"
     },
     {
-        "title": "Tabel Otentikasi",
+        "title": "Authentication Tabel",
         "url": "auth/config#tabel-otentikasi"
     },
     {
-        "title": "Mengenkripsi Password",
+        "title": "Encrypting Password",
         "url": "auth/usage#mengenkripsi-password"
     },
     {
@@ -28,11 +28,11 @@ var data = [
         "url": "auth/usage#log-in"
     },
     {
-        "title": "Memproteksi Route",
+        "title": "Protecting Route",
         "url": "auth/usage#memproteksi-route"
     },
     {
-        "title": "Mengambil Data User",
+        "title": "Retrieving User Data",
         "url": "auth/usage#mengambil-data-user"
     },
     {
@@ -40,19 +40,19 @@ var data = [
         "url": "auth/usage#log-out"
     },
     {
-        "title": "Driver Database",
+        "title": "Database Driver",
         "url": "cache/config#driver-database"
     },
     {
-        "title": "Driver Memcached",
+        "title": "Memcached Driver",
         "url": "cache/config#driver-memcached"
     },
     {
-        "title": "Driver Redis",
+        "title": "Redis Driver",
         "url": "cache/config#driver-redis"
     },
     {
-        "title": "Driver Memori",
+        "title": "Memori Driver",
         "url": "cache/config#driver-memori"
     },
     {
