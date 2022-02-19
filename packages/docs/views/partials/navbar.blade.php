@@ -27,17 +27,17 @@
                 </div>
             </div>
             <div class="navbar-end">
-                <a class="navbar-item" id="home" href="{{ URL::home() }}">Rumah</a>
-                <a class="navbar-item" id="docs" href="{{ url('docs') }}">Dokumentasi</a>
+                <a class="navbar-item" id="homepage" href="{{ URL::home() }}">Rumah</a>
+                <a class="navbar-item" id="docs" href="{{ URL::to('docs') }}">Dokumentasi</a>
                 <a class="navbar-item" id="api" href="https://rakit.esyede.my.id/api" target="_blank">API</a>
                 <a class="navbar-item" id="repos" href="https://rakit.esyede.my.id/repositories" target="_blank">Repositori</a>
                 <a class="navbar-item" id="forum" href="https://rakit.esyede.my.id/forum" target="_blank">Forum</a>
                 <a class="navbar-item" id="github" href="https://github.com/esyede/rakit" target="_blank">Github</a>
-                <!-- <div class="navbar-item">
+                <div class="navbar-item">
                     <div class="buttons">
                         <span class="button is-rounded is-small is-info" id="docs-lang">Indonesian</span>
                     </div>
-                </div> -->
+                </div>
             </div>
         </div>
     </div>
