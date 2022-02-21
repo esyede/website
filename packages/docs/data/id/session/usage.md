@@ -94,6 +94,10 @@ Pertahankan beberapa item flash untuk request lain:
 
 ```php
 Session::keep(['status', 'other_item']);
+
+// atau,
+
+Session::keep('status', 'other_item');
 ```
 
 
