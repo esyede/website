@@ -131,6 +131,8 @@ class Input
      *      // Ambil hanya username dan email dari data inputan
      *      $input = Input::only(['username', 'email']);
      *
+     *      $input = Input::only('username', 'email');
+     *
      * </code>
      *
      * @param array $keys
@@ -139,6 +141,7 @@ class Input
      */
     public static function only($keys)
     {
+        $keys = is_array($keys) ? $keys : func_get_args();
         return Arr::only(static::get(), $keys);
     }
 
@@ -153,6 +156,8 @@ class Input
      *      // Ambil semua data inputan kecuali username dan email
      *      $input = Input::except(['username', 'email']);
      *
+     *      $input = Input::except('username', 'email');
+     *
      * </code>
      *
      * @param array $keys
@@ -161,6 +166,7 @@ class Input
      */
     public static function except($keys)
     {
+        $keys = is_array($keys) ? $keys : func_get_args();
         return Arr::except(static::get(), $keys);
     }
 
