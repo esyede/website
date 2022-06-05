@@ -180,11 +180,9 @@ class Requester
             $defaults['HTTP_HOST'] = $components['host'];
         }
 
-        if (isset($components['scheme'])) {
-            if ('https' === $components['scheme']) {
-                $defaults['HTTPS'] = 'on';
-                $defaults['SERVER_PORT'] = 443;
-            }
+        if (isset($components['scheme']) && 'https' === $components['scheme']) {
+            $defaults['HTTPS'] = 'on';
+            $defaults['SERVER_PORT'] = 443;
         }
 
         if (isset($components['port'])) {
@@ -355,7 +353,7 @@ class Requester
 
         $orderings = ini_get('request_order');
         $orderings = $orderings ? $orderings : ini_get('variable_order');
-        $orderings = preg_replace('#[^cgp]#', '', strtolower($orderings));
+        $orderings = preg_replace('/[^cgp]/', '', strtolower($orderings));
         $orderings = $orderings ? $orderings : 'gp';
 
         $_REQUEST = [];
@@ -677,10 +675,7 @@ class Requester
     {
         $userinfo = $this->getUser();
         $pass = $this->getPassword();
-
-        if ('' !== $pass) {
-            $userinfo .= ':'.$pass;
-        }
+        $userinfo .= ('' === $pass) ? '' : ':'.$pass;
 
         return $userinfo;
     }
@@ -813,7 +808,7 @@ class Requester
         $host = strtolower(preg_replace('/:\d+$/', '', trim($host)));
 
         if ($host && ! preg_match('/^\[?(?:[a-zA-Z0-9-:\]_]+\.?)+$/', $host)) {
-            throw new \UnexpectedValueException('Invalid Host');
+            throw new \UnexpectedValueException(sprintf('Invalid host: %s', $host));
         }
 
         return $host;
@@ -1009,14 +1004,11 @@ class Requester
     {
         if (false === $this->content
         || (true === $asResource && null !== $this->content)) {
-            throw new \LogicException(
-                'getContent() can only be called once when using the resource return type.'
-            );
+            throw new \LogicException('getContent() can only be called once when using the resource return type.');
         }
 
         if (true === $asResource) {
             $this->content = false;
-
             return fopen('php://input', 'rb');
         }
 
@@ -1034,12 +1026,7 @@ class Requester
      */
     public function getETags()
     {
-        return preg_split(
-            '/\s*,\s*/',
-            $this->headers->get('if_none_match'),
-            null,
-            PREG_SPLIT_NO_EMPTY
-        );
+        return preg_split('/\s*,\s*/', $this->headers->get('if_none_match'), null, PREG_SPLIT_NO_EMPTY);
     }
 
     /**
@@ -1185,7 +1172,7 @@ class Requester
         foreach (array_filter(explode(',', $header)) as $value) {
             if (preg_match('/;\s*(q=.*$)/', $value, $match)) {
                 $q = substr(trim($match[1]), 2);
-                $value = trim(substr($value, 0, -strlen($match[0])));
+                $value = trim(substr($value, 0, -mb_strlen($match[0], '8bit')));
             } else {
                 $q = 1;
             }
@@ -1231,7 +1218,7 @@ class Requester
             $schemeAndHttpHost = $this->getSchemeAndHttpHost();
 
             if (0 === strpos($requestUri, $schemeAndHttpHost)) {
-                $requestUri = substr($requestUri, strlen($schemeAndHttpHost));
+                $requestUri = substr($requestUri, mb_strlen($schemeAndHttpHost, '8bit'));
             }
         } elseif ($this->server->has('ORIG_PATH_INFO')) {
             $requestUri = $this->server->get('ORIG_PATH_INFO');
@@ -1274,11 +1261,7 @@ class Requester
                 $seg = $segs[$index];
                 $baseUrl = '/'.$seg.$baseUrl;
                 ++$index;
-            } while (
-                ($last > $index)
-                && (false !== ($pos = strpos($path, $baseUrl)))
-                && (0 !== $pos)
-            );
+            } while ($last > $index && (false !== ($pos = strpos($path, $baseUrl))) && 0 !== $pos);
         }
 
         $requestUri = $this->getRequestUri();
@@ -1306,10 +1289,10 @@ class Requester
             return '';
         }
 
-        if ((strlen($requestUri) >= strlen($baseUrl))
+        if ((mb_strlen($requestUri, '8bit') >= mb_strlen($baseUrl, '8bit'))
         && ((false !== ($pos = strpos($requestUri, $baseUrl)))
         && (0 !== $pos))) {
-            $baseUrl = substr($requestUri, 0, $pos + strlen($baseUrl));
+            $baseUrl = substr($requestUri, 0, $pos + mb_strlen($baseUrl, '8bit'));
         }
 
         return rtrim($baseUrl, '/');
@@ -1363,7 +1346,7 @@ class Requester
         }
 
         if ((null !== $baseUrl)
-        && (false === ($pathInfo = substr($requestUri, strlen($baseUrl))))) {
+        && (false === ($pathInfo = substr($requestUri, mb_strlen($baseUrl, '8bit'))))) {
             return '/';
         } elseif (null === $baseUrl) {
             return $requestUri;
@@ -1424,7 +1407,7 @@ class Requester
             return false;
         }
 
-        $len = strlen($prefix);
+        $len = mb_strlen($prefix, '8bit');
 
         if (preg_match('#^(%[[:xdigit:]]{2}|.){'.$len.'}#', $string, $match)) {
             return $match[0];
