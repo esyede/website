@@ -115,13 +115,9 @@ class Home_Controller extends Base_Controller
             $view->totalpage = (int) ceil(count($verbatim) / $perpage);
             $view->packages = Stuff::paging($verbatim, Stuff::currpage(), $perpage);
 
-            if (empty($view->packages) || $view->currpage > $view->totalpage) {
-                return Response::error('404');
-            }
+            abort_if(empty($view->packages) || $view->currpage > $view->totalpage, 404);
         } else {
-            if (! in_array($name, $keys)) {
-                return Response::error('404');
-            }
+            abort_if(! in_array($name, $keys), 404);
 
             $view->catname = Str::slug($name);
             $view->categories = $categories;
@@ -129,9 +125,7 @@ class Home_Controller extends Base_Controller
             $view->totalpage = (int) ceil(count($categorized[$name]) / $perpage);
             $view->packages = Stuff::paging($categorized[$name], Stuff::currpage(), $perpage);
 
-            if (empty($view->packages) || $view->currpage > $view->totalpage) {
-                return Response::error('404');
-            }
+            abort_if(empty($view->packages) || $view->currpage > $view->totalpage, 404);
         }
 
         return $view;
