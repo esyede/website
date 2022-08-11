@@ -55,7 +55,8 @@ class Responder
         415 => 'Unsupported Media Type',
         416 => 'Range Not Satisfiable',
         417 => 'Expectation Failed',
-        418 => "I'm a teapot",
+        418 => 'I\'m a teapot',
+        419 => 'Page Expired',
         421 => 'Misdirected Request',
         422 => 'Unprocessable Content',
         423 => 'Locked',
@@ -308,7 +309,7 @@ class Responder
         && ! is_numeric($content)
         && ! is_callable([$content, '__toString'])) {
             throw new \UnexpectedValueException(
-                "The Response content must be a string or object ".
+                'The Response content must be a string or object '.
                 "implementing __toString(), '".gettype($content)."' given."
             );
         }

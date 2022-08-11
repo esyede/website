@@ -67,9 +67,11 @@ class Home_Controller extends Base_Controller
      */
     public function action_key()
     {
-        return view('home.key')
-            ->with_page($this->page)
-            ->with_key(Str::random(32));
+
+        return Response::json([
+            'key' => Str::random(32),
+            'message' => "Copy this key into your 'Application Key' config in application/config/application.php",
+        ]);
     }
 
     /**
@@ -79,6 +81,10 @@ class Home_Controller extends Base_Controller
      */
     public function action_download()
     {
+        Log::filename('downloads');
+        Log::info('Download from: '.Request::ip());
+        Log::filename(null);
+
         return redirect('https://github.com/esyede/rakit/archive/'.RAKIT_VERSION.'.zip');
     }
 
@@ -115,9 +121,13 @@ class Home_Controller extends Base_Controller
             $view->totalpage = (int) ceil(count($verbatim) / $perpage);
             $view->packages = Stuff::paging($verbatim, Stuff::currpage(), $perpage);
 
-            abort_if(empty($view->packages) || $view->currpage > $view->totalpage, 404);
+            if (empty($view->packages) || $view->currpage > $view->totalpage) {
+                return Response::error(404);
+            }
         } else {
-            abort_if(! in_array($name, $keys), 404);
+            if (! in_array($name, $keys)) {
+                return Response::error(404);
+            }
 
             $view->catname = Str::slug($name);
             $view->categories = $categories;
@@ -125,7 +135,9 @@ class Home_Controller extends Base_Controller
             $view->totalpage = (int) ceil(count($categorized[$name]) / $perpage);
             $view->packages = Stuff::paging($categorized[$name], Stuff::currpage(), $perpage);
 
-            abort_if(empty($view->packages) || $view->currpage > $view->totalpage, 404);
+            if (empty($view->packages) || $view->currpage > $view->totalpage) {
+                return Response::error(404);
+            }
         }
 
         return $view;
