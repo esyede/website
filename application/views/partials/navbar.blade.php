@@ -12,7 +12,7 @@
 			<div class="navbar-end">
 				<a class="navbar-item" href="{{ URL::home() }}">Rumah</a>
 				<a class="navbar-item" href="{{ url('docs') }}">Dokumentasi</a>
-				<a class="navbar-item" href="{{ url('api') }}" target="_blank">API</a>
+				<a class="navbar-item" href="{{ url('api/'.RAKIT_VERSION.'/index.html') }}" target="_blank">API</a>
 				<a class="navbar-item" href="{{ url('repositories') }}">Repositori</a>
 				<a class="navbar-item" href="{{ url('forum') }}" target="_blank">Forum</a>
 				<a class="navbar-item" href="https://github.com/esyede/rakit" target="_blank">Github</a>

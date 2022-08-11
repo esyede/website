@@ -67,11 +67,10 @@ class Home_Controller extends Base_Controller
      */
     public function action_key()
     {
-
         return Response::json([
             'key' => Str::random(32),
             'message' => "Copy this key into your 'Application Key' config in application/config/application.php",
-        ]);
+        ], 200, [], JSON_PRETTY_PRINT);
     }
 
     /**
