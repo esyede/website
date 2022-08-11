@@ -486,7 +486,8 @@ if (! function_exists('session')) {
      *
      * </code>
      *
-     * @param string $locale
+     * @param string $key
+     * @param mixed  $value
      *
      * @return mixed
      */
@@ -510,8 +511,7 @@ if (! function_exists('fake')) {
      *
      * </code>
      *
-     * @param string $key
-     * @param mixed  $value
+     * @param string|null $locale
      *
      * @return mixed
      */
