@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ config('application.language') }}">
     @include('partials.header')
     <body class="has-background-white">
         @include('partials.navbar')

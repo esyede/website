@@ -5,19 +5,19 @@
         <div class="modal-background"></div>
         <div class="modal-content">
             <section class="modal-card-body">
-                <p>Contoh instalasi paket bernama <i class="has-text-success">themable</i>:</p>
-                <p><pre><code>php rakit package:install themable</code></pre></p>
+                <p>{!! __('repo.modal.install.text1', ['pkg' => '<i class="has-text-success">themable</i>']) !!}</p>
+                <p><pre><code>{{ __('repo.modal.install.text2', ['pkg' => 'themable']) }}</code></pre></p>
                 <br>
-                <p>Instalasi manual:</p>
+                <p>{{ __('repo.modal.install.text3') }}</p>
                 <p class="notification has-text-left is-unselectable">
                     <small>
-                    1. Unduh paket <span class="has-text-danger">themable</span> tersebut<br>
-                    2. Ekstrak ke folder <span class="has-text-danger">packages/</span><br>
-                    3. Jika paket tersebut memiliki aset, salin asetnya ke <span class="has-text-danger">assets/packages/themable/</span><br>
+                    {!! __('repo.modal.install.text4', ['pkg' => '<span class="has-text-danger">themable</span>']) !!}<br>
+                    {!! __('repo.modal.install.text5', ['pkg' => '<span class="has-text-danger">packages/</span>']) !!}<br>
+                    {!! __('repo.modal.install.text6', ['pkg' => '<span class="has-text-danger">assets/packages/themable/</span>']) !!}<br>
                     </small>
                 </p>
                 <br>
-                <button class="button is-info" id="modal-close-howto">Oke, Mengerti</button>
+                <button class="button is-info" id="modal-close-howto">{{ __('repo.modal.okay') }}</button>
             </section>
         </div>
     </div>
@@ -28,23 +28,23 @@
         <div class="modal-background"></div>
         <div class="modal-content">
             <section class="modal-card-body">
-                <p>Cara berbagi paket:</p>
+                <p>{{ __('repo.modal.share.text1') }}</p>
                 <p class="notification has-text-left is-unselectable">
                     <small>
-                    1. Login ke github dan edit file <a href="https://github.com/esyede/rakit/edit/master/repositories.json" target="_blank">repositories.json</a> untuk menambahkan data paket anda.<br>
-                    2. Kirim pull request berupa perubahan yang anda buat tersebut.<br>
-                    3. Buat thread baru di subforum <a href="{{ url('forum/forum6-paket-library.html') }}" target="_blank">Paket & library</a> sesuai nama paket anda dan jelaskan detailnya.<br>
+                    {!! __('repo.modal.share.text2', ['json' => '<a href="https://github.com/esyede/rakit/edit/master/repositories.json" target="_blank">repositories.json</a>']) !!}<br>
+                    {{ __('repo.modal.share.text3') }}<br>
+                    {!! __('repo.modal.share.text4', ['sub' => '<a href="'.url('forum/forum6-paket-library.html').'" target="_blank">Paket & library</a>']) !!}<br>
                     </small>
                 </p>
-                <p>Jika rilis versi baru:</p>
+                <p>{{ __('repo.modal.share.text5') }}</p>
                 <p class="notification has-text-left is-unselectable">
                     <small>
-                    1. Ulangi langkah "Cara berbagi paket" diatas.<br>
-                    2. Edit postingan pertama di thread anda dan tambahkan detail versi baru anda.<br>
+                    {{ __('repo.modal.share.text6') }}<br>
+                    {{ __('repo.modal.share.text7') }}<br>
                     </small>
                 </p>
                 <br>
-                <button class="button is-success" id="modal-close-add-package">Oke, Mengerti</button>
+                <button class="button is-success" id="modal-close-add-package">{{ __('repo.modal.okay') }}</button>
             </section>
         </div>
     </div>
@@ -52,11 +52,11 @@
 
 @section('pages_title')
     <br>
-    <h1 class="title">Repositori Paket</h1>
-    <p class="subtitle">Download dan bagikan paket anda bersama pengembang lain</p>
+    <h1 class="title">{{ __('repo.hero.head') }}</h1>
+    <p class="subtitle">{{ __('repo.hero.text') }}</p>
     <div class="buttons is-block">
-        <button id="show-modal-howto" class="button is-info">Cara Install?</button>
-        <button id="show-modal-add-package" class="button is-success">Bagikan Paket</button>
+        <button id="show-modal-howto" class="button is-info">{{ __('repo.hero.btn1') }}</button>
+        <button id="show-modal-add-package" class="button is-success">{{ __('repo.hero.btn2') }}</button>
     </div>
     @yield('howto')
     @yield('add-package')
@@ -70,7 +70,7 @@
             <div class="columns">
                 <div class="column is-3-desktop is-3-tablet">
                     <aside class="menu">
-                        <p class="menu-label">Kategori</p>
+                        <p class="menu-label">{{ __('repo.side.cat') }}</p>
                         <ul class="menu-list">
                             @foreach ($categories as $category)
                             <li>
@@ -83,7 +83,7 @@
                             </li>
                             @endforeach
                             <li>
-                                <a href="{{ url('repositories') }}">Semua
+                                <a href="{{ url('repositories') }}">{{ __('repo.content.all') }}
                                     <span class="tag is-info is-light is-rounded">
                                         {{ $totalcount }}
                                     </span>
@@ -108,13 +108,13 @@
                                   <div class="content">
                                     <div class="is-pulled-right is-hidden-mobile">
                                         @if ($packages[$i]['maintained'])
-                                            <span class="button is-success is-rounded is-small" title="Paket ini masih dimaintain oleh pembuatnya">maintained</span>
+                                            <span class="button is-success is-rounded is-small" title="{{ __('repo.content.maintained') }}">maintained</span>
                                         @else
-                                            <span class="button is-warning is-rounded is-small" title="Paket ini sudah tidak dimaintain oleh pembuatnya">unmaintained</span>
+                                            <span class="button is-warning is-rounded is-small" title="{{ __('repo.content.unmaintained') }}">unmaintained</span>
                                         @endif
                                     </div>
                                     <p>
-                                        <a class="is-size-4" title="Kunjungi repositori milik paket ini" href="{{ $packages[$i]['repository'] }}"  target="_blank">{{ $packages[$i]['name'] }}</a>
+                                        <a class="is-size-4" title="{{ __('repo.content.visit') }}" href="{{ $packages[$i]['repository'] }}"  target="_blank">{{ $packages[$i]['name'] }}</a>
                                         <br>
                                         {!! nl2br($packages[$i]['description']) !!}
                                     </p>
@@ -123,7 +123,7 @@
                                         <a class="tag is-small is-primary" href="{{ url('repositories/'.Str::slug($packages[$i]['category'])) }}" title="Kategori: {{ $packages[$i]['category'] }}">{{ Str::title($packages[$i]['category']) }}</a>
                                     </div>
                                     <span class="is-pulled-right is-size-7">
-                                        Kompatibel: {{ implode(', ', array_keys($packages[$i]['compatibilities'])) }}
+                                        {{ __('repo.content.compat') }} {{ implode(', ', array_keys($packages[$i]['compatibilities'])) }}
                                     </span>
                                   </div>
                                 </div>
@@ -133,15 +133,15 @@
 
                         <nav class="pagination is-rounded" role="navigation">
                             @if ($currpage > 1)
-                                <a class="pagination-previous" href="?page={{ ($currpage - 1) }}">&laquo; Sebelumnya</a>
+                                <a class="pagination-previous" href="?page={{ ($currpage - 1) }}">&laquo; {{ __('pagination.previous') }}</a>
                             @else
-                                <a class="pagination-previous" href="#" disabled>&laquo; Sebelumnya</a>
+                                <a class="pagination-previous" href="#" disabled>&laquo; {{ __('pagination.previous') }}</a>
                             @endif
 
                             @if ($currpage < $totalpage)
-                                <a class="pagination-next" href="?page={{ ($currpage + 1) }}">Selanjutnya &raquo;</a>
+                                <a class="pagination-next" href="?page={{ ($currpage + 1) }}">{{ __('pagination.next') }} &raquo;</a>
                             @else
-                                <a class="pagination-next" href="#" disabled>Selanjutnya &raquo;</a>
+                                <a class="pagination-next" href="#" disabled>{{ __('pagination.next') }} &raquo;</a>
                             @endif
                         </nav>
                     </div>

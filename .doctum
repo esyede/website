@@ -1,0 +1,34 @@
+<?php
+
+use Doctum\Doctum;
+use Doctum\Version\GitVersionCollection;
+use Doctum\RemoteRepository\GitHubRemoteRepository;
+use Symfony\Component\Finder\Finder;
+
+define('DS', DIRECTORY_SEPARATOR);
+
+require 'paths.php';
+require 'system/core.php';
+
+$iterator = Finder::create()
+    ->files()
+    ->name('*.php')
+    ->in(__DIR__.DS.'system');
+
+$versions = GitVersionCollection::create(__DIR__.DS.'system')
+    ->add('master', 'master')
+    ->add(RAKIT_VERSION, RAKIT_VERSION);
+
+return new Doctum($iterator, [
+    'title' => 'API',
+    'version' => $versions,
+    'language' => 'en',
+    'build_dir' =>  __DIR__.DS.'api'.DS.'api'.DS.'%version%'.DS,
+    'cache_dir' => __DIR__.DS.'api'.DS.'cache'.DS.'%version%'.DS,
+    'source_dir' => __DIR__.DS.'system',
+    'remote_repository' => new GitHubRemoteRepository('esyede/rakit', dirname(__DIR__.DS.'system')),
+    'default_opened_level' => 1,
+    'base_url' => 'https://rakit.esyede.my.id/docs/',
+]);
+
+// Run: php doctum.phar update .doctum

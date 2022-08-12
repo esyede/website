@@ -12,32 +12,18 @@ class Home_Controller extends Base_Controller
     public $page;
 
     /**
-     * Teks untuk tagline.
-     *
-     * @var string
-     */
-    public $tagline;
-
-    /**
-     * Teks untuk navbar brand.
-     *
-     * @var string
-     */
-    public $brand;
-
-    /**
      * Konstruktor.
      */
     public function __construct()
     {
         parent::__construct();
 
-        $this->brand = 'Rakit';
-        $this->tagline = 'Kerangka kerja PHP sederhana, ringan dan modular.';
+        $language = (Request::foundation()->getPreferredLanguage() == 'id_ID') ? 'id' : 'en';
+        Config::set('application.language', $language);
 
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
-        $page = Str::title($page).' | '.$this->tagline;
+        $page = Str::title($page).' | '.__('home.hero.slogan');
         $this->page = $page;
     }
 
@@ -49,13 +35,11 @@ class Home_Controller extends Base_Controller
     public function action_index()
     {
         $view = view('home.index');
-
-        $view->brand = $this->brand;
-        $view->tagline = $this->tagline;
         $view->page = $this->page;
-        $view->news = 'Versi terbaru rakit (v0.9.9) telah siap diuji coba. '.
-            '<a href="'.url('forum/topic4-rakit-v099-siap-diuji-coba.html').'" target="_blank">'.
-            'Baca selengkapnya..</a>';
+        $view->news = __('home.news.text', [
+            'version' => RAKIT_VERSION,
+            'more' => '<a href="'.url('forum/topic4-rakit-v099-siap-diuji-coba.html').'" target="_blank">'.__('home.news.more').'</a>',
+        ]);
 
         return $view;
     }
@@ -98,8 +82,8 @@ class Home_Controller extends Base_Controller
         $verbatim = Stuff::packages();
         $view = view('home.repositories');
 
-        $view->brand = $this->brand;
-        $view->tagline = $this->tagline;
+        $view->brand = 'Rakit';
+        $view->tagline = __('home.hero.slogan');
         $view->page = $this->page;
         $view->totalcount = count($verbatim);
 
@@ -114,7 +98,7 @@ class Home_Controller extends Base_Controller
         }
 
         if (is_null($name)) {
-            $view->catname = 'semua';
+            $view->catname = Str::slug(__('repo.content.all'));
             $view->categories = $categories;
             $view->currpage = Stuff::currpage();
             $view->totalpage = (int) ceil(count($verbatim) / $perpage);
