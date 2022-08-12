@@ -9,7 +9,10 @@ class Base_Controller extends Controller
      */
     public function __construct()
     {
-        $this->middleware('before', 'csrf')->on('post');
+        // Apply csrf middleware ke seluruh action, kecuali 'logout'.
+        $this->middleware('before', 'csrf')
+            ->on(['post', 'put', 'patch', 'delete'])
+            ->except(['logout']);
     }
 
     /**
@@ -20,7 +23,7 @@ class Base_Controller extends Controller
      *
      * @return Response
      */
-    public function __call($method, $parameters)
+    public function __call($method, array $parameters)
     {
         return abort(404);
     }
