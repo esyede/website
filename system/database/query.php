@@ -7,7 +7,6 @@ defined('DS') or exit('No direct script access.');
 use Closure;
 use System\Database;
 use System\Paginator;
-use System\Response;
 use System\Database\Query\Grammars\Grammar;
 use System\Database\Query\Grammars\Postgres;
 use System\Database\Query\Grammars\SQLServer;
@@ -632,7 +631,7 @@ class Query
     public function find_or_fail($id, array $columns = ['*'])
     {
         $results = $this->find($id, $columns);
-        return (null === $results) ? Response::error(404) : $results;
+        return (null === $results) ? abort(404) : $results;
     }
 
     /**
@@ -675,7 +674,7 @@ class Query
         $columns = is_array($columns) ? $columns : func_get_args();
         $results = $this->first($columns);
 
-        return (null === $results) ? Response::error(404) : $results;
+        return (null === $results) ? abort(404) : $results;
     }
 
     /**
