@@ -14,7 +14,7 @@ return [
 
     'header' => [
         'documentation' => 'Documentation',
-        'description' => 'Rakit framework documentation'
+        'description' => 'Rakit framework documentation',
     ],
     'navbar' => [
         'home' => 'Home',

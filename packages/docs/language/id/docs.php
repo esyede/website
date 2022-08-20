@@ -14,7 +14,7 @@ return [
 
     'header' => [
         'documentation' => 'Dokumentasi',
-        'description' => 'Dokumentasi rakit framework'
+        'description' => 'Dokumentasi rakit framework',
     ],
     'navbar' => [
         'home' => 'Rumah',
