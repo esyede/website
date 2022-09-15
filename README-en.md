@@ -2,7 +2,7 @@
 <h1 align="center">Rakit Web Framework</h1>
 
 <p align="center">
-  <img src="https://github.com/esyede/rakit/workflows/build/badge.svg" alt="build"/>
+  <img src="https://github.com/esyede/website/workflows/build/badge.svg" alt="build"/>
   <img src="https://img.shields.io/github/v/release/esyede/rakit?include_prereleases" alt="release"/>
   <img src="https://img.shields.io/github/languages/top/esyede/rakit" alt="language"/>
   <img src="https://img.shields.io/github/license/esyede/rakit" alt="license"/>
