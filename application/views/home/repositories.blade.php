@@ -5,15 +5,15 @@
         <div class="modal-background"></div>
         <div class="modal-content">
             <section class="modal-card-body">
-                <p>{!! __('repo.modal.install.text1', ['pkg' => '<i class="has-text-success">themable</i>']) !!}</p>
-                <p><pre><code>{{ __('repo.modal.install.text2', ['pkg' => 'themable']) }}</code></pre></p>
+                <p>{!! __('repo.modal.install.text1', ['pkg' => '<i class="has-text-success">notyf</i>']) !!}</p>
+                <p><pre><code>{{ __('repo.modal.install.text2', ['pkg' => 'notyf']) }}</code></pre></p>
                 <br>
                 <p>{{ __('repo.modal.install.text3') }}</p>
                 <p class="notification has-text-left is-unselectable">
                     <small>
-                    {!! __('repo.modal.install.text4', ['pkg' => '<span class="has-text-danger">themable</span>']) !!}<br>
+                    {!! __('repo.modal.install.text4', ['pkg' => '<span class="has-text-danger">notyf</span>']) !!}<br>
                     {!! __('repo.modal.install.text5', ['pkg' => '<span class="has-text-danger">packages/</span>']) !!}<br>
-                    {!! __('repo.modal.install.text6', ['pkg' => '<span class="has-text-danger">assets/packages/themable/</span>']) !!}<br>
+                    {!! __('repo.modal.install.text6', ['pkg' => '<span class="has-text-danger">assets/packages/notyf/</span>']) !!}<br>
                     </small>
                 </p>
                 <br>
