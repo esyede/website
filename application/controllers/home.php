@@ -68,7 +68,7 @@ class Home_Controller extends Base_Controller
         Log::info('Download from: '.Request::ip());
         Log::filename(null);
 
-        return redirect('https://github.com/esyede/rakit/archive/'.RAKIT_VERSION.'.zip');
+        return redirect('https://github.com/esyede/rakit/archive/master.zip');
     }
 
     /**
