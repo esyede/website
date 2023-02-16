@@ -4,7 +4,6 @@ namespace System\Database;
 
 defined('DS') or exit('No direct script access.');
 
-use Closure;
 use System\Database;
 use System\Paginator;
 use System\Database\Query\Grammars\Grammar;
@@ -176,13 +175,11 @@ class Query
      */
     public function join($table, $column1, $operator = null, $column2 = null, $type = 'INNER')
     {
-        if ($column1 instanceof Closure) {
+        if ($column1 instanceof \Closure) {
             $this->joins[] = new Query\Join($type, $table);
             call_user_func($column1, end($this->joins));
         } else {
-            $join = new Query\Join($type, $table);
-            $join->on($column1, $operator, $column2);
-            $this->joins[] = $join;
+            $this->joins[] = (new Query\Join($type, $table))->on($column1, $operator, $column2);
         }
 
         return $this;
@@ -254,11 +251,11 @@ class Query
      */
     public function where($column, $operator = null, $value = null, $connector = 'AND')
     {
-        if ($column instanceof Closure) {
+        if ($column instanceof \Closure) {
             return $this->where_nested($column, $connector);
         }
 
-        if (! in_array(strtolower((string) $operator), $this->operators) && null === $value) {
+        if (!in_array(strtolower((string) $operator), $this->operators) && null === $value) {
             $value = $operator;
             $operator = '=';
         }
@@ -476,24 +473,23 @@ class Query
     /**
      * Tambahkan klausa NESTED WHERE ke query.
      *
-     * @param Closure $callback
+     * @param \Closure $callback
      * @param string  $connector
      *
      * @return Query
      */
     public function where_nested(\Closure $callback, $connector = 'AND')
     {
-        $type = 'where_nested';
         $query = new Query($this->connection, $this->grammar, $this->from);
 
         call_user_func($callback, $query);
 
         if (null !== $query->wheres) {
+            $type = 'where_nested';
             $this->wheres[] = compact('type', 'query', 'connector');
         }
 
         $this->bindings = array_merge($this->bindings, $query->bindings);
-
         return $this;
     }
 
@@ -507,8 +503,8 @@ class Query
      */
     private function dynamic_where($method, array $parameters)
     {
-        $keyword = substr($method, 6);
-        $segments = preg_split('/(_and_|_or_)/i', $keyword, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $method = substr((string) $method, 6);
+        $segments = (array) preg_split('/(_and_|_or_)/i', $method, -1, PREG_SPLIT_DELIM_CAPTURE);
         $connector = 'AND';
 
         $index = 0;
@@ -667,7 +663,7 @@ class Query
      *
      * @param array $columns
      *
-     * @return \stdClass||\System\Response
+     * @return \stdClass|\System\Response
      */
     public function first_or_fail($columns = ['*'])
     {
@@ -694,7 +690,7 @@ class Query
             return $row->{$column};
         }, $results);
 
-        if (! is_null($key) && count($results)) {
+        if (!is_null($key) && count($results)) {
             return array_combine(array_map(function ($row) use ($key) {
                 return $row->{$key};
             }, $results), $values);
@@ -728,7 +724,6 @@ class Query
         }
 
         $this->selects = null;
-
         return $results;
     }
 
@@ -748,7 +743,6 @@ class Query
         $result = $this->connection->only($sql, $this->bindings);
 
         $this->aggregate = null;
-
         return $result;
     }
 
@@ -771,7 +765,6 @@ class Query
         $this->orderings = $orderings;
 
         $results = $this->for_page($page, $perpage)->get($columns);
-
         return Paginator::make($results, $total, $perpage);
     }
 
@@ -792,7 +785,6 @@ class Query
         }
 
         $sql = $this->grammar->insert($this, $values);
-
         return $this->connection->query($sql, $bindings);
     }
 
@@ -857,7 +849,7 @@ class Query
     protected function adjust($column, $amount, $operator)
     {
         $wrapped = $this->grammar->wrap($column);
-        $value = Database::raw($wrapped.$operator.$amount);
+        $value = Database::raw($wrapped . $operator . $amount);
 
         return $this->update([$column => $value]);
     }
@@ -888,13 +880,22 @@ class Query
      */
     public function delete($id = null)
     {
-        if (! is_null($id)) {
+        if (!is_null($id)) {
             $this->where('id', '=', $id);
         }
 
         $sql = $this->grammar->delete($this);
-
         return $this->connection->query($sql, $this->bindings);
+    }
+
+    /**
+     * Ambil representasi SQL dari kueri.
+     *
+     * @return string
+     */
+    public function to_sql()
+    {
+        return $this->grammar->select($this);
     }
 
     /**
@@ -903,6 +904,8 @@ class Query
      */
     public function __call($method, array $parameters)
     {
+        $method = (string) $method;
+
         if (0 === strpos($method, 'where_')) {
             return $this->dynamic_where($method, $parameters, $this);
         }

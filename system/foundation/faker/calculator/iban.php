@@ -8,11 +8,10 @@ class Iban
 {
     public static function checksum($iban)
     {
-        $string = substr($iban, 4).substr($iban, 0, 2).'00';
-        $string = preg_replace_callback('/[A-Z]/', ['self', 'alphaToNumberCallback'], $string);
-        $string = (98 - self::mod97($string));
-
-        return str_pad($string, 2, '0', STR_PAD_LEFT);
+        $iban = (string) $iban;
+        $iban = substr($iban, 4) . substr($iban, 0, 2) . '00';
+        $iban = preg_replace_callback('/[A-Z]/', ['self', 'alphaToNumberCallback'], $iban);
+        return str_pad(98 - self::mod97($iban), 2, '0', STR_PAD_LEFT);
     }
 
     private static function alphaToNumberCallback($match)
@@ -27,6 +26,7 @@ class Iban
 
     public static function mod97($number)
     {
+        $number = (string) $number;
         $checksum = (int) $number[0];
 
         for ($i = 1, $size = mb_strlen($number, '8bit'); $i < $size; ++$i) {
@@ -38,6 +38,6 @@ class Iban
 
     public static function isValid($iban)
     {
-        return self::checksum($iban) === substr($iban, 2, 2);
+        return self::checksum($iban) === substr((string) $iban, 2, 2);
     }
 }

@@ -18,7 +18,9 @@ class Dates extends Base
             return (int) $max;
         }
 
-        return ($max instanceof \DateTime) ? $max->getTimestamp() : strtotime(empty($max) ? 'now' : $max);
+        return ($max instanceof \DateTime)
+            ? $max->getTimestamp()
+            : strtotime(empty($max) ? 'now' : $max);
     }
 
     public static function unixTime($max = 'now')
@@ -28,12 +30,12 @@ class Dates extends Base
 
     public static function dateTime($max = 'now')
     {
-        return new \DateTime('@'.static::unixTime($max));
+        return new \DateTime('@' . static::unixTime($max));
     }
 
     public static function dateTimeAD($max = 'now')
     {
-        return new \DateTime('@'.mt_rand(-62135597361, static::getMaxTimestamp($max)));
+        return new \DateTime('@' . mt_rand(-62135597361, static::getMaxTimestamp($max)));
     }
 
     public static function iso8601($max = 'now')
@@ -53,18 +55,18 @@ class Dates extends Base
 
     public static function dateTimeBetween($startDate = '-30 years', $endDate = 'now')
     {
-        $start = ($startDate instanceof \DateTime) ? $startDate->getTimestamp() : strtotime($startDate);
+        $start = ($startDate instanceof \DateTime)
+            ? $startDate->getTimestamp()
+            : strtotime($startDate);
+
         $end = static::getMaxTimestamp($endDate);
 
         if ($start > $end) {
             throw new \InvalidArgumentException('Start date must be anterior to end date.');
         }
 
-        $timestamp = mt_rand($start, $end);
-        $timestamp = new \DateTime('@'.$timestamp);
-        $timestamp->setTimezone(new \DateTimeZone(date_default_timezone_get()));
-
-        return $timestamp;
+        return (new \DateTime('@' . mt_rand($start, $end)))
+            ->setTimezone(new \DateTimeZone(date_default_timezone_get()));
     }
 
     public static function dateTimeThisCentury($max = 'now')

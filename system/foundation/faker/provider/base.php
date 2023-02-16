@@ -30,10 +30,10 @@ class Base
 
     public static function randomNumber($nbDigits = null, $strict = false)
     {
-        if (! is_bool($strict)) {
+        if (!is_bool($strict)) {
             throw new \InvalidArgumentException(
-                'randomNumber() generates numbers of fixed width. To generate numbers '.
-                'between two boundaries, use numberBetween() instead.'
+                'randomNumber() generates numbers of fixed width. To generate numbers ' .
+                    'between two boundaries, use numberBetween() instead.'
             );
         }
 
@@ -88,55 +88,49 @@ class Base
 
     public static function randomElements(array $array = ['a', 'b', 'c'], $count = 1)
     {
-        $allKeys = array_keys($array);
-        $numKeys = count($allKeys);
+        $keys = array_keys($array);
+        $total = count($keys);
 
-        if ($numKeys < $count) {
+        if ($total < $count) {
             throw new \LengthException(sprintf(
-                'Cannot get %s elements, only %s elements is available the in array', $count, $numKeys
+                'Cannot get %s elements, only %s elements is available the in array',
+                $count,
+                $total
             ));
         }
 
-        $highKey = $numKeys - 1;
+        $high = $total - 1;
         $keys = $elements = [];
-        $numElements = 0;
+        $index = 0;
 
-        while ($numElements < $count) {
-            $num = mt_rand(0, $highKey);
+        while ($index < $count) {
+            $num = mt_rand(0, $high);
 
             if (isset($keys[$num])) {
                 continue;
             }
 
             $keys[$num] = true;
-            $elements[] = $array[$allKeys[$num]];
-            ++$numElements;
+            $elements[] = $array[$keys[$num]];
+            ++$index;
         }
 
         return $elements;
     }
 
-    public static function randomElement($array = ['a', 'b', 'c'])
+    public static function randomElement(array $array = ['a', 'b', 'c'])
     {
-        if (! $array) {
-            return;
-        }
-
-        $elements = static::randomElements($array, 1);
-
-        return $elements[0];
+        return empty($array) ? null : static::randomElements($array, 1)[0];
     }
 
-    public static function randomKey($array = [])
+    public static function randomKey(array $array = [])
     {
-        if (! $array) {
+        if (empty($array)) {
             return;
         }
 
         $keys = array_keys($array);
-        $key = $keys[mt_rand(0, count($keys) - 1)];
-
-        return $key;
+        return $keys[mt_rand(0, count($keys) - 1)];
     }
 
     public static function shuffle($arg = '')
@@ -158,7 +152,7 @@ class Base
         $i = 0;
         reset($array);
 
-        while (list($key, $value) = each($array)) {
+        while (list($key, $value) = static::eachEvery($array)) {
             $j = (0 === $i) ? 0 : mt_rand(0, $i);
 
             if ($j === $i) {
@@ -177,10 +171,10 @@ class Base
     public static function shuffleString($string = '', $encoding = 'UTF-8')
     {
         $array = [];
-        $strlen = mb_strlen($string, $encoding);
+        $strlen = mb_strlen((string) $string, $encoding);
 
         for ($i = 0; $i < $strlen; ++$i) {
-            $array[] = mb_substr($string, $i, 1, $encoding);
+            $array[] = mb_substr((string) $string, $i, 1, $encoding);
         }
 
         return implode('', static::shuffleArray($array));
@@ -188,27 +182,28 @@ class Base
 
     public static function numerify($string = '###')
     {
-        $toReplace = [];
+        $string = (string) $string;
+        $replacing = [];
 
         for ($i = 0, $count = mb_strlen($string, '8bit'); $i < $count; ++$i) {
             if ('#' === $string[$i]) {
-                $toReplace[] = $i;
+                $replacing[] = $i;
             }
         }
 
-        if ($nbReplacements = count($toReplace)) {
-            $maxAtOnce = mb_strlen((string) mt_getrandmax(), '8bit') - 1;
+        if ($total = count($replacing)) {
+            $step = mb_strlen((string) mt_getrandmax(), '8bit') - 1;
             $numbers = '';
             $i = 0;
 
-            while ($i < $nbReplacements) {
-                $size = min($nbReplacements - $i, $maxAtOnce);
+            while ($i < $total) {
+                $size = min($total - $i, $step);
                 $numbers .= str_pad(static::randomNumber($size), $size, '0', STR_PAD_LEFT);
                 $i += $size;
             }
 
-            for ($i = 0; $i < $nbReplacements; ++$i) {
-                $string[$toReplace[$i]] = $numbers[$i];
+            for ($i = 0; $i < $total; ++$i) {
+                $string[$replacing[$i]] = $numbers[$i];
             }
         }
 
@@ -236,8 +231,8 @@ class Base
         $regex = preg_replace('/\$?\/?$/', '', $regex);
         $regex = preg_replace('/\{(\d+)\}/', '{\1,\1}', $regex);
         $regex = preg_replace('/(?<!\\\)\?/', '{0,1}', $regex);
-        $regex = preg_replace('/(?<!\\\)\*/', '{0,'.static::randomDigitNotNull().'}', $regex);
-        $regex = preg_replace('/(?<!\\\)\+/', '{1,'.static::randomDigitNotNull().'}', $regex);
+        $regex = preg_replace('/(?<!\\\)\*/', '{0,' . static::randomDigitNotNull() . '}', $regex);
+        $regex = preg_replace('/(?<!\\\)\+/', '{1,' . static::randomDigitNotNull() . '}', $regex);
         $regex = preg_replace_callback('/(\[[^\]]+\])\{(\d+),(\d+)\}/', function ($matches) {
             return str_repeat($matches[1], Base::randomElement(range($matches[2], $matches[3])));
         }, $regex);
@@ -255,9 +250,9 @@ class Base
         }, $regex);
 
         $regex = preg_replace_callback('/\[([^\]]+)\]/', function ($matches) {
-            return '['.preg_replace_callback('/(\w|\d)\-(\w|\d)/', function ($range) {
+            return '[' . preg_replace_callback('/(\w|\d)\-(\w|\d)/', function ($range) {
                 return implode('', range($range[1], $range[2]));
-            }, $matches[1]).']';
+            }, $matches[1]) . ']';
         }, $regex);
 
         $regex = preg_replace_callback('/\[([^\]]+)\]/', function ($matches) {
@@ -267,19 +262,18 @@ class Base
         $regex = preg_replace_callback('/\\\w/', 'static::randomLetter', $regex);
         $regex = preg_replace_callback('/\\\d/', 'static::randomDigit', $regex);
         $regex = preg_replace_callback('/(?<!\\\)\./', 'static::randomAscii', $regex);
-        $regex = str_replace('\\', '', $regex);
 
-        return $regex;
+        return str_replace('\\', '', $regex);
     }
 
     public static function toLower($string = '')
     {
-        return mb_strtolower($string, 'UTF-8');
+        return mb_strtolower((string) $string, 'UTF-8');
     }
 
     public static function toUpper($string = '')
     {
-        return mb_strtoupper($string, 'UTF-8');
+        return mb_strtoupper((string) $string, 'UTF-8');
     }
 
     public function optional($weight = 0.5, $default = null)
@@ -289,10 +283,19 @@ class Base
 
     public function unique($reset = false, $max_retries = 10000)
     {
-        if ($reset || ! $this->unique) {
+        if ($reset || !$this->unique) {
             $this->unique = new Unique($this->generator, $max_retries);
         }
 
         return $this->unique;
+    }
+
+    protected static function eachEvery($array)
+    {
+        $key = key($array);
+        $value = current($array);
+        $each = is_null($key) ? false : [1 => $value, 'value' => $value, 0 => $key, 'key' => $key];
+        next($array);
+        return $each;
     }
 }

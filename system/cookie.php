@@ -22,7 +22,7 @@ class Cookie
      */
     public static function has($name)
     {
-        return ! is_null(static::get($name));
+        return !is_null(static::get($name));
     }
 
     /**
@@ -45,7 +45,7 @@ class Cookie
      */
     public static function get($name, $default = null)
     {
-        if (isset(static::$jar[$name])) {
+        if (isset(static::$jar[$name]) && isset(static::$jar[$name]['value'])) {
             return Crypter::decrypt(static::$jar[$name]['value']);
         }
 
@@ -83,22 +83,33 @@ class Cookie
         $secure = false,
         $samesite = 'lax'
     ) {
+        // Jika $secure nilainya TRUE, cookie hanya bisa diakses via HTTPS.
+        if ($secure && !Request::secure()) {
+            throw new \Exception('Attempting to set secure cookie over HTTP.');
+        }
+
         $expiration = (0 === (int) $expiration) ? 0 : (time() + ($expiration * 60));
         $samesite = is_null($samesite) ? Config::get('session.samesite', 'lax') : $samesite;
         $samesite = is_string($samesite) ? strtolower($samesite) : $samesite;
 
-        if (! in_array($samesite, ['lax', 'strict', 'none'])) {
-            throw new \InvalidArgumentException('The "samesite" parameter value is not valid.');
+        if (!in_array($samesite, ['lax', 'strict', 'none'])) {
+            throw new \Exception(sprintf(
+                'The "samesite" parameter value is not valid: %s (%s)',
+                $samesite,
+                gettype($samesite)
+            ));
         }
 
         $value = Crypter::encrypt($value);
-
-        // Jika $secure nilainya TRUE, cookie hanya bisa diakses via HTTPS.
-        if ($secure && ! Request::secure()) {
-            throw new \Exception('Attempting to set secure cookie over HTTP.');
-        }
-
-        static::$jar[$name] = compact('name', 'value', 'expiration', 'path', 'domain', 'secure', 'samesite');
+        static::$jar[$name] = [
+            'name' => $name,
+            'value' => $value,
+            'expiration' => $expiration,
+            'path' => $path,
+            'domain' => $domain,
+            'secure' => $secure,
+            'samesite' => $samesite,
+        ];
     }
 
     /**

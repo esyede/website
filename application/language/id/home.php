@@ -69,7 +69,7 @@ return [
         'license' => 'Lisensi MIT',
     ],
     'news' => [
-        'text' => 'Versi terbaru rakit (:version) telah siap diuji coba. :more',
-        'more' => 'Baca selangkapnya..',
+        'text' => 'Ngobrol dengan pengembang lain di panel diskusi kami :more',
+        'more' => 'Selangkapnya..',
     ],
 ];

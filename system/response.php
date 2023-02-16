@@ -36,7 +36,7 @@ class Response
     /**
      * Ambil instance foundation rersponse.
      *
-     * @return ]System\Foundation\Http\Response
+     * @return \System\Foundation\Http\Response
      */
     public function foundation()
     {
@@ -114,7 +114,7 @@ class Response
      */
     public static function json($data, $status = 200, array $headers = [], $json_options = 0)
     {
-        $headers['content-type'] = 'application/json; charset=utf-8';
+        $headers['Content-Type'] = 'application/json; charset=utf-8';
         return new static(json_encode($data, $json_options), $status, $headers);
     }
 
@@ -136,8 +136,8 @@ class Response
      */
     public static function jsonp($callback, $data, $status = 200, array $headers = [])
     {
-        $headers['content-type'] = 'application/javascript; charset=utf-8';
-        return new static($callback.'('.json_encode($data).');', $status, $headers);
+        $headers['Content-Type'] = 'application/javascript; charset=utf-8';
+        return new static($callback . '(' . json_encode($data) . ');', $status, $headers);
     }
 
     /**
@@ -158,7 +158,7 @@ class Response
      */
     public static function facile($data, $status = 200, array $headers = [])
     {
-        $headers['content-type'] = 'application/json; charset=utf-8';
+        $headers['Content-Type'] = 'application/json; charset=utf-8';
         return new static(facile_to_json($data), $status, $headers);
     }
 
@@ -186,7 +186,7 @@ class Response
     public static function error($code, array $headers = [])
     {
         $code = (int) $code;
-        $message = Foundation\Http\Responder::$statusTexts;
+        $message = Foundation\Http\Response::$statusTexts;
         $message = isset($message[$code]) ? $message[$code] : 'Unknown Error';
 
         if (Request::wants_json()) {
@@ -194,7 +194,7 @@ class Response
             return static::json(compact('status', 'message'), $code, $headers);
         }
 
-        $view = View::exists('error.'.$code) ? 'error.'.$code : 'error.default';
+        $view = View::exists('error.' . $code) ? 'error.' . $code : 'error.unknown';
         return static::view($view, compact('code', 'message'), $code, $headers);
     }
 
@@ -219,26 +219,21 @@ class Response
      */
     public static function download($path, $name = null, array $headers = [])
     {
-        if (! is_file($path)) {
+        if (!is_file($path)) {
             throw new \Exception(sprintf('Target file not found: %s', $path));
         }
 
         $name = is_null($name) ? basename($path) : $name;
-
-        // Default headers.
-        $defaults = [
-            'content-description' => 'File Transfer',
-            'content-type' => Storage::mime($path),
-            'content-transfer-encoding' => 'binary',
-            'expires' => 0,
-            'cache-control' => 'must-revalidate, post-check=0, pre-check=0',
-            'pragma' => 'public',
-            'content-length' => Storage::size($path),
-            'content-disposition' => 'attachment; filename="'.$name.'"',
-        ];
-
-        $headers = array_merge($defaults, $headers);
-        $response = new static(Storage::get($path), 200, $headers);
+        $response = new static(Storage::get($path), 200, array_merge($headers, [
+            'Content-Description' => 'File Transfer',
+            'Content-Type' => Storage::mime($path),
+            'Content-Transfer-Encoding' => 'binary',
+            'Expires' => 0,
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma' => 'public',
+            'Content-Length' => Storage::size($path),
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $name),
+        ]));
 
         if (Config::get('session.driver')) {
             Session::save();
@@ -253,7 +248,7 @@ class Response
         $chunksize = (int) Config::get('application.chunk_size', 4) * 1024;
 
         if ($file = fopen($path, 'rb')) {
-            while (! feof($file) && 0 === connection_status() && ! connection_aborted()) {
+            while (!feof($file) && 0 === connection_status() && !connection_aborted()) {
                 echo fread($file, $chunksize);
                 flush();
             }
@@ -322,8 +317,8 @@ class Response
         $reflector = new \ReflectionClass('\System\Foundation\Http\Cookie');
 
         foreach (Cookie::$jar as $name => $cookie) {
-            $config = array_values($cookie);
-            $this->headers()->setCookie($reflector->newInstanceArgs($config));
+            $cookie = array_values($cookie);
+            $this->foundation()->headers->setCookie($reflector->newInstanceArgs($cookie));
         }
     }
 

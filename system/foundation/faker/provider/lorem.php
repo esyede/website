@@ -75,7 +75,7 @@ class Lorem extends Base
         $words = static::words($nbWords);
         $words[0] = ucwords($words[0]);
 
-        return implode(' ', $words).'.';
+        return implode(' ', $words) . '.';
     }
 
     public static function sentences($nb = 3, $asText = false)
@@ -119,16 +119,16 @@ class Lorem extends Base
 
         if ($maxNbChars < 5) {
             throw new \InvalidArgumentException(
-                'text() can only generate text of at least 5 characters'
+                'Lorem::text() can only generate text of at least 5 characters'
             );
         } elseif ($maxNbChars < 25) {
             while (empty($text)) {
                 $size = 0;
 
                 while ($size < $maxNbChars) {
-                    $word = ($size ? ' ' : '').static::word();
+                    $word = ($size ? ' ' : '') . static::word();
                     $text[] = $word;
-                    $size += mb_strlen($word, '8bit');
+                    $size += mb_strlen((string) $word, '8bit');
                 }
 
                 array_pop($text);
@@ -141,9 +141,9 @@ class Lorem extends Base
                 $size = 0;
 
                 while ($size < $maxNbChars) {
-                    $sentence = ($size ? ' ' : '').static::sentence();
+                    $sentence = ($size ? ' ' : '') . static::sentence();
                     $text[] = $sentence;
-                    $size += mb_strlen($sentence, '8bit');
+                    $size += mb_strlen((string) $sentence, '8bit');
                 }
 
                 array_pop($text);
@@ -153,9 +153,9 @@ class Lorem extends Base
                 $size = 0;
 
                 while ($size < $maxNbChars) {
-                    $paragraph = ($size ? "\n" : '').static::paragraph();
+                    $paragraph = ($size ? "\n" : '') . static::paragraph();
                     $text[] = $paragraph;
-                    $size += mb_strlen($paragraph, '8bit');
+                    $size += mb_strlen((string) $paragraph, '8bit');
                 }
 
                 array_pop($text);

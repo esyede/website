@@ -6,9 +6,7 @@ defined('DS') or exit('No direct script access.');
 
 use System\Arr;
 use System\Str;
-use System\URI;
 use System\Package;
-use System\Request;
 use System\Response;
 use System\Redirect;
 use System\View;
@@ -126,13 +124,13 @@ class Route
     {
         $delegate = $this->delegate();
 
-        if (! is_null($delegate)) {
+        if (!is_null($delegate)) {
             return Controller::call($delegate, $this->parameters);
         }
 
         $handler = $this->handler();
 
-        if (! is_null($handler)) {
+        if (!is_null($handler)) {
             return call_user_func_array($handler, $this->parameters);
         }
     }
@@ -146,7 +144,7 @@ class Route
      */
     protected function middlewares($event)
     {
-        $global = Package::prefix($this->package).$event;
+        $global = Package::prefix($this->package) . $event;
         $middlewares = array_unique([$event, $global]);
 
         if (isset($this->action[$event])) {
@@ -228,6 +226,18 @@ class Route
     public function is($name)
     {
         return Arr::get($this->action, 'as') === $name;
+    }
+
+    /**
+     * Periksa apakah named-route telah terdaftar atau belum.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public static function has($name)
+    {
+        return in_array($name, array_values(array_filter(data_get(static::lists(), '*.*.as', []))));
     }
 
     /**
@@ -350,7 +360,7 @@ class Route
      */
     public static function forward($method, $uri)
     {
-        return Router::route(strtoupper($method), $uri)->call();
+        return Router::route(strtoupper((string) $method), $uri)->call();
     }
 
     /**
@@ -383,5 +393,15 @@ class Route
         static::get($route, function () use ($to, $status) {
             return Redirect::to($to, $status);
         });
+    }
+
+    /**
+     * Ambil list route yang telah terdaftar.
+     *
+     * @return array
+     */
+    public static function lists()
+    {
+        return Router::routes();
     }
 }

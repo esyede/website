@@ -42,11 +42,10 @@ class Cache
     {
         $driver = is_null($driver) ? Config::get('cache.driver') : $driver;
 
-        if (isset(static::$drivers[$driver])) {
-            return static::$drivers[$driver];
+        if (!isset(static::$drivers[$driver])) {
+            static::$drivers[$driver] = static::factory($driver);
         }
 
-        static::$drivers[$driver] = static::factory($driver);
         return static::$drivers[$driver];
     }
 
@@ -64,15 +63,32 @@ class Cache
             return $resolver();
         }
 
+        $key = Config::get('cache.key');
+
         switch ($driver) {
-            case 'apc':       return new Cache\Drivers\APC(Config::get('cache.key'));
-            case 'file':      return new Cache\Drivers\File(path('storage').'cache'.DS);
-            case 'memcached': return new Cache\Drivers\Memcached(Memcached::connection(), Config::get('cache.key'));
-            case 'memory':    return new Cache\Drivers\Memory();
-            case 'redis':     return new Cache\Drivers\Redis(Redis::db());
-            case 'database':  return new Cache\Drivers\Database(Config::get('cache.key'));
-            case 'wincache':  return new Cache\Drivers\WinCache(Config::get('cache.key'));
-            default:          throw new \Exception(sprintf('Unsupported cache driver: %s', $driver));
+            case 'apc':
+                return new Cache\Drivers\APC($key);
+
+            case 'file':
+                return new Cache\Drivers\File(path('storage') . 'cache' . DS);
+
+            case 'memcached':
+                return new Cache\Drivers\Memcached(Memcached::connection(), $key);
+
+            case 'memory':
+                return new Cache\Drivers\Memory();
+
+            case 'redis':
+                return new Cache\Drivers\Redis(Redis::db());
+
+            case 'database':
+                return new Cache\Drivers\Database($key);
+
+            case 'wincache':
+                return new Cache\Drivers\WinCache($key);
+
+            default:
+                throw new \Exception(sprintf('Unsupported cache driver: %s', $driver));
         }
     }
 

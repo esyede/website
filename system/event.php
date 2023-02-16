@@ -150,7 +150,7 @@ class Event
     public static function flush($queue)
     {
         foreach (static::$flushers[$queue] as $flusher) {
-            if (! isset(static::$queued[$queue])) {
+            if (!isset(static::$queued[$queue])) {
                 continue;
             }
 
@@ -181,7 +181,7 @@ class Event
      * @param array        $parameters
      * @param bool         $halt
      *
-     * @return array
+     * @return array|null
      */
     public static function fire($events, array $parameters = [], $halt = false)
     {
@@ -189,16 +189,18 @@ class Event
         $responses = [];
 
         foreach ($events as $event) {
-            if (static::exists($event)) {
-                foreach (static::$events[$event] as $handler) {
-                    $response = call_user_func_array($handler, $parameters);
+            if (!static::exists($event)) {
+                continue;
+            }
 
-                    if ($halt && ! is_null($response)) {
-                        return $response;
-                    }
+            foreach (static::$events[$event] as $handler) {
+                $response = call_user_func_array($handler, $parameters);
 
-                    $responses[] = $response;
+                if ($halt && !is_null($response)) {
+                    return $response;
                 }
+
+                $responses[] = $response;
             }
         }
 

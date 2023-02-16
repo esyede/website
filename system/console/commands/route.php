@@ -22,12 +22,12 @@ class Route extends Command
             throw new \Exception('Please specify a request method and URI.');
         }
 
-        $_SERVER['REQUEST_METHOD'] = strtoupper($arguments[0]);
+        $_SERVER['REQUEST_METHOD'] = strtoupper((string) $arguments[0]);
         $_SERVER['REQUEST_URI'] = $arguments[1];
 
         $route = Router::route(Request::method(), $_SERVER['REQUEST_URI']);
         $route = is_null($route) ? '404: Not Found' : $route->response();
 
-        dd($route.PHP_EOL);
+        dd($route . PHP_EOL);
     }
 }

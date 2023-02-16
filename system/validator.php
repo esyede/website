@@ -28,7 +28,7 @@ class Validator
     protected $rules = [];
 
     /**
-     * Berisi list pesan validasi.
+     * Berisi list pesan error validasi.
      *
      * @var array
      */
@@ -79,11 +79,11 @@ class Validator
     /**
      * Buat sebuah instance validator baru.
      *
-     * @param mixed $attributes
+     * @param array $attributes
      * @param array $rules
      * @param array $messages
      */
-    public function __construct($attributes, $rules, array $messages = [])
+    public function __construct(array $attributes, array $rules, array $messages = [])
     {
         foreach ($rules as $key => &$rule) {
             $rule = is_string($rule) ? explode('|', $rule) : $rule;
@@ -91,7 +91,7 @@ class Validator
 
         $this->rules = $rules;
         $this->messages = $messages;
-        $this->attributes = is_object($attributes) ? get_object_vars($attributes) : $attributes;
+        $this->attributes = $attributes;
     }
 
     /**
@@ -103,7 +103,7 @@ class Validator
      *
      * @return Validator
      */
-    public static function make($attributes, $rules, array $messages = [])
+    public static function make(array $attributes, array $rules, array $messages = [])
     {
         return new static($attributes, $rules, $messages);
     }
@@ -146,7 +146,7 @@ class Validator
      */
     public function invalid()
     {
-        return ! $this->valid();
+        return !$this->valid();
     }
 
     /**
@@ -180,7 +180,7 @@ class Validator
         $value = Arr::get($this->attributes, $attribute);
         $validatable = $this->validatable($rule, $attribute, $value);
 
-        if ($validatable && ! $this->{'validate_'.$rule}($attribute, $value, $parameters, $this)) {
+        if ($validatable && !$this->{'validate_' . $rule}($attribute, $value, $parameters, $this)) {
             $this->error($attribute, $rule, $parameters);
         }
     }
@@ -244,9 +244,11 @@ class Validator
             return false;
         } elseif (is_string($value) && '' === trim($value)) {
             return false;
-        } elseif (! is_null(Input::file($attribute))
-        && is_array($value)
-        && '' === trim($value['tmp_name'])) {
+        } elseif (
+            !is_null(Input::file($attribute))
+            && is_array($value)
+            && '' === trim($value['tmp_name'])
+        ) {
             return false;
         }
 
@@ -281,7 +283,7 @@ class Validator
      */
     protected function validate_confirmed($attribute, $value)
     {
-        return $this->validate_same($attribute, $value, [$attribute.'_confirmation']);
+        return $this->validate_same($attribute, $value, [$attribute . '_confirmation']);
     }
 
     /**
@@ -379,7 +381,7 @@ class Validator
      */
     protected function validate_size($attribute, $value, array $parameters)
     {
-        if (! is_numeric($parameters[0])) {
+        if (!is_numeric($parameters[0])) {
             return false;
         }
 
@@ -474,7 +476,7 @@ class Validator
      */
     protected function validate_not_in($attribute, $value, array $parameters)
     {
-        return ! in_array($value, $parameters);
+        return !in_array($value, $parameters);
     }
 
     /**
@@ -577,7 +579,7 @@ class Validator
     protected function validate_uuid($attribute, $value)
     {
         return is_string($value)
-            ? (bool) preg_match('{^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$}Di', $value)
+            ? (bool) preg_match('/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/Di', $value)
             : false;
     }
 
@@ -599,7 +601,7 @@ class Validator
             return false;
         }
 
-        return ('' === $value) ? true : (! preg_match('/[^\x09\x10\x13\x0A\x0D\x20-\x7E]/', $value));
+        return ('' === $value) ? true : (!preg_match('/[^\x09\x10\x13\x0A\x0D\x20-\x7E]/', $value));
     }
 
     /**
@@ -612,7 +614,7 @@ class Validator
      */
     protected function validate_active_url($attribute, $value)
     {
-        if (! is_string($value)) {
+        if (!is_string($value)) {
             return false;
         }
 
@@ -712,7 +714,7 @@ class Validator
      */
     protected function validate_mimes($attribute, $value, array $parameters)
     {
-        if (! is_array($value) || '' === Arr::get($value, 'tmp_name', '')) {
+        if (!is_array($value) || '' === Arr::get($value, 'tmp_name', '')) {
             return true;
         }
 
@@ -733,9 +735,18 @@ class Validator
      *
      * @return bool
      */
-    protected function validate_array($attribute, $value)
+    protected function validate_array($attribute, $value, array $parameters = [])
     {
-        return is_array($value);
+        if (!is_array($value)) {
+            return false;
+        }
+
+        if (empty($attribute)) {
+            return true;
+        }
+
+        $value = array_diff_key($value, array_fill_keys($parameters, ''));
+        return empty($value);
     }
 
     /**
@@ -828,6 +839,36 @@ class Validator
     }
 
     /**
+     * Validasi bahwa atribut merupakan sebuah tanggal.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param array  $parameters
+     *
+     * @return bool
+     */
+    protected function validate_date($attribute, $value)
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return true;
+        }
+
+        try {
+            if ((!is_string($value) && !is_numeric($value)) || strtotime($value) === false) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        $date = date_parse($value);
+
+        return checkdate($date['month'], $date['day'], $date['year']);
+    }
+
+    /**
      * Validasi tanggal ini adalah setelah tanggal yang ditentukan.
      *
      * @param string $attribute
@@ -852,7 +893,32 @@ class Validator
      */
     protected function validate_date_format($attribute, $value, array $parameters)
     {
-        return false !== date_create_from_format($parameters[0], $value);
+        return (is_string($parameters[0]) || is_numeric($parameters[0]))
+            && false !== date_create_from_format($parameters[0], $value);
+    }
+
+    /**
+     * Validasi bahwa string berisi karakter UTF-8 yang valid.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param array  $parameters
+     *
+     * @return bool
+     */
+    public function validate_utf8($attribute, $value, array $parameters)
+    {
+        $pattern = '/\A(?:[\x00-\x7F]++
+            | [\xC2-\xDF][\x80-\xBF]
+            |  \xE0[\xA0-\xBF][\x80-\xBF]
+            | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
+            |  \xED[\x80-\x9F][\x80-\xBF]
+            |  \xF0[\x90-\xBF][\x80-\xBF]{2}
+            | [\xF1-\xF3][\x80-\xBF]{3}
+            |  \xF4[\x80-\x8F][\x80-\xBF]{2}
+            )*+\z/x';
+
+        return preg_match($pattern, $value);
     }
 
     /**
@@ -866,13 +932,11 @@ class Validator
     protected function message($attribute, $rule)
     {
         $package = Package::prefix($this->package);
-
-        // Contoh: 'username_required', 'peraturan_accepted'
-        $custom = $attribute.'_'.$rule;
+        $custom = $attribute . '_' . $rule;
 
         if (array_key_exists($custom, $this->messages)) {
             return $this->messages[$custom];
-        } elseif (Lang::has($custom = $package.'validation.custom.'.$custom, $this->language)) {
+        } elseif (Lang::has($custom = $package . 'validation.custom.' . $custom, $this->language)) {
             return Lang::line($custom)->get($this->language);
         } elseif (array_key_exists($rule, $this->messages)) {
             return $this->messages[$rule];
@@ -880,7 +944,7 @@ class Validator
             return $this->size_message($package, $attribute, $rule);
         }
 
-        return Lang::line($package.'validation.'.$rule)->get($this->language);
+        return Lang::line($package . 'validation.' . $rule)->get($this->language);
     }
 
     /**
@@ -902,7 +966,7 @@ class Validator
             $line = 'string';
         }
 
-        return Lang::line($package.'validation.'.$rule.'.'.$line)->get($this->language);
+        return Lang::line($package . 'validation.' . $rule . '.' . $line)->get($this->language);
     }
 
     /**
@@ -918,7 +982,7 @@ class Validator
     protected function replace($message, $attribute, $rule, array $parameters)
     {
         $message = str_replace(':attribute', $this->attribute($attribute), $message);
-        $method = 'replace_'.$rule;
+        $method = 'replace_' . $rule;
 
         if (method_exists($this, $method)) {
             $message = $this->{$method}($message, $attribute, $rule, $parameters);
@@ -1192,7 +1256,7 @@ class Validator
     protected function attribute($attribute)
     {
         $package = Package::prefix($this->package);
-        $line = $package.'validation.attributes.'.$attribute;
+        $line = $package . 'validation.attributes.' . $attribute;
 
         return Lang::has($line, $this->language)
             ? Lang::line($line)->get($this->language)
@@ -1229,6 +1293,7 @@ class Validator
      */
     protected function parse($rule)
     {
+        $rule = (string) $rule;
         $parameters = [];
 
         if (false !== ($colon = strpos($rule, ':'))) {

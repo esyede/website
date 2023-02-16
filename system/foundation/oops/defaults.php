@@ -10,6 +10,10 @@ class Defaults
     const SQL_KEYWORDS2 = 'ALL|DISTINCT|DISTINCTROW|IGNORE|AS|USING|ON|AND|OR|IN|IS|NOT|NULL|[RI]?LIKE|REGEXP|TRUE|FALSE';
 
     public $data;
+    public $time;
+    public $profiler;
+    public $cpuUsage;
+
     private $id;
 
     public function __construct($id)
@@ -30,7 +34,7 @@ class Defaults
 
         $data = $this->data;
 
-        require __DIR__.'/assets/bar/'.$this->id.'.tab.phtml';
+        require __DIR__ . '/assets/bar/' . $this->id . '.tab.phtml';
 
         return ob_get_clean();
     }
@@ -46,9 +50,9 @@ class Defaults
             // ..
         });
 
-        if (is_file(__DIR__.'/assets/bar/'.$this->id.'.panel.phtml')) {
+        if (is_file(__DIR__ . '/assets/bar/' . $this->id . '.panel.phtml')) {
             $data = $this->data;
-            require __DIR__.'/assets/bar/'.$this->id.'.panel.phtml';
+            require __DIR__ . '/assets/bar/' . $this->id . '.panel.phtml';
         }
 
         return ob_get_clean();
@@ -61,7 +65,7 @@ class Defaults
      *
      * @return array
      */
-    public function sqlHints($sql)
+    public static function sqlHints($sql)
     {
         $hints = [];
 
@@ -87,7 +91,7 @@ class Defaults
         }
 
         if (preg_match('/LIKE\\s[\'"](%.*?)[\'"]/i', $sql, $matches)) {
-            $hints[] = 'An argument has a leading wildcard character: <code>'.$matches[1].'</code>.
+            $hints[] = 'An argument has a leading wildcard character: <code>' . $matches[1] . '</code>.
             The predicate with this argument is not sargable and cannot use an index if one exists.';
         }
 
@@ -108,42 +112,44 @@ class Defaults
      *
      * @return string
      */
-    public function sqlHighlight($sql, array $bindings = [])
+    public static function sqlHighlight($sql, array $bindings = [])
     {
         $sql = " $sql ";
-        $sql = preg_replace('#(?<=[\\s,(])('.static::SQL_KEYWORDS1.')(?=[\\s,)])#i', "\n\$1", $sql);
+        $sql = preg_replace('#(?<=[\\s,(])(' . static::SQL_KEYWORDS1 . ')(?=[\\s,)])#i', "\n\$1", $sql);
         $sql = preg_replace('#[ \t]{2,}#', ' ', $sql);
         $sql = htmlspecialchars($sql, ENT_IGNORE, 'UTF-8');
-        $sql = preg_replace_callback('#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])('.static::SQL_KEYWORDS1.')(?=[\\s,)])|(?<=[\\s,(=])('.static::SQL_KEYWORDS2.')(?=[\\s,)=])#is', function ($matches) {
-            if (! empty($matches[1])) { // komentar
-                return '<em style="color:gray">'.$matches[1].'</em>';
-            } elseif (! empty($matches[2])) { // error
-                return '<strong style="color:red">'.$matches[2].'</strong>';
-            } elseif (! empty($matches[3])) { // keyword - keyword penting
-                return '<strong style="color:blue; text-transform: uppercase;">'.$matches[3].'</strong>';
-            } elseif (! empty($matches[4])) { // keyword lainnya
-                return '<strong style="color:green">'.$matches[4].'</strong>';
+        $sql = preg_replace_callback('#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])(' . static::SQL_KEYWORDS1 . ')(?=[\\s,)])|(?<=[\\s,(=])(' . static::SQL_KEYWORDS2 . ')(?=[\\s,)=])#is', function ($matches) {
+            if (!empty($matches[1])) { // komentar
+                return '<em style="color:gray">' . $matches[1] . '</em>';
+            } elseif (!empty($matches[2])) { // error
+                return '<strong style="color:red">' . $matches[2] . '</strong>';
+            } elseif (!empty($matches[3])) { // keyword - keyword penting
+                return '<strong style="color:blue; text-transform: uppercase;">' . $matches[3] . '</strong>';
+            } elseif (!empty($matches[4])) { // keyword lainnya
+                return '<strong style="color:green">' . $matches[4] . '</strong>';
             }
         }, $sql);
 
         $bindings = array_map(function ($binding) {
             if (is_array($binding)) {
                 $binding = implode(', ', array_map(function ($value) {
-                    return is_string($value) ? htmlspecialchars('\''.$value.'\'', ENT_NOQUOTES, 'UTF-8') : $value;
+                    return is_string($value) ? htmlspecialchars('\'' . $value . '\'', ENT_NOQUOTES, 'UTF-8') : $value;
                 }, $binding));
 
-                return htmlspecialchars('('.$binding.')', ENT_NOQUOTES, 'UTF-8');
+                return htmlspecialchars('(' . $binding . ')', ENT_NOQUOTES, 'UTF-8');
             }
 
-            if (is_string($binding)
-            && (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $binding)
-            || preg_last_error())) {
-                return '<i title="Length '.mb_strlen($binding, '8bit').' bytes">&lt;binary&gt;</i>';
+            if (
+                is_string($binding)
+                && (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $binding)
+                    || preg_last_error())
+            ) {
+                return '<i title="Length ' . mb_strlen($binding, '8bit') . ' bytes">&lt;binary&gt;</i>';
             }
 
             if (is_string($binding)) {
-                $text = htmlspecialchars('\''.$binding.'\'', ENT_NOQUOTES, 'UTF-8');
-                return '<span title="Length '.mb_strlen($text, '8bit').' characters">'.$text.'</span>';
+                $text = htmlspecialchars('\'' . $binding . '\'', ENT_NOQUOTES, 'UTF-8');
+                return '<span title="Length ' . mb_strlen($text, '8bit') . ' characters">' . $text . '</span>';
             }
 
             if (is_resource($binding)) {
@@ -153,12 +159,12 @@ class Defaults
                     $info = stream_get_meta_data($binding);
                 }
 
-                return '<i'.(isset($info['uri']) ? ' title="'.htmlspecialchars($info['uri'], ENT_NOQUOTES, 'UTF-8').'"' : null)
-                    .'>&lt;'.htmlspecialchars($type, ENT_NOQUOTES, 'UTF-8').' resource&gt;</i>';
+                return '<i' . (isset($info['uri']) ? ' title="' . htmlspecialchars($info['uri'], ENT_NOQUOTES, 'UTF-8') . '"' : null)
+                    . '>&lt;' . htmlspecialchars($type, ENT_NOQUOTES, 'UTF-8') . ' resource&gt;</i>';
             }
 
             if ($binding instanceof \DateTime) {
-                return htmlspecialchars('\''.$binding->format('Y-m-d H:i:s').'\'', ENT_NOQUOTES, 'UTF-8');
+                return htmlspecialchars('\'' . $binding->format('Y-m-d H:i:s') . '\'', ENT_NOQUOTES, 'UTF-8');
             }
 
             return htmlspecialchars($binding, ENT_NOQUOTES, 'UTF-8');
@@ -166,6 +172,6 @@ class Defaults
 
         $sql = str_replace(['%', '?'], ['%%', '%s'], $sql);
 
-        return '<div><code>'.nl2br(trim(vsprintf($sql, $bindings))).'</code></div>';
+        return '<div><code>' . nl2br(trim(vsprintf($sql, $bindings))) . '</code></div>';
     }
 }

@@ -34,25 +34,37 @@ class JWT
     /**
      * Encode payload.
      *
-     * @param array  $payloads
-     * @param string $secret
-     * @param string $algorithm
-     * @param array  $headers
+     * @param array       $payloads
+     * @param string      $secret
+     * @param string|null $algorithm
+     * @param array       $headers
      *
      * @return string
      */
-    public static function encode(array $payloads, $secret, $algorithm = 'HS256', array $headers = [])
+    public static function encode(array $payloads, $secret, $algorithm = null, array $headers = [])
     {
-        $timestamp = static::$timestamp ? static::$timestamp : time();
-        $algorithm = is_string($algorithm) ? strtoupper($algorithm) : $algorithm;
-        $headers = $headers + ['typ' => 'JWT', 'alg' => $algorithm];
+        $algorithm = (null === $algorithm) ? 'HS256' : $algorithm;
 
+        if (!is_string($algorithm) || strlen($algorithm) < 1) {
+            throw new \Exception('Empty or non-string algorithm');
+        }
+
+        $algorithm = strtoupper($algorithm);
+
+        if (!isset(static::$algorithms[$algorithm])) {
+            throw new \Exception(sprintf(
+                'Only these algorithm are supported: %s',
+                implode(', ', static::$algorithms)
+            ));
+        }
+
+        $headers = $headers + ['typ' => 'JWT', 'alg' => $algorithm];
         $headers = static::encode_url(static::encode_json($headers));
         $payloads = static::encode_url(static::encode_json($payloads));
-        $message = $headers.'.'.$payloads;
+        $message = $headers . '.' . $payloads;
         $signature = static::encode_url(static::signature($message, $secret, $algorithm));
 
-        return $headers.'.'.$payloads.'.'.$signature;
+        return $message . '.' . $signature;
     }
 
     /**
@@ -72,17 +84,20 @@ class JWT
         $timestamp = static::$timestamp ? static::$timestamp : time();
         $jwt = explode('.', $token);
 
-        if (! is_array($jwt) || count($jwt) !== 3) {
+        if (!is_array($jwt) || count($jwt) !== 3) {
             throw new \Exception('Wrong number of segments');
         }
 
         list($headers64, $payloads64, $signature64) = $jwt;
+        $headers = static::decode_json(static::decode_url($headers64));
 
-        if (null === ($headers = static::decode_json(static::decode_url($headers64)))) {
+        if (null === $headers) {
             throw new \Exception('Invalid header encoding');
         }
 
-        if (null === ($payloads = static::decode_json(static::decode_url($payloads64)))) {
+        $payloads = static::decode_json(static::decode_url($payloads64));
+
+        if (null === $payloads) {
             throw new \Exception('Invalid claims encoding');
         }
 
@@ -90,28 +105,39 @@ class JWT
             $payloads = new \stdClass();
         }
 
-        if (false === ($signature = static::decode_url($signature64))) {
+        $signature = static::decode_url($signature64);
+
+        if (false === $signature) {
             throw new \Exception('Invalid signature encoding');
         }
 
-        if (empty($headers->alg)) {
-            throw new \Exception('Empty algorithm');
+        if (!isset($headers->alg) || !is_string($headers->alg) || strlen($headers->alg) < 1) {
+            throw new \Exception('Empty or non-string algorithm');
         }
 
-        if (empty(static::$algorithms[$headers->alg])) {
-            throw new \Exception('Only these algorithm are supported: '.implode(', ', static::$algorithms));
+        if (!isset(static::$algorithms[$headers->alg]) || !static::$algorithms[$headers->alg]) {
+            throw new \Exception(sprintf(
+                'Only these algorithm are supported: %s',
+                implode(', ', static::$algorithms)
+            ));
         }
 
-        if (! static::verify($headers64.'.'.$payloads64, $signature, $secret, $headers->alg)) {
+        if (!static::verify($headers64 . '.' . $payloads64, $signature, $secret, $headers->alg)) {
             throw new \Exception('Signature verification failed');
         }
 
         if (isset($payloads->nbf) && $payloads->nbf > ($timestamp + static::$leeway)) {
-            throw new \Exception('Cannot handle token prior to '.date(\DateTime::ISO8601, $payloads->nbf));
+            throw new \Exception(sprintf(
+                'Cannot handle token prior to %s',
+                date(\DateTime::ATOM, $payloads->nbf)
+            ));
         }
 
         if (isset($payloads->iat) && $payloads->iat > ($timestamp + static::$leeway)) {
-            throw new \Exception('Cannot handle token prior to '.date(\DateTime::ISO8601, $payloads->iat));
+            throw new \Exception(sprintf(
+                'Cannot handle token prior to %s',
+                date(\DateTime::ATOM, $payloads->iat)
+            ));
         }
 
         if (isset($payloads->exp) && ($timestamp - static::$leeway) >= $payloads->exp) {
@@ -132,12 +158,14 @@ class JWT
      */
     private static function signature($payload, $secret, $algorithm)
     {
-        $algorithm = is_string($algorithm) ? strtoupper($algorithm) : $algorithm;
+        $algorithm = is_string($algorithm) ? strtoupper((string) $algorithm) : $algorithm;
 
-        if (! isset(static::$algorithms[$algorithm])) {
+        if (!isset(static::$algorithms[$algorithm])) {
             throw new \Exception(sprintf(
                 'Only these algorithms are supported: %s, got: %s (%s)',
-                implode(', ', array_keys(static::$algorithms)), $algorithm, gettype($algorithm)
+                implode(', ', array_keys(static::$algorithms)),
+                $algorithm,
+                gettype($algorithm)
             ));
         }
 
@@ -158,10 +186,12 @@ class JWT
     {
         $algorithm = is_string($algorithm) ? strtoupper($algorithm) : $algorithm;
 
-        if (! isset(static::$algorithms[$algorithm])) {
+        if (!isset(static::$algorithms[$algorithm])) {
             throw new \Exception(sprintf(
                 'Only these algorithms are supported: %s, got: %s (%s)',
-                implode(', ', array_keys(static::$algorithms)), $algorithm, gettype($algorithm)
+                implode(', ', array_keys(static::$algorithms)),
+                $algorithm,
+                gettype($algorithm)
             ));
         }
 
@@ -183,7 +213,7 @@ class JWT
 
     private static function decode_url($data)
     {
-        $remainder = strlen($data) % 4;
+        $remainder = strlen((string) $data) % 4;
         $data .= $remainder ? str_repeat('=', 4 - $remainder) : '';
 
         return base64_decode(strtr($data, '-_', '+/'));
@@ -198,7 +228,7 @@ class JWT
      */
     private static function encode_json($data)
     {
-        $json = (PHP_VERSION_ID >= 50500) ? json_encode($data, 0, 512) : json_encode($data);
+        $json = json_encode($data);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
             static::json_error(json_last_error());
@@ -214,11 +244,11 @@ class JWT
      *
      * @param string $data
      *
-     * @return string
+     * @return \stdClass
      */
     private static function decode_json($data)
     {
-        $object = json_decode($data, false, 512, JSON_BIGINT_AS_STRING);
+        $object = json_decode($data, false);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
             static::json_error(json_last_error());

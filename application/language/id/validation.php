@@ -36,6 +36,8 @@ return [
     'countbetween' => 'Bilah :attribute harus diantara :min dan :max elemen.',
     'countmax' => 'Bilah :attribute harus lebih kurang dari :max elemen.',
     'countmin' => 'Bilah :attribute harus paling sedikit :min elemen.',
+    'date' => 'Bilah :attribute harus berisi tanggal.',
+    'date_format' => 'Bilah :attribute harus diisi tanggal dengan format :format.',
     'different' => 'Bilah :attribute dan :other harus berbeda.',
     'email' => 'Format isian :attribute tidak valid.',
     'exists' => 'Bilah :attribute yang dipilih tidak valid.',
@@ -58,6 +60,7 @@ return [
     'not_in' => 'Bilah :attribute yang dipilih tidak valid.',
     'numeric' => 'Bilah :attribute harus berupa angka.',
     'required' => 'Bilah :attribute wajib diisi.',
+    'required_with' => 'Bilah :attribute wajib diisi dengan :field',
     'same' => 'Bilah :attribute dan :other harus sama.',
     'size' => [
         'numeric' => 'Bilah :attribute harus berukuran :size.',
@@ -66,23 +69,26 @@ return [
     ],
     'unique' => 'Bilah :attribute sudah ada sebelumnya.',
     'url' => 'Format bilah :attribute tidak valid.',
+    'utf8' => 'Bilah :attribute hanya boleh diisi karakter UTF-8',
 
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language
     |--------------------------------------------------------------------------
     |
-    | Di sini anda dapat menentukan pesan validasi kustom untuk atribut
-    | menggunakan konvensi 'atribut_rule'. Ini membantu menjaga validasi
-    | kustom anda tetap bersih dan rapi.
+    | Di sini anda dapat menentukan pesan validasi kuatom untuk atribut
+    | menggunakan konvensi '[atribut] + _ + [rule]'. Ini membantu menjaga
+    | validasi kustom anda tetap bersih dan rapi.
     |
-    | Jadi, katakanlah anda ingin menggunakan pesan validasi kustom ketika
+    | Jadi, katakanlah anda ingin menggunakan pesan validasi kuatom ketika
     | memvalidasi bahwa atribut 'email' itu unik.
-    | Cukup tambahkan 'email_unique' ke array ini dengan pesan kustom anda.
+    | Cukup tambahkan 'email_unique' ke array ini dengan pesan kuatom anda.
     |
     */
 
-    'custom' => [],
+    'custom' => [
+        // ..
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -98,6 +104,8 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        // ..
+    ],
 
 ];

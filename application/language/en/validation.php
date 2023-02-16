@@ -36,7 +36,8 @@ return [
     'countbetween' => 'The :attribute must have between :min and :max selected elements.',
     'countmax' => 'The :attribute must have less than :max selected elements.',
     'countmin' => 'The :attribute must have at least :min selected elements.',
-    'date_format' => 'The :attribute must have a valid date format.',
+    'date' => 'The :attribute is not a valid date.',
+    'date_format' => 'The :attribute must have a valid date format :format.',
     'different' => 'The :attribute and :other must be different.',
     'email' => 'The :attribute format is invalid.',
     'exists' => 'The selected :attribute is invalid.',
@@ -68,6 +69,7 @@ return [
     ],
     'unique' => 'The :attribute has already been taken.',
     'url' => 'The :attribute format is invalid.',
+    'utf8' => 'The :attribute should anly contains UTF-8 characters.',
 
     /*
     |--------------------------------------------------------------------------
@@ -75,8 +77,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Di sini anda dapat menentukan pesan validasi kuatom untuk atribut
-    | menggunakan konvensi 'atribut_rule'. Ini membantu menjaga validasi
-    | kustom anda tetap bersih dan rapi.
+    | menggunakan konvensi '[atribut] + _ + [rule]'. Ini membantu menjaga
+    | validasi kustom anda tetap bersih dan rapi.
     |
     | Jadi, katakanlah anda ingin menggunakan pesan validasi kuatom ketika
     | memvalidasi bahwa atribut 'email' itu unik.
@@ -84,7 +86,9 @@ return [
     |
     */
 
-    'custom' => [],
+    'custom' => [
+        // ..
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -100,5 +104,7 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        // ..
+    ],
 ];

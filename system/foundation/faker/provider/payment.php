@@ -53,67 +53,67 @@ class Payment extends Base
     ];
 
     protected static $ibanFormats = [
-        'AD' => ['n', 4],    ['n', 4],  ['c', 12],
-        'AE' => ['n', 3],    ['n', 16],
-        'AL' => ['n', 8],    ['c', 16],
-        'AT' => ['n', 5],    ['n', 11],
-        'AZ' => ['a', 4],    ['c', 20],
-        'BA' => ['n', 3],    ['n', 3],  ['n', 8],  ['n', 2],
-        'BE' => ['n', 3],    ['n', 7],  ['n', 2],
-        'BG' => ['a', 4],    ['n', 4],  ['n', 2],  ['c', 8],
-        'BH' => ['a', 4],    ['c', 14],
-        'BR' => ['n', 8],    ['n', 5],  ['n', 10], ['a', 1],  ['c', 1],
-        'CH' => ['n', 5],    ['c', 12],
-        'CR' => ['n', 3],    ['n', 14],
-        'CY' => ['n', 3],    ['n', 5],  ['c', 16],
-        'CZ' => ['n', 4],    ['n', 6],  ['n', 10],
-        'DE' => ['n', 8],    ['n', 10],
-        'DK' => ['n', 4],    ['n', 9],  ['n', 1],
-        'DO' => ['c', 4],    ['n', 20],
-        'EE' => ['n', 2],    ['n', 2],  ['n', 11], ['n', 1],
-        'ES' => ['n', 4],    ['n', 4],  ['n', 1],  ['n', 1],  ['n', 10],
-        'FR' => ['n', 5],    ['n', 5],  ['c', 11], ['n', 2],
-        'GB' => ['a', 4],    ['n', 6],  ['n', 8],
-        'GE' => ['a', 2],    ['n', 16],
-        'GI' => ['a', 4],    ['c', 15],
-        'GR' => ['n', 3],    ['n', 4],  ['c', 16],
-        'GT' => ['c', 4],    ['c', 20],
-        'HR' => ['n', 7],    ['n', 10],
-        'HU' => ['n', 3],    ['n', 4],  ['n', 1],  ['n', 15], ['n', 1],
-        'IE' => ['a', 4],    ['n', 6],  ['n', 8],
-        'IL' => ['n', 3],    ['n', 3],  ['n', 13],
-        'IS' => ['n', 4],    ['n', 2],  ['n', 6],  ['n', 10],
-        'IT' => ['a', 1],    ['n', 5],  ['n', 5],  ['c', 12],
-        'KW' => ['a', 4],    ['c', 22],
-        'KZ' => ['n', 3],    ['c', 13],
-        'LB' => ['n', 4],    ['c', 20],
-        'LI' => ['n', 5],    ['c', 12],
-        'LT' => ['n', 5],    ['n', 11],
-        'LU' => ['n', 3],    ['c', 13],
-        'LV' => ['a', 4],    ['c', 13],
-        'MC' => ['n', 5],    ['n', 5],  ['c', 11], ['n', 2],
-        'MD' => ['c', 2],    ['c', 18],
-        'ME' => ['n', 3],    ['n', 13], ['n', 2],
-        'MK' => ['n', 3],    ['c', 10], ['n', 2],
-        'MR' => ['n', 5],    ['n', 5],  ['n', 11], ['n', 2],
-        'MT' => ['a', 4],    ['n', 5],  ['c', 18],
-        'MU' => ['a', 4],    ['n', 2],  ['n', 2],  ['n', 12], ['n', 3],  ['a', 3],
-        'NL' => ['a', 4],    ['n', 10],
-        'NO' => ['n', 4],    ['n', 6],  ['n', 1],
-        'PK' => ['a', 4],    ['c', 16],
-        'PL' => ['n', 8],    ['n', 16],
-        'PS' => ['a', 4],    ['c', 21],
-        'PT' => ['n', 4],    ['n', 4],  ['n', 11], ['n', 2],
-        'RO' => ['a', 4],    ['c', 16],
-        'RS' => ['n', 3],    ['n', 13], ['n', 2],
-        'SA' => ['n', 2],    ['c', 18],
-        'SE' => ['n', 3],    ['n', 16], ['n', 1],
-        'SI' => ['n', 5],    ['n', 8],  ['n', 2],
-        'SK' => ['n', 4],    ['n', 6],  ['n', 10],
-        'SM' => ['a', 1],    ['n', 5],  ['n', 5],  ['c', 12],
-        'TN' => ['n', 2],    ['n', 3],  ['n', 13], ['n', 2],
-        'TR' => ['n', 5],    ['c', 1],  ['c', 16],
-        'VG' => ['a', 4],    ['n', 16],
+        'AD' => ['n', 4], ['n', 4], ['c', 12],
+        'AE' => ['n', 3], ['n', 16],
+        'AL' => ['n', 8], ['c', 16],
+        'AT' => ['n', 5], ['n', 11],
+        'AZ' => ['a', 4], ['c', 20],
+        'BA' => ['n', 3], ['n', 3], ['n', 8], ['n', 2],
+        'BE' => ['n', 3], ['n', 7], ['n', 2],
+        'BG' => ['a', 4], ['n', 4], ['n', 2], ['c', 8],
+        'BH' => ['a', 4], ['c', 14],
+        'BR' => ['n', 8], ['n', 5], ['n', 10], ['a', 1], ['c', 1],
+        'CH' => ['n', 5], ['c', 12],
+        'CR' => ['n', 3], ['n', 14],
+        'CY' => ['n', 3], ['n', 5], ['c', 16],
+        'CZ' => ['n', 4], ['n', 6], ['n', 10],
+        'DE' => ['n', 8], ['n', 10],
+        'DK' => ['n', 4], ['n', 9], ['n', 1],
+        'DO' => ['c', 4], ['n', 20],
+        'EE' => ['n', 2], ['n', 2], ['n', 11], ['n', 1],
+        'ES' => ['n', 4], ['n', 4], ['n', 1], ['n', 1], ['n', 10],
+        'FR' => ['n', 5], ['n', 5], ['c', 11], ['n', 2],
+        'GB' => ['a', 4], ['n', 6], ['n', 8],
+        'GE' => ['a', 2], ['n', 16],
+        'GI' => ['a', 4], ['c', 15],
+        'GR' => ['n', 3], ['n', 4], ['c', 16],
+        'GT' => ['c', 4], ['c', 20],
+        'HR' => ['n', 7], ['n', 10],
+        'HU' => ['n', 3], ['n', 4], ['n', 1], ['n', 15], ['n', 1],
+        'IE' => ['a', 4], ['n', 6], ['n', 8],
+        'IL' => ['n', 3], ['n', 3], ['n', 13],
+        'IS' => ['n', 4], ['n', 2], ['n', 6], ['n', 10],
+        'IT' => ['a', 1], ['n', 5], ['n', 5], ['c', 12],
+        'KW' => ['a', 4], ['c', 22],
+        'KZ' => ['n', 3], ['c', 13],
+        'LB' => ['n', 4], ['c', 20],
+        'LI' => ['n', 5], ['c', 12],
+        'LT' => ['n', 5], ['n', 11],
+        'LU' => ['n', 3], ['c', 13],
+        'LV' => ['a', 4], ['c', 13],
+        'MC' => ['n', 5], ['n', 5], ['c', 11], ['n', 2],
+        'MD' => ['c', 2], ['c', 18],
+        'ME' => ['n', 3], ['n', 13], ['n', 2],
+        'MK' => ['n', 3], ['c', 10], ['n', 2],
+        'MR' => ['n', 5], ['n', 5], ['n', 11], ['n', 2],
+        'MT' => ['a', 4], ['n', 5], ['c', 18],
+        'MU' => ['a', 4], ['n', 2], ['n', 2], ['n', 12], ['n', 3], ['a', 3],
+        'NL' => ['a', 4], ['n', 10],
+        'NO' => ['n', 4], ['n', 6], ['n', 1],
+        'PK' => ['a', 4], ['c', 16],
+        'PL' => ['n', 8], ['n', 16],
+        'PS' => ['a', 4], ['c', 21],
+        'PT' => ['n', 4], ['n', 4], ['n', 11], ['n', 2],
+        'RO' => ['a', 4], ['c', 16],
+        'RS' => ['n', 3], ['n', 13], ['n', 2],
+        'SA' => ['n', 2], ['c', 18],
+        'SE' => ['n', 3], ['n', 16], ['n', 1],
+        'SI' => ['n', 5], ['n', 8], ['n', 2],
+        'SK' => ['n', 4], ['n', 6], ['n', 10],
+        'SM' => ['a', 1], ['n', 5], ['n', 5], ['c', 12],
+        'TN' => ['n', 2], ['n', 3], ['n', 13], ['n', 2],
+        'TR' => ['n', 5], ['c', 1], ['c', 16],
+        'VG' => ['a', 4], ['n', 16],
     ];
 
     public static function creditCardType()
@@ -133,7 +133,7 @@ class Payment extends Base
             $p2 = substr($number, 4, 4);
             $p3 = substr($number, 8, 4);
             $p4 = substr($number, 12);
-            $number = $p1.$separator.$p2.$separator.$p3.$separator.$p4;
+            $number = $p1 . $separator . $p2 . $separator . $p3 . $separator . $p4;
         }
 
         return $number;
@@ -163,7 +163,7 @@ class Payment extends Base
 
     protected static function iban($countryCode, $prefix = '', $length = null)
     {
-        $countryCode = strtoupper($countryCode);
+        $countryCode = strtoupper((string) $countryCode);
         $format = isset(static::$ibanFormats[$countryCode]) ? static::$ibanFormats[$countryCode] : [];
 
         if (null === $length) {
@@ -178,7 +178,7 @@ class Payment extends Base
             }
         }
 
-        $result = $prefix;
+        $result = (string) $prefix;
         $length -= mb_strlen($prefix, '8bit');
         $nextPart = array_shift($format);
 
@@ -201,11 +201,13 @@ class Payment extends Base
                 case 'c':
                     $result .= (mt_rand(0, 100) <= 50)
                         ? static::randomDigit()
-                        : strtoupper(static::randomLetter());
+                        : strtoupper((string) static::randomLetter());
                     break;
+
                 case 'a':
-                    $result .= strtoupper(static::randomLetter());
+                    $result .= strtoupper((string) static::randomLetter());
                     break;
+
                 case 'n':
                     $result .= static::randomDigit();
                     break;
@@ -214,7 +216,7 @@ class Payment extends Base
 
         $result = static::addBankCodeChecksum($result, $countryCode);
         $countryNumber = 100 * (ord($countryCode[0]) - 55) + (ord($countryCode[1]) - 55);
-        $tempResult = $result.$countryNumber.'00';
+        $tempResult = $result . $countryNumber . '00';
         $checksum = (int) $tempResult[0];
 
         for ($i = 1, $size = mb_strlen($tempResult, '8bit'); $i < $size; ++$i) {
@@ -222,9 +224,9 @@ class Payment extends Base
         }
 
         $checksum = 98 - $checksum;
-        $checksum = ($checksum < 10) ? '0'.$checksum : $checksum;
+        $checksum = ($checksum < 10) ? '0' . $checksum : $checksum;
 
-        return $countryCode.$checksum.$result;
+        return $countryCode . $checksum . $result;
     }
 
     protected static function addBankCodeChecksum($iban, $countryCode = '')

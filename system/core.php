@@ -11,7 +11,7 @@ defined('DS') or exit('No direct script access.');
 | Definisikan info versi framework yang saat ini sedang digunakan.
 */
 
-define('RAKIT_VERSION', 'v0.9.9');
+define('RAKIT_VERSION', '0.9.9');
 
 /*
 |--------------------------------------------------------------------------
@@ -25,7 +25,7 @@ define('RAKIT_VERSION', 'v0.9.9');
 
 define('CRLF', "\r\n");
 define('DEFAULT_PACKAGE', 'application');
-define('RAKIT_KEY', (string) require path('rakit_key'));
+define('RAKIT_KEY', require path('rakit_key'));
 
 /*
 |--------------------------------------------------------------------------
@@ -39,12 +39,12 @@ define('RAKIT_KEY', (string) require path('rakit_key'));
 |
 */
 
-require path('system').'container.php';
-require path('system').'event.php';
-require path('system').'package.php';
-require path('system').'config.php';
-require path('system').'helpers.php';
-require path('system').'autoloader.php';
+require path('system') . 'container.php';
+require path('system') . 'event.php';
+require path('system') . 'package.php';
+require path('system') . 'config.php';
+require path('system') . 'helpers.php';
+require path('system') . 'autoloader.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -80,9 +80,8 @@ Autoloader::namespaces(['System' => path('system')]);
 | panjang dan tetap mudah dibaca. Nah, disini kita perlu memanggilnya.
 |
 */
-use System\Foundation\Http\Request as FoundationRequest;
 
-Request::$foundation = FoundationRequest::createFromGlobals();
+Request::$foundation = Foundation\Http\Request::createFromGlobals();
 
 /*
 |--------------------------------------------------------------------------
@@ -114,7 +113,7 @@ if (Request::cli()) {
 |
 */
 
-$packages = require path('app').'packages.php';
+$packages = require path('app') . 'packages.php';
 
 foreach ($packages as $package => $config) {
     Package::register($package, $config);

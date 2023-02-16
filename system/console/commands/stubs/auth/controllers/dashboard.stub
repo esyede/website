@@ -1,0 +1,27 @@
+<?php
+
+defined('DS') or exit('No direct script access.');
+
+use System\Routing\Controller;
+use System\View;
+
+class Dashboard_Controller extends Controller
+{
+    /**
+     * Buat instance controller baru.
+     */
+    public function __construct()
+    {
+        $this->middleware('before', 'csrf|throttle:60,1|auth');
+    }
+
+    /**
+     * Tampilkan halaman dashboard.
+     *
+     * @return \System\Response
+     */
+    public function action_index()
+    {
+        return View::make('dashboard');
+    }
+}

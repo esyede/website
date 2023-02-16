@@ -2,7 +2,7 @@
 
 defined('DS') or exit('No direct script access.');
 
-if (! function_exists('e')) {
+if (!function_exists('e')) {
     /**
      * Ubah karakter HTML ke entity-nya.
      *
@@ -12,26 +12,12 @@ if (! function_exists('e')) {
      */
     function e($value)
     {
+        $value = (string) $value;
         return htmlentities($value, ENT_QUOTES, 'UTF-8', false);
     }
 }
 
-if (! function_exists('isset_or')) {
-    /**
-     * Toggle variabel kosong.
-     *
-     * @param mixed &$variable
-     * @param mixed $alternate
-     *
-     * @return mixed
-     */
-    function isset_or(&$variable, $alternate = null)
-    {
-        return isset($variable) ? $variable : $alternate;
-    }
-}
-
-if (! function_exists('dd')) {
+if (!function_exists('dd')) {
     /**
      * Dump variable dan hentikan eksekusi script.
      *
@@ -39,7 +25,7 @@ if (! function_exists('dd')) {
      *
      * @return void
      */
-    function dd(/* ..$variables */)
+    function dd($variables)
     {
         $variables = func_get_args();
 
@@ -53,13 +39,13 @@ if (! function_exists('dd')) {
             array_map('\System\Foundation\Oops\Debugger::dump', $variables);
         }
 
-        if (! \System\Foundation\Oops\Debugger::$productionMode) {
+        if (!\System\Foundation\Oops\Debugger::$productionMode) {
             die;
         }
     }
 }
 
-if (! function_exists('bd')) {
+if (!function_exists('bd')) {
     /**
      * Dump variable ke debug bar tanpa menghentikan eksekusi script.
      *
@@ -74,7 +60,7 @@ if (! function_exists('bd')) {
     }
 }
 
-if (! function_exists('dump')) {
+if (!function_exists('dump')) {
     /**
      * Dump variable tanpa menghentikan eksekusi script.
      *
@@ -89,7 +75,7 @@ if (! function_exists('dump')) {
     }
 }
 
-if (! function_exists('optional')) {
+if (!function_exists('optional')) {
     /**
      * Izinkan akses ke objek opsional.
      *
@@ -104,7 +90,23 @@ if (! function_exists('optional')) {
     }
 }
 
-if (! function_exists('__')) {
+if (!function_exists('trans')) {
+    /**
+     * Ambil sebuah baris bahasa.
+     *
+     * @param string $key
+     * @param array  $replacements
+     * @param string $language
+     *
+     * @return string
+     */
+    function trans($key, array $replacements = [], $language = null)
+    {
+        return \System\Lang::has($key) ? \System\Lang::line($key, $replacements, $language) : $key;
+    }
+}
+
+if (!function_exists('__')) {
     /**
      * Ambil sebuah baris bahasa.
      *
@@ -116,11 +118,11 @@ if (! function_exists('__')) {
      */
     function __($key, array $replacements = [], $language = null)
     {
-        return Lang::line($key, $replacements, $language);
+        return trans($key, $replacements, $language);
     }
 }
 
-if (! function_exists('is_cli')) {
+if (!function_exists('is_cli')) {
     /**
      * Cek apakah request saat ini datang dari CLI.
      *
@@ -130,11 +132,11 @@ if (! function_exists('is_cli')) {
     {
         return defined('STDIN')
             || 'cli' === php_sapi_name()
-            || ('cgi' === substr(PHP_SAPI, 0, 3) && is_callable('getenv') && getenv('TERM'));
+            || ('cgi' === substr((string) PHP_SAPI, 0, 3) && is_callable('getenv') && getenv('TERM'));
     }
 }
 
-if (! function_exists('data_fill')) {
+if (!function_exists('data_fill')) {
     /**
      * Isi dengan data jika ia masih kosong.
      *
@@ -150,7 +152,7 @@ if (! function_exists('data_fill')) {
     }
 }
 
-if (! function_exists('data_get')) {
+if (!function_exists('data_get')) {
     /**
      * Ambil sebuah item dari array menggunakan notasi 'dot'.
      *
@@ -168,9 +170,9 @@ if (! function_exists('data_get')) {
 
         $key = is_array($key) ? $key : explode('.', $key);
 
-        while (! is_null($segment = array_shift($key))) {
+        while (!is_null($segment = array_shift($key))) {
             if ('*' === $segment) {
-                if (! is_array($target)) {
+                if (!is_array($target)) {
                     return value($default);
                 }
 
@@ -196,7 +198,7 @@ if (! function_exists('data_get')) {
     }
 }
 
-if (! function_exists('data_set')) {
+if (!function_exists('data_set')) {
     /**
      * Set sebuah item array mengunakan notasi 'dot'.
      *
@@ -212,7 +214,7 @@ if (! function_exists('data_set')) {
         $segments = is_array($key) ? $key : explode('.', $key);
 
         if ('*' === ($segment = array_shift($segments))) {
-            if (! \System\Arr::accessible($target)) {
+            if (!\System\Arr::accessible($target)) {
                 $target = [];
             }
 
@@ -227,22 +229,22 @@ if (! function_exists('data_set')) {
             }
         } elseif (\System\Arr::accessible($target)) {
             if ($segments) {
-                if (! \System\Arr::exists($target, $segment)) {
+                if (!\System\Arr::exists($target, $segment)) {
                     $target[$segment] = [];
                 }
 
                 data_set($target[$segment], $segments, $value, $overwrite);
-            } elseif ($overwrite || ! \System\Arr::exists($target, $segment)) {
+            } elseif ($overwrite || !\System\Arr::exists($target, $segment)) {
                 $target[$segment] = $value;
             }
         } elseif (is_object($target)) {
             if ($segments) {
-                if (! isset($target->{$segment})) {
+                if (!isset($target->{$segment})) {
                     $target->{$segment} = [];
                 }
 
                 data_set($target->{$segment}, $segments, $value, $overwrite);
-            } elseif ($overwrite || ! isset($target->{$segment})) {
+            } elseif ($overwrite || !isset($target->{$segment})) {
                 $target->{$segment} = $value;
             }
         } else {
@@ -259,19 +261,18 @@ if (! function_exists('data_set')) {
     }
 }
 
-if (! function_exists('retry')) {
+if (!function_exists('retry')) {
     /**
      * Ulangi eksekusi sebanyak jumlah yang diberikan.
      *
-     * @param int      $times
-     * @param callable $callback
-     * @param int      $sleep
-     *
-     * @throws \Exception
+     * @param int           $times
+     * @param callable      $callback
+     * @param int           $sleep_ms
+     * @param callable|null $when
      *
      * @return mixed
      */
-    function retry($times, callable $callback, $sleep = 0, $when = null)
+    function retry($times, callable $callback, $sleep_ms = 0, $when = null)
     {
         $attempts = 0;
         --$times;
@@ -282,26 +283,26 @@ if (! function_exists('retry')) {
         try {
             return $callback($attempts);
         } catch (\Throwable $e) {
-            if (! $times || ($when && ! $when($e))) {
+            if (!$times || ($when && !$when($e))) {
                 throw $e;
             }
 
             --$times;
 
-            if ($sleep) {
-                usleep($sleep * 1000);
+            if ($sleep_ms) {
+                usleep($sleep_ms * 1000);
             }
 
             goto beginning;
         } catch (\Exception $e) {
-            if (! $times || ($when && ! $when($e))) {
+            if (!$times || ($when && !$when($e))) {
                 throw $e;
             }
 
             --$times;
 
-            if ($sleep) {
-                usleep($sleep * 1000);
+            if ($sleep_ms) {
+                usleep($sleep_ms * 1000);
             }
 
             goto beginning;
@@ -309,7 +310,7 @@ if (! function_exists('retry')) {
     }
 }
 
-if (! function_exists('facile_to_json')) {
+if (!function_exists('facile_to_json')) {
     /**
      * Ubah object Facile menjadi string JSON.
      *
@@ -317,7 +318,7 @@ if (! function_exists('facile_to_json')) {
      *
      * @return string
      */
-    function facile_to_json($models)
+    function facile_to_json($models, $json_options = 0)
     {
         if ($models instanceof \System\Database\Facile\Model) {
             $models = $models->to_array();
@@ -327,11 +328,11 @@ if (! function_exists('facile_to_json')) {
             }, $models);
         }
 
-        return json_encode($models, JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT);
+        return json_encode($models, $json_options);
     }
 }
 
-if (! function_exists('head')) {
+if (!function_exists('head')) {
     /**
      * Mereturn elemen pertama milik array.
      *
@@ -339,13 +340,13 @@ if (! function_exists('head')) {
      *
      * @return mixed
      */
-    function head($array)
+    function head(array $array)
     {
         return reset($array);
     }
 }
 
-if (! function_exists('last')) {
+if (!function_exists('last')) {
     /**
      * Return elemen terakhir milik array.
      *
@@ -353,13 +354,13 @@ if (! function_exists('last')) {
      *
      * @return mixed
      */
-    function last($array)
+    function last(array $array)
     {
         return end($array);
     }
 }
 
-if (! function_exists('url')) {
+if (!function_exists('url')) {
     /**
      * Buat sebuah URL.
      *
@@ -383,7 +384,7 @@ if (! function_exists('url')) {
     }
 }
 
-if (! function_exists('asset')) {
+if (!function_exists('asset')) {
     /**
      * Buat URL ke sebuah aset.
      *
@@ -397,7 +398,7 @@ if (! function_exists('asset')) {
     }
 }
 
-if (! function_exists('action')) {
+if (!function_exists('action')) {
     /**
      * Buat URL ke sebuah action di controller.
      *
@@ -422,7 +423,7 @@ if (! function_exists('action')) {
     }
 }
 
-if (! function_exists('route')) {
+if (!function_exists('route')) {
     /**
      * Buat sebuah URL ke named route.
      *
@@ -432,7 +433,7 @@ if (! function_exists('route')) {
      *      $url = route('profile');
      *
      *      // Buat URL ke route yang bernama 'profile' dengan parameter tambahan.
-     *      $url = route('profile', [$username]);
+     *      $url = route('profile', [$name]);
      *
      * </code>
      *
@@ -447,7 +448,7 @@ if (! function_exists('route')) {
     }
 }
 
-if (! function_exists('config')) {
+if (!function_exists('config')) {
     /**
      * Get atau set config.
      *
@@ -480,7 +481,7 @@ if (! function_exists('config')) {
     }
 }
 
-if (! function_exists('cache')) {
+if (!function_exists('cache')) {
     /**
      * Get/set cache.
      *
@@ -513,7 +514,7 @@ if (! function_exists('cache')) {
     }
 }
 
-if (! function_exists('session')) {
+if (!function_exists('session')) {
     /**
      * Get/set session.
      *
@@ -546,7 +547,7 @@ if (! function_exists('session')) {
     }
 }
 
-if (! function_exists('fake')) {
+if (!function_exists('fake')) {
     /**
      * Buat instance faker.
      *
@@ -564,14 +565,30 @@ if (! function_exists('fake')) {
      *
      * @return mixed
      */
-    function fake($local = null)
+    function fake($locale = null)
     {
         $locale = $locale ? $locale : config('application.language');
         return \System\Foundation\Faker\Factory::create($locale);
     }
 }
 
-if (! function_exists('redirect')) {
+if (!function_exists('validate')) {
+    /**
+     * Buat instance validator.
+     *
+     * @param array $attributes
+     * @param array $rules
+     * @param array $messages
+     *
+     * @return \System\Validator
+     */
+    function validate(array $attributes, array $rules, array $messages = [])
+    {
+        return \System\Validator::make($attributes, $rules, $messages);
+    }
+}
+
+if (!function_exists('redirect')) {
     /**
      * Buat sebuah redireksi.
      *
@@ -592,7 +609,7 @@ if (! function_exists('redirect')) {
     }
 }
 
-if (! function_exists('old')) {
+if (!function_exists('old')) {
     /**
      * Ambil old input dari session.
      *
@@ -607,7 +624,7 @@ if (! function_exists('old')) {
     }
 }
 
-if (! function_exists('back')) {
+if (!function_exists('back')) {
     /**
      * Buat sebuah redireksi ke halaman sebelumnya.
      *
@@ -619,7 +636,7 @@ if (! function_exists('back')) {
     }
 }
 
-if (! function_exists('abort')) {
+if (!function_exists('abort')) {
     /**
      * Buat sebuah response error.
      *
@@ -628,26 +645,26 @@ if (! function_exists('abort')) {
      *
      * @return string
      */
-    function abort($code, $headers = [])
+    function abort($code, array $headers = [])
     {
         $code = (int) $code;
-        $message = \System\Foundation\Http\Responder::$statusTexts;
+        $message = \System\Foundation\Http\Response::$statusTexts;
         $message = isset($message[$code]) ? $message[$code] : 'Unknown Error';
 
         if (\System\Request::wants_json()) {
             $status = $code;
             $message = json_encode(compact('status', 'message'));
-            $headers = array_merge($headers, ['content-type' => 'application/json']);
+            $headers = array_merge($headers, ['Content-Type' => 'application/json']);
         } else {
-            $view = \System\View::exists('error.'.$code) ? 'error.'.$code : 'error.default';
+            $view = \System\View::exists('error.' . $code) ? 'error.' . $code : 'error.unknown';
             $message = \System\View::make($view)->render();
         }
 
         $response = new \System\Response($message, $code, $headers);
         $response->render();
 
-        if (Config::get('session.driver')) {
-            Session::save();
+        if (\System\Config::get('session.driver')) {
+            \System\Session::save();
         }
 
         $response->send();
@@ -657,7 +674,7 @@ if (! function_exists('abort')) {
     }
 }
 
-if (! function_exists('abort_if')) {
+if (!function_exists('abort_if')) {
     /**
      * Buat sebuah response error jika kondisi terpenuhi.
      *
@@ -667,7 +684,7 @@ if (! function_exists('abort_if')) {
      *
      * @return string
      */
-    function abort_if($condition, $code, $headers = [])
+    function abort_if($condition, $code, array $headers = [])
     {
         if ($condition) {
             return abort($code, $headers);
@@ -675,7 +692,7 @@ if (! function_exists('abort_if')) {
     }
 }
 
-if (! function_exists('csrf_name')) {
+if (!function_exists('csrf_name')) {
     /**
      * Ambil nama field CSRF token.
      *
@@ -690,7 +707,7 @@ if (! function_exists('csrf_name')) {
     }
 }
 
-if (! function_exists('csrf_token')) {
+if (!function_exists('csrf_token')) {
     /**
      * Ambil token CSRF saat ini.
      *
@@ -702,22 +719,23 @@ if (! function_exists('csrf_token')) {
     }
 }
 
-if (! function_exists('csrf_field')) {
+if (!function_exists('csrf_field')) {
     /**
      * Tambahkan hidden field untuk CSRF token.
-     *
-     * @param string $name
-     * @param array  $parameters
      *
      * @return string
      */
     function csrf_field()
     {
-        return '<input type="hidden" name="'.csrf_name().'" value="'.csrf_token().'">'.PHP_EOL;
+        return sprintf(
+            '<input type="hidden" name="%s" value="%s">' . PHP_EOL,
+            csrf_name(),
+            csrf_token()
+        );
     }
 }
 
-if (! function_exists('root_namespace')) {
+if (!function_exists('root_namespace')) {
     /**
      * Ambil root namespace milik class.
      *
@@ -734,7 +752,7 @@ if (! function_exists('root_namespace')) {
     }
 }
 
-if (! function_exists('class_basename')) {
+if (!function_exists('class_basename')) {
     /**
      * Ambil 'class basename' milik sebuah kelas atau object.
      * Class basename adalah nama kelas tanpa namespace.
@@ -746,11 +764,11 @@ if (! function_exists('class_basename')) {
     function class_basename($class)
     {
         $class = is_object($class) ? get_class($class) : $class;
-        return basename(str_replace('\\', '/', $class));
+        return basename(str_replace('\\', '/', (string) $class));
     }
 }
 
-if (! function_exists('value')) {
+if (!function_exists('value')) {
     /**
      * Mereturn value milik sebuah item.
      * Jika item merupakan sebuah Closure, hasil eksekusinya yang akan di-return.
@@ -761,11 +779,11 @@ if (! function_exists('value')) {
      */
     function value($value)
     {
-        return (is_callable($value) && ! is_string($value)) ? call_user_func($value) : $value;
+        return (is_callable($value) && !is_string($value)) ? call_user_func($value) : $value;
     }
 }
 
-if (! function_exists('view')) {
+if (!function_exists('view')) {
     /**
      * Buat instance kelas View.
      *
@@ -780,7 +798,7 @@ if (! function_exists('view')) {
     }
 }
 
-if (! function_exists('render')) {
+if (!function_exists('render')) {
     /**
      * Render view.
      *
@@ -795,7 +813,7 @@ if (! function_exists('render')) {
     }
 }
 
-if (! function_exists('render_each')) {
+if (!function_exists('render_each')) {
     /**
      * Ambil konten hasil render view parsial.
      *
@@ -812,7 +830,7 @@ if (! function_exists('render_each')) {
     }
 }
 
-if (! function_exists('yield_content')) {
+if (!function_exists('yield_content')) {
     /**
      * Ambil konten milik sebuah section.
      *
@@ -826,7 +844,7 @@ if (! function_exists('yield_content')) {
     }
 }
 
-if (! function_exists('yield_section')) {
+if (!function_exists('yield_section')) {
     /**
      * Hentikan injeksi konten kedalam section dan return kontennya.
      *
@@ -838,7 +856,7 @@ if (! function_exists('yield_section')) {
     }
 }
 
-if (! function_exists('section_start')) {
+if (!function_exists('section_start')) {
     /**
      * Mulai injeksi konten ke section.
      *
@@ -850,7 +868,7 @@ if (! function_exists('section_start')) {
     }
 }
 
-if (! function_exists('section_stop')) {
+if (!function_exists('section_stop')) {
     /**
      * Hentikan injeksi konten kedalam section.
      *
@@ -862,7 +880,7 @@ if (! function_exists('section_stop')) {
     }
 }
 
-if (! function_exists('encrypt')) {
+if (!function_exists('encrypt')) {
     /**
      * Enkripsi string.
      *
@@ -876,7 +894,7 @@ if (! function_exists('encrypt')) {
     }
 }
 
-if (! function_exists('decrypt')) {
+if (!function_exists('decrypt')) {
     /**
      * Enkripsi string.
      *
@@ -890,37 +908,37 @@ if (! function_exists('decrypt')) {
     }
 }
 
-if (! function_exists('event')) {
+if (!function_exists('bcrypt')) {
     /**
-     * Jalankan event.
+     * Buat hash password.
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    function bcrypt($string)
+    {
+        return \System\Hash::make($string);
+    }
+}
+
+if (!function_exists('dispatch')) {
+    /**
+     * Jalankan sebuah job.
      *
      * @param string|array $events
      * @param array        $parameters
      * @param bool         $halt
      *
-     * @return array
+     * @return array|null
      */
-    function event($events, array $parameters = [], $halt = false)
+    function dispatch($events, array $parameters = [], $halt = false)
     {
         return \System\Event::fire($events, $parameters, $halt);
     }
 }
 
-if (! function_exists('dispatch')) {
-    /**
-     * Jalankan sebuah job.
-     *
-     * @param string $name
-     *
-     * @return array
-     */
-    function dispatch($name)
-    {
-        return \System\Job::run($name);
-    }
-}
-
-if (! function_exists('blank')) {
+if (!function_exists('blank')) {
     /**
      * Tentukan apakah value yang diberikan "kosong".
      *
@@ -950,7 +968,7 @@ if (! function_exists('blank')) {
     }
 }
 
-if (! function_exists('filled')) {
+if (!function_exists('filled')) {
     /**
      * Tentukan apakah value yang diberikan "tidak kosong".
      *
@@ -960,11 +978,11 @@ if (! function_exists('filled')) {
      */
     function filled($value)
     {
-        return ! blank($value);
+        return !blank($value);
     }
 }
 
-if (! function_exists('now')) {
+if (!function_exists('now')) {
     /**
      * Ambil instance tanggal saat ini.
      *
@@ -976,7 +994,7 @@ if (! function_exists('now')) {
     }
 }
 
-if (! function_exists('get_cli_option')) {
+if (!function_exists('get_cli_option')) {
     /**
      * Ambil parameter yang dioper ke rakit console.
      *
@@ -987,10 +1005,12 @@ if (! function_exists('get_cli_option')) {
      */
     function get_cli_option($option, $default = null)
     {
-        $arguments = \System\Request::foundation()->server->get('argv');
+        $arguments = (array) \System\Request::foundation()->server->get('argv');
 
         foreach ($arguments as $argument) {
-            if (Str::starts_with($argument, '--'.$option.'=')) {
+            $argument = (string) $argument;
+
+            if (0 === strpos($argument, '--' . $option . '=')) {
                 return substr($argument, mb_strlen($option, '8bit') + 3);
             }
         }
@@ -999,7 +1019,32 @@ if (! function_exists('get_cli_option')) {
     }
 }
 
-if (! function_exists('system_os')) {
+if (!function_exists('has_cli_flag')) {
+    /**
+     * Ambil parameter yang dioper ke rakit console.
+     *
+     * @param string $flag
+     * @param mixed  $default
+     *
+     * @return string
+     */
+    function has_cli_flag($flag)
+    {
+        $arguments = (array) \System\Request::foundation()->server->get('argv');
+
+        foreach ($arguments as $argument) {
+            $argument = (string) $argument;
+
+            if (false !== strpos($argument, '-' . $flag)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('system_os')) {
     /**
      * Ambil platform / sistem operasi server.
      *
@@ -1021,25 +1066,26 @@ if (! function_exists('system_os')) {
             'SunOS' => 'Solaris',
         ];
 
-        return isset_or($platforms[PHP_OS], 'Unknown');
+        return isset($platforms[PHP_OS]) ? $platforms[PHP_OS] : 'Unknown';
     }
+}
 
-    if (! function_exists('human_filesize')) {
-        /**
-         * Format ukuran file (ramah manusia).
-         *
-         * @param int $bytes
-         * @param int $precision
-         *
-         * @return string
-         */
-        function human_filesize($bytes, $precision = 2)
-        {
-            $precision = (int) $precision;
-            $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-            $power = min(floor(($bytes ? log($bytes) : 0) / log(1024)), count($units) - 1);
+if (!function_exists('human_filesize')) {
+    /**
+     * Format ukuran file (ramah manusia).
+     *
+     * @param int $bytes
+     * @param int $precision
+     *
+     * @return string
+     */
+    function human_filesize($bytes, $precision = 2)
+    {
+        $precision = (int) $precision;
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        $power = min(floor(($bytes ? log($bytes) : 0) / log(1024)), count($units) - 1);
+        $bytes = round($bytes / pow(1024, $power), $precision);
 
-            return sprintf('%.'.$precision.'f %s', round($bytes / pow(1024, $power), $precision), $units[$power]);
-        }
+        return sprintf('%.' . $precision . 'f %s', $bytes, $units[$power]);
     }
 }

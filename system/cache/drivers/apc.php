@@ -32,7 +32,7 @@ class APC extends Driver
      */
     public function has($key)
     {
-        return ! is_null($this->get($key));
+        return !is_null($this->get($key));
     }
 
     /**
@@ -44,7 +44,7 @@ class APC extends Driver
      */
     protected function retrieve($key)
     {
-        if (false !== ($cache = apc_fetch($this->key.$key))) {
+        if (false !== ($cache = apc_fetch($this->key . $key))) {
             return $cache;
         }
     }
@@ -65,18 +65,7 @@ class APC extends Driver
      */
     public function put($key, $value, $minutes)
     {
-        apc_store($this->key.$key, $value, $minutes * 60);
-    }
-
-    /**
-     * Simpan item ke cache untuk selamanya (atau 5 tahun).
-     *
-     * @param string $key
-     * @param mixed  $value
-     */
-    public function forever($key, $value)
-    {
-        return $this->put($key, $value, 0);
+        apc_store($this->key . $key, $value, $minutes * 60);
     }
 
     /**
@@ -86,6 +75,6 @@ class APC extends Driver
      */
     public function forget($key)
     {
-        apc_delete($this->key.$key);
+        apc_delete($this->key . $key);
     }
 }

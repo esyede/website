@@ -14,7 +14,4 @@ defined('DS') or exit('No direct script access.');
 
 return [
     'docs' => ['handles' => 'docs'],
-
-    // Taruh array konfigurasi paket lain disini..
-
 ];

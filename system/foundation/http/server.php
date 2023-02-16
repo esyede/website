@@ -16,6 +16,8 @@ class Server extends Parameter
         $headers = [];
 
         foreach ($this->parameters as $key => $value) {
+            $key = (string) $key;
+
             if (0 === strpos($key, 'HTTP_')) {
                 $headers[substr($key, 5)] = $value;
             } elseif (in_array($key, ['CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'])) {
@@ -55,9 +57,8 @@ class Server extends Parameter
                 $authHeader = $this->parameters['REDIRECT_HTTP_AUTHORIZATION'];
             }
 
-            if ((null !== $authHeader)
-            && (0 === stripos($authHeader, 'basic'))) {
-                $exploded = explode(':', base64_decode(substr($authHeader, 6)));
+            if (null !== $authHeader && 0 === stripos((string) $authHeader, 'basic')) {
+                $exploded = explode(':', base64_decode(substr((string) $authHeader, 6)));
 
                 if (2 === count($exploded)) {
                     list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;
@@ -66,7 +67,7 @@ class Server extends Parameter
         }
 
         if (isset($headers['PHP_AUTH_USER'])) {
-            $basic = 'Basic '.base64_encode($headers['PHP_AUTH_USER'].':'.$headers['PHP_AUTH_PW']);
+            $basic = 'Basic ' . base64_encode($headers['PHP_AUTH_USER'] . ':' . $headers['PHP_AUTH_PW']);
             $headers['AUTHORIZATION'] = $basic;
         }
 

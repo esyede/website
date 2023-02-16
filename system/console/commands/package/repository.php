@@ -4,8 +4,6 @@ namespace System\Console\Commands\Package;
 
 defined('DS') or exit('No direct script access.');
 
-use System\Curl;
-
 class Repository
 {
     /**
@@ -41,9 +39,10 @@ class Repository
             }
         }
 
-        throw new \Exception(PHP_EOL.sprintf(
-            'Error: Package canot be found on the repository: %s', $name
-        ).PHP_EOL);
+        throw new \Exception(PHP_EOL . sprintf(
+            'Error: Package canot be found on the repository: %s',
+            $name
+        ) . PHP_EOL);
     }
 
     /**
@@ -55,11 +54,29 @@ class Repository
      */
     protected function packages()
     {
-        $response = Curl::get(static::$repository);
-        $packages = json_decode(json_encode($response->body), true);
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => static::$repository,
+            CURLOPT_HTTPGET => 1,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_AUTOREFERER => 1,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_FOLLOWLOCATION => 1,
+            CURLOPT_VERBOSE => get_cli_option('verbose') ? 1 : 0,
+            CURLOPT_USERAGENT => sprintf(
+                'Mozilla/5.0 (Linux x86_64; rv:%s.0) Gecko/20100101 Firefox/%s.0',
+                mt_rand(90, 110),
+                mt_rand(90, 110)
+            ),
+        ]);
+        $packages = curl_exec($ch);
+        curl_close($ch);
 
-        if (! is_array($packages) || count($packages) < 1) {
-            throw new \Exception('Broken repository json data. Please contact rakit team.'.PHP_EOL);
+        $packages = json_decode($packages, true);
+
+        if (!is_array($packages) || count($packages) < 1) {
+            throw new \Exception('Broken repository data. Please contact rakit team.' . PHP_EOL);
         }
 
         return $packages;

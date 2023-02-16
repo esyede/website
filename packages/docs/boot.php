@@ -2,6 +2,8 @@
 
 defined('DS') or exit('No direct script access.');
 
+use System\Autoloader;
+
 /*
 |--------------------------------------------------------------------------
 | Autoload
@@ -9,4 +11,6 @@ defined('DS') or exit('No direct script access.');
 |
 */
 
-Autoloader::namespaces(['Docs\Libraries' => __DIR__.'/libraries']);
+Autoloader::map([
+    'Docs\Libraries\Docs' => __DIR__ . '/libraries/docs.php',
+]);

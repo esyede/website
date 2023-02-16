@@ -40,18 +40,17 @@ chdir(__DIR__);
 // --------------------------------------------------------------
 // Definisikan path ke base direktori.
 // --------------------------------------------------------------
-$GLOBALS['rakit_paths']['base'] = __DIR__.DS;
+$GLOBALS['rakit_paths']['base'] = __DIR__ . DS;
 
 // --------------------------------------------------------------
 // Defininisikan konstanta lain yang belum ada.
 // --------------------------------------------------------------
 foreach ($paths as $name => $path) {
-    if (! isset($GLOBALS['rakit_paths'][$name])) {
-
+    if (!isset($GLOBALS['rakit_paths'][$name])) {
         if ('rakit_key' === $name) {
-            $path = $GLOBALS['rakit_paths']['base'].$path;
+            $path = $GLOBALS['rakit_paths']['base'] . $path;
         } else {
-            $path = realpath($path).DS;
+            $path = realpath($path) . DS;
         }
 
         $GLOBALS['rakit_paths'][$name] = $path;
@@ -85,4 +84,32 @@ function path($path)
 function set_path($path, $value)
 {
     $GLOBALS['rakit_paths'][$path] = $value;
+}
+
+// --------------------------------------------------------------
+// Polyfill untuk atribut #[\ReturnTypeWillChange].
+// --------------------------------------------------------------
+
+if (PHP_VERSION_ID < 80000) {
+    final class Attribute
+    {
+        const TARGET_CLASS = 1;
+        const TARGET_FUNCTION = 2;
+        const TARGET_METHOD = 4;
+        const TARGET_PROPERTY = 8;
+        const TARGET_CLASS_CONSTANT = 16;
+        const TARGET_PARAMETER = 32;
+        const TARGET_ALL = 63;
+    }
+}
+
+if (PHP_VERSION_ID < 80100) {
+    #[Attribute(Attribute::TARGET_METHOD)]
+    final class ReturnTypeWillChange
+    {
+        public function __construct()
+        {
+            // ..
+        }
+    }
 }

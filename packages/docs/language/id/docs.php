@@ -23,12 +23,13 @@ return [
         'repositories' => 'Repositori',
         'forum' => 'Forum',
         'vcs' => 'Github',
+        'search' => 'Cari...',
     ],
     'content' => [
         'edit' => 'Edit',
     ],
     'footer' => [
-        'credit' => 'Dibuat dengan :love oleh awesome :contributors. Dirilis dibawah :license.',
+        'credit' => 'Dibuat dengan :love oleh :contributors. Dirilis dibawah :license.',
         'contributors' => 'Para Kontributor',
         'license' => 'Lisensi MIT',
     ],

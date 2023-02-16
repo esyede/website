@@ -31,21 +31,21 @@ class Resolver
     /**
      * Resolve seluruh migrasi milik sebuah paket.
      *
-     * @param string $package
+     * @param array $arguments
      *
      * @return array
      */
-    public function outstanding($package = null)
+    public function outstanding(array $arguments = [])
     {
-        $packages = is_null($package) ? array_merge(Package::names(), ['application']) : [$package];
+        $arguments = empty($arguments) ? array_merge(Package::names(), ['application']) : $arguments;
         $migrations = [];
 
-        foreach ($packages as $package) {
+        foreach ($arguments as $package) {
             $ran = $this->database->ran($package);
             $files = $this->migrations($package);
 
             foreach ($files as $key => $name) {
-                if (! in_array($name, $ran)) {
+                if (!in_array($name, $ran)) {
                     $migrations[] = compact('package', 'name');
                 }
             }
@@ -77,14 +77,13 @@ class Resolver
 
         foreach ($migrations as $migration) {
             $migration = (array) $migration;
-            $package = $migration['package'];
-            $name = $migration['name'];
-            $path = Package::path($package).'migrations'.DS;
+            $package = (string) $migration['package'];
+            $name = (string) $migration['name'];
+            $path = Package::path($package) . 'migrations' . DS;
 
-            require_once $path.$name.'.php';
+            require_once $path . $name . '.php';
 
-            $prefix = Package::class_prefix($package);
-            $class = $prefix.Str::classify(substr($name, 18));
+            $class = Package::class_prefix($package) . Str::classify(substr($name, 18));
             $migration = new $class();
             $instances[] = compact('package', 'name', 'migration');
         }
@@ -105,14 +104,14 @@ class Resolver
      */
     protected function migrations($package)
     {
-        $files = glob(Package::path($package).'migrations'.DS.'*_*.php');
+        $files = glob(Package::path($package) . 'migrations' . DS . '*_*.php');
 
         if (false === $files) {
             return [];
         }
 
         foreach ($files as &$file) {
-            $file = Str::replace_last('.php', '', basename($file));
+            $file = Str::replace_last('.php', '', basename((string) $file));
         }
 
         sort($files);

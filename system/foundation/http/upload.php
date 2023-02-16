@@ -78,7 +78,10 @@ class Upload extends \SplFileInfo
         'application/mp4' => ['mp4s'],
         'application/msword' => ['doc', 'dot'],
         'application/mxf' => ['mxf'],
-        'application/octet-stream' => ['bin', 'dms', 'lrf', 'mar', 'so', 'dist', 'distz', 'pkg', 'bpk', 'dump', 'elc', 'deploy'],
+        'application/octet-stream' => [
+            'bin', 'dms', 'lrf', 'mar', 'so', 'dist', 'distz',
+            'pkg', 'bpk', 'dump', 'elc', 'deploy',
+        ],
         'application/oda' => ['oda'],
         'application/oebps-package+xml' => ['opf'],
         'application/ogg' => ['ogx'],
@@ -769,7 +772,8 @@ class Upload extends \SplFileInfo
         'video/vnd.dece.pd' => ['uvp', 'uvvp'],
         'video/vnd.dece.sd' => ['uvs', 'uvvs'],
         'video/vnd.dece.video' => ['uvv', 'uvvv'],
-        'video/vnd.dvb.file' => ['dvb',
+        'video/vnd.dvb.file' => [
+            'dvb',
         ],
         'video/vnd.fvt' => ['fvt'],
         'video/vnd.mpegurl' => ['mxu', 'm4u'],
@@ -799,7 +803,7 @@ class Upload extends \SplFileInfo
      * Kumpulkan informasi file diupload user, via variabel global $_FILES.
      *
      * @param string $path
-     * @param string $originalName
+     * @param string $origName
      * @param string $mimeType
      * @param int    $size
      * @param int    $error
@@ -807,27 +811,27 @@ class Upload extends \SplFileInfo
      */
     public function __construct(
         $path,
-        $originalName,
+        $origName,
         $mimeType = null,
         $size = null,
         $error = null,
         $test = false
     ) {
-        if (! ini_get('file_uploads')) {
+        if (!ini_get('file_uploads')) {
             throw new \Exception(sprintf(
-                'Unable to create Upload because "file_uploads" directive '.
-                'is disabled in your php.ini file (%s)',
+                "Unable to create Upload because 'file_uploads' directive is "
+                    . "disabled in your php.ini file (%s)",
                 get_cfg_var('cfg_file_path')
             ));
         }
 
-        $this->originalName = $this->getName($originalName);
+        $this->originalName = $this->getName($origName);
         $this->mimeType = $mimeType ? $mimeType : 'application/octet-stream';
         $this->size = $size;
         $this->error = $error ? $error : UPLOAD_ERR_OK;
         $this->test = (bool) $test;
 
-        if (UPLOAD_ERR_OK === $this->error && ! is_file($path)) {
+        if (UPLOAD_ERR_OK === $this->error && !is_file($path)) {
             throw new \Exception(sprintf('File does not exists: %s', $path));
         }
 
@@ -857,11 +861,11 @@ class Upload extends \SplFileInfo
     {
         $path = $this->getPathname();
 
-        if (! is_file($path)) {
+        if (!is_file($path)) {
             throw new \Exception(sprintf('File does not exists: %s', $path));
         }
 
-        if (! is_readable($path)) {
+        if (!is_readable($path)) {
             throw new \Exception(sprintf('File is not readable: %s', $path));
         }
 
@@ -873,9 +877,28 @@ class Upload extends \SplFileInfo
      *
      * @return string|null
      */
+    #[\ReturnTypeWillChange]
     public function getExtension()
     {
         return pathinfo($this->getBasename(), PATHINFO_EXTENSION);
+    }
+
+    /**
+     * Ambil isi file.
+     *
+     * @return string
+     */
+    public function getContent()
+    {
+        $content = file_get_contents($this->getPathname());
+
+        if (false === $content) {
+            throw new \Exception(
+                sprintf('Could not get the content of the file: %s', $this->getPathname())
+            );
+        }
+
+        return $content;
     }
 
     /**
@@ -888,7 +911,7 @@ class Upload extends \SplFileInfo
      */
     protected function getTargetFile($directory, $name = null)
     {
-        if (! is_dir($directory)) {
+        if (!is_dir($directory)) {
             try {
                 mkdir($directory, 0755, true);
             } catch (\Throwable $e) {
@@ -896,13 +919,13 @@ class Upload extends \SplFileInfo
             } catch (\Exception $e) {
                 throw new \Exception(sprintf('Unable to create the directory: %s', $directory));
             }
-        } elseif (! is_writable($directory)) {
+        } elseif (!is_writable($directory)) {
             throw new \Exception(sprintf('Directory is not writable: %s', $directory));
         }
 
         $name = is_null($name) ? $this->getBasename() : $this->getName($name);
 
-        return $directory.DS.$name;
+        return $directory . DS . $name;
     }
 
     /**
@@ -914,7 +937,7 @@ class Upload extends \SplFileInfo
      */
     protected function getName($name)
     {
-        $original = str_replace('\\', '/', $name);
+        $original = str_replace('\\', '/', (string) $name);
         $position = strrpos($original, '/');
         $original = (false === $position) ? $original : substr($original, $position + 1);
 
@@ -987,7 +1010,7 @@ class Upload extends \SplFileInfo
             $target = $this->getTargetFile($directory, $name);
 
             if ($this->test) {
-                if (! @rename($this->getPathname(), $target)) {
+                if (!@rename($this->getPathname(), $target)) {
                     $error = error_get_last();
                     throw new \Exception(sprintf(
                         "Could not move the file '%s' to '%s' (%s).",
@@ -1027,17 +1050,26 @@ class Upload extends \SplFileInfo
      */
     public static function getMaxFilesize()
     {
-        $max = trim(ini_get('upload_max_filesize'));
+        $max = trim((string) ini_get('upload_max_filesize'));
 
         if ('' === $max) {
             return PHP_INT_MAX;
         }
 
-        switch (strtolower(substr($max, -1))) {
-            case 't': $max *= 1024; // No break, memang disengaja.
-            case 'g': $max *= 1024; // No break, memang disengaja.
-            case 'm': $max *= 1024; // No break, memang disengaja.
-            case 'k': $max *= 1024; // No break, memang disengaja.
+        $metric = strtolower(substr($max, -1));
+
+        switch ($metric) {
+            case 't':
+                $max *= 1024; // No break, memang disengaja.
+
+            case 'g':
+                $max *= 1024; // No break, memang disengaja.
+
+            case 'm':
+                $max *= 1024; // No break, memang disengaja.
+
+            case 'k':
+                $max *= 1024; // No break, memang disengaja.
         }
 
         return (int) $max;

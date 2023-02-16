@@ -7,7 +7,6 @@ defined('DS') or exit('No direct script access.');
 use System\Arr;
 use System\Str;
 use System\Event;
-use System\Database;
 use System\Validator;
 
 abstract class Model
@@ -181,7 +180,6 @@ abstract class Model
         }
 
         $this->validation = Validator::make($this->attributes, static::$rules, static::$messages);
-
         return $this->validation->passes();
     }
 
@@ -339,7 +337,7 @@ abstract class Model
     {
         if (is_null($foreign)) {
             list($unused, $caller) = debug_backtrace(false);
-            $foreign = $caller['function'].'_id';
+            $foreign = $caller['function'] . '_id';
             unset($unused, $caller);
         }
 
@@ -386,7 +384,7 @@ abstract class Model
      */
     public function save()
     {
-        if (! $this->dirty()) {
+        if (!$this->dirty()) {
             return true;
         }
 
@@ -394,14 +392,14 @@ abstract class Model
             $this->timestamp();
         }
 
-        Event::fire(['facile.saving', 'facile.saving: '.get_class($this)], [$this]);
+        Event::fire(['facile.saving', 'facile.saving: ' . get_class($this)], [$this]);
 
         if ($this->exists) {
             $query = $this->query()->where(static::$key, '=', $this->get_key());
             $result = (1 === $query->update($this->get_dirty()));
 
             if ($result) {
-                Event::fire(['facile.updated', 'facile.updated: '.get_class($this)], [$this]);
+                Event::fire(['facile.updated', 'facile.updated: ' . get_class($this)], [$this]);
             }
         } else {
             $id = $this->query()->insert_get_id($this->attributes, $this->key());
@@ -409,14 +407,14 @@ abstract class Model
             $this->exists = $result = is_numeric($this->get_key());
 
             if ($result) {
-                Event::fire(['facile.created', 'facile.created: '.get_class($this)], [$this]);
+                Event::fire(['facile.created', 'facile.created: ' . get_class($this)], [$this]);
             }
         }
 
         $this->original = $this->attributes;
 
         if ($result) {
-            Event::fire(['facile.saved', 'facile.saved: '.get_class($this)], [$this]);
+            Event::fire(['facile.saved', 'facile.saved: ' . get_class($this)], [$this]);
         }
 
         return $result;
@@ -430,11 +428,11 @@ abstract class Model
     public function delete()
     {
         if ($this->exists) {
-            Event::fire(['facile.deleting', 'facile.deleting: '.get_class($this)], [$this]);
+            Event::fire(['facile.deleting', 'facile.deleting: ' . get_class($this)], [$this]);
 
             $result = $this->query()->where(static::$key, '=', $this->get_key())->delete();
 
-            Event::fire(['facile.deleted', 'facile.deleted: '.get_class($this)], [$this]);
+            Event::fire(['facile.deleted', 'facile.deleted: ' . get_class($this)], [$this]);
 
             return $result;
         }
@@ -447,7 +445,7 @@ abstract class Model
     {
         $this->updated_at = date('Y-m-d H:i:s');
 
-        if (! $this->exists) {
+        if (!$this->exists) {
             $this->created_at = $this->updated_at;
         }
     }
@@ -469,6 +467,7 @@ abstract class Model
     protected function _query()
     {
         return new Query($this);
+        return (new Query($this))->connection()->table($this->table());
     }
 
     /**
@@ -502,7 +501,7 @@ abstract class Model
      */
     public function dirty()
     {
-        return (! $this->exists || count($this->get_dirty()) > 0);
+        return (!$this->exists || count($this->get_dirty()) > 0);
     }
 
     /**
@@ -512,7 +511,7 @@ abstract class Model
      */
     public function table()
     {
-        return static::$table ? static::$table : strtolower(Str::plural(class_basename($this)));
+        return static::$table ? static::$table : strtolower(Str::plural((string) class_basename($this)));
     }
 
     /**
@@ -525,7 +524,7 @@ abstract class Model
         $dirty = [];
 
         foreach ($this->attributes as $key => $value) {
-            if (! array_key_exists($key, $this->original) || $value !== $this->original[$key]) {
+            if (!array_key_exists($key, $this->original) || $value !== $this->original[$key]) {
                 $dirty[$key] = $value;
             }
         }
@@ -595,7 +594,7 @@ abstract class Model
         $keys = array_keys($this->attributes);
 
         foreach ($keys as $attribute) {
-            if (! in_array($attribute, static::$hidden)) {
+            if (!in_array($attribute, static::$hidden)) {
                 $attributes[$attribute] = $this->{$attribute};
             }
         }
@@ -633,12 +632,12 @@ abstract class Model
         if (array_key_exists($key, $this->relationships)) {
             return $this->relationships[$key];
         } elseif (array_key_exists($key, $this->attributes)) {
-            return $this->{'get_'.$key}();
+            return $this->{'get_' . $key}();
         } elseif (method_exists($this, $key)) {
             return $this->relationships[$key] = $this->{$key}()->results();
         }
 
-        return $this->{'get_'.$key}();
+        return $this->{'get_' . $key}();
     }
 
     /**
@@ -649,7 +648,7 @@ abstract class Model
      */
     public function __set($key, $value)
     {
-        $this->{'set_'.$key}($value);
+        $this->{'set_' . $key}($value);
     }
 
     /**
@@ -662,11 +661,11 @@ abstract class Model
     public function __isset($key)
     {
         if (array_key_exists($key, $this->attributes)) {
-            return (! empty($this->attributes[$key]));
+            return (!empty($this->attributes[$key]));
         }
 
         if (array_key_exists($key, $this->relationships)) {
-            return (! empty($this->relationships[$key]));
+            return (!empty($this->relationships[$key]));
         }
 
         return false;
@@ -692,16 +691,19 @@ abstract class Model
      */
     public function __call($method, array $parameters)
     {
+        $method = (string) $method;
         $methods = ['key', 'table', 'connection', 'sequence', 'perpage', 'timestamps'];
 
         if (in_array($method, $methods)) {
             return static::${$method};
         }
 
-        $underscored = ['with', 'query'];
+        if ('with' === $method) {
+            return call_user_func_array([$this, '_with'], $parameters);
+        }
 
-        if (in_array($method, $underscored)) {
-            return call_user_func_array([$this, '_'.$method], $parameters);
+        if ('query' === $method) {
+            return call_user_func_array([$this, '_query'], $parameters);
         }
 
         if (Str::starts_with($method, 'get_')) {

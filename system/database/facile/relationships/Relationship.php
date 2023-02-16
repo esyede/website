@@ -50,12 +50,12 @@ abstract class Relationship extends Query
      */
     public static function foreign($model, $foreign = null)
     {
-        if (! is_null($foreign)) {
+        if (!is_null($foreign)) {
             return $foreign;
         }
 
         $model = is_object($model) ? class_basename($model) : $model;
-        return strtolower(basename($model).'_id');
+        return strtolower(basename((string) $model) . '_id');
     }
 
     /**

@@ -7,7 +7,6 @@ defined('DS') or exit('No direct script access.');
 use System\Arr;
 use System\Str;
 use System\Package;
-use System\Request;
 
 class Router
 {
@@ -158,9 +157,9 @@ class Router
     public static function register($method, $route, $action)
     {
         $route = Str::characterify($route);
-        $digits = is_string($route) && '' !== $route && ! preg_match('/[^0-9]/', $route);
+        $digits = is_string($route) && '' !== $route && !preg_match('/[^0-9]/', $route);
 
-        $route = $digits ? '('.$route.')' : $route;
+        $route = $digits ? '(' . $route . ')' : $route;
         $route = is_string($route) ? explode(', ', $route) : $route;
 
         if (is_array($method)) {
@@ -182,7 +181,7 @@ class Router
                 continue;
             }
 
-            $uri = ltrim(str_replace('(:package)', static::$package, $uri), '/');
+            $uri = ltrim(str_replace('(:package)', (string) static::$package, $uri), '/');
             $uri = ('' === $uri) ? '/' : $uri;
 
             if ('(' === $uri[0]) {
@@ -193,7 +192,7 @@ class Router
 
             $routes[$method][$uri] = is_array($action) ? $action : static::action($action);
 
-            if (! is_null(static::$group)) {
+            if (!is_null(static::$group)) {
                 $routes[$method][$uri] += static::$group;
             }
         }
@@ -240,8 +239,8 @@ class Router
             }
 
             $wildcards = static::repeat('(:any?)', static::$segments);
-            $pattern = trim($root.'/'.$controller.'/'.$wildcards, '/');
-            $uses = $identifier.'@(:1)';
+            $pattern = trim($root . '/' . $controller . '/' . $wildcards, '/');
+            $uses = $identifier . '@(:1)';
 
             static::register('*', $pattern, compact('uses', 'defaults'));
         }
@@ -256,10 +255,10 @@ class Router
      */
     protected static function root($identifier, $controller, $root)
     {
-        $home = ('home' === $controller) ? '' : dirname($controller);
-        $pattern = trim($root.'/'.$home, '/');
+        $home = ('home' === $controller) ? '' : dirname((string) $controller);
+        $pattern = trim($root . '/' . $home, '/');
 
-        static::register('*', $pattern ? $pattern : '/', ['uses' => $identifier.'@index']);
+        static::register('*', $pattern ? $pattern : '/', ['uses' => $identifier . '@index']);
     }
 
     /**
@@ -340,7 +339,7 @@ class Router
             return new Route($method, $uri, $routes[$uri]);
         }
 
-        if (! is_null($route = static::match($method, $uri))) {
+        if (!is_null($route = static::match($method, $uri))) {
             return $route;
         }
     }
@@ -359,7 +358,7 @@ class Router
 
         foreach ($routes as $route => $action) {
             if (Str::contains($route, '(')) {
-                $pattern = '#^'.static::wildcards($route).'$#u';
+                $pattern = '#^' . static::wildcards($route) . '$#u';
 
                 if (preg_match($pattern, $uri, $parameters)) {
                     return new Route($method, $route, $action, array_slice($parameters, 1));
@@ -396,7 +395,7 @@ class Router
         $routes = static::$routes;
 
         foreach (static::$methods as $method) {
-            if (! isset($routes[$method])) {
+            if (!isset($routes[$method])) {
                 $routes[$method] = [];
             }
 

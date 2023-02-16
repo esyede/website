@@ -31,7 +31,7 @@ class Console
     {
         $arguments = is_array($arguments) ? $arguments : [$arguments];
 
-        if (! isset($arguments[0])) {
+        if (!isset($arguments[0])) {
             $arguments[0] = 'help:run';
         }
 
@@ -44,7 +44,7 @@ class Console
         $command = static::resolve($package, $command);
 
         if (is_null($command)) {
-            throw new \Exception(sprintf('Command not found: %s', $command));
+            throw new \Exception(sprintf("Command not found: '%s'", implode(' ', $arguments)));
         }
 
         if (is_callable([$command, $method])) {
@@ -96,15 +96,14 @@ class Console
     {
         $identifier = Package::identifier($package, $command);
 
-        if (Container::registered('command: '.$identifier)) {
-            return Container::resolve('command: '.$identifier);
+        if (Container::registered('command: ' . $identifier)) {
+            return Container::resolve('command: ' . $identifier);
         }
 
-        if (is_file($path = Package::path($package).'commands'.DS.$command.'.php')) {
+        if (is_file($path = Package::path($package) . 'commands' . DS . $command . '.php')) {
             require_once $path;
 
             $command = static::format($package, $command);
-
             return new $command();
         }
     }
@@ -122,7 +121,7 @@ class Console
         $arguments = [];
 
         for ($i = 0, $count = count($argv); $i < $count; $i++) {
-            $argument = $argv[$i];
+            $argument = (string) $argv[$i];
 
             if (Str::starts_with($argument, '--')) {
                 list($key, $value) = [substr($argument, 2), true];
@@ -152,6 +151,6 @@ class Console
     protected static function format($package, $command)
     {
         $prefix = Package::class_prefix($package);
-        return '\\'.$prefix.Str::classify($command).'_Command';
+        return '\\' . $prefix . Str::classify($command) . '_Command';
     }
 }

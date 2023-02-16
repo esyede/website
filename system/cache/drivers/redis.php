@@ -34,7 +34,7 @@ class Redis extends Driver
      */
     public function has($key)
     {
-        return ! is_null($this->redis->get($key));
+        return !is_null($this->redis->get($key));
     }
 
     /**
@@ -78,7 +78,7 @@ class Redis extends Driver
      */
     public function forever($key, $value)
     {
-        $this->redis->set($key, serialize($value));
+        $this->put($key, serialize($value), 2628000);
     }
 
     /**

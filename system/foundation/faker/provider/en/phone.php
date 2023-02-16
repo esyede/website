@@ -56,25 +56,19 @@ class Phone extends BasePhone
 
     public function tollFreePhoneNumber()
     {
-        $format = self::randomElement(static::$tollFreeFormats);
-        return self::numerify($this->generator->parse($format));
+        return self::numerify($this->generator->parse(self::randomElement(static::$tollFreeFormats)));
     }
 
     public static function areaCode()
     {
-        return self::numberBetween(2, 9).self::randomDigit().self::randomDigitNotNull($digits[1]);
+        $digit = self::randomDigit();
+        return self::numberBetween(2, 9) . self::randomDigit() . self::randomDigitNotNull($digit);
     }
 
     public static function exchangeCode()
     {
         $digits = [self::numberBetween(2, 9), self::randomDigit()];
-
-        if (1 === $digits[1]) {
-            $digits[] = self::randomDigitNotNull(1);
-        } else {
-            $digits[] = self::randomDigit();
-        }
-
+        $digits[] = (1 === $digits[1]) ? self::randomDigitNotNull(1) : self::randomDigit();
         return implode('', $digits);
     }
 }

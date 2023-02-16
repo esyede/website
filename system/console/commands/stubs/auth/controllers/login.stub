@@ -1,0 +1,75 @@
+<?php
+
+defined('DS') or exit('No direct script access.');
+
+use System\Routing\Controller;
+use System\View;
+use System\Validator;
+use System\Redirect;
+use System\Input;
+use System\Auth;
+
+class Auth_Login_Controller extends Controller
+{
+    /**
+     * Buat instance controller baru.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('before', 'csrf|throttle:60,1');
+    }
+
+    /**
+     * Tampilkan formulir login.
+     *
+     * @return \System\Response
+     */
+    public function action_show()
+    {
+        return View::make('auth.login');
+    }
+
+    /**
+     * Tangani permintaan login.
+     *
+     * @return \System\Response
+     */
+    public function action_login()
+    {
+        $validation = Validator::make(Input::all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return Redirect::back()
+                ->with_input()
+                ->with_errors($validation);
+        }
+
+        $credentials = Input::only('email', 'password');
+        $remember = Input::has('remember');
+
+        if (! Auth::attempt($credentials, $remember)) {
+            return Redirect::back()
+                ->with_input()
+                ->with('error', 'Invalid credentials.');
+        }
+
+        return Redirect::to('/dashboard');
+    }
+
+    /**
+     * Tangani permintaan logout.
+     *
+     * @return \System\Response
+     */
+    public function action_logout()
+    {
+        Auth::logout();
+
+        return Redirect::to('/');
+    }
+}

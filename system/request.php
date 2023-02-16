@@ -68,6 +68,19 @@ class Request
     }
 
     /**
+     * Memeriksa tipe request method.
+     *
+     * @param string $method
+     *
+     * @return bool
+     */
+    public static function is_method($method)
+    {
+        $method = strtoupper($method);
+        return static::method() === (('HEAD' === $method) ? 'GET' : $method);
+    }
+
+    /**
      * Ambil request handler dari request saat ini.
      *
      * <code>
@@ -116,7 +129,7 @@ class Request
      */
     public static function server($key, $default = null)
     {
-        return Arr::get(static::servers(), strtoupper($key), $default);
+        return Arr::get(static::servers(), strtoupper((string) $key), $default);
     }
 
     /**
@@ -136,7 +149,7 @@ class Request
      */
     public static function spoofed()
     {
-        return ! is_null(static::foundation()->get(Request::SPOOFER));
+        return !is_null(static::foundation()->get(Request::SPOOFER));
     }
 
     /**
@@ -184,7 +197,7 @@ class Request
             }
 
             foreach ($types as $type) {
-                if (static::matches_type($accept, $type) || $accept === strtok($type, '/').'/*') {
+                if (static::matches_type($accept, $type) || $accept === strtok($type, '/') . '/*') {
                     return true;
                 }
             }
@@ -213,7 +226,7 @@ class Request
             foreach ($types as $ctype) {
                 $type = isset(static::$formats[$ctype]) ? static::$formats[$ctype] : $ctype;
 
-                if (static::matches_type($type, $accept) || $accept === strtok($type, '/').'/*') {
+                if (static::matches_type($type, $accept) || $accept === strtok($type, '/') . '/*') {
                     return $ctype;
                 }
             }
@@ -258,7 +271,10 @@ class Request
         $split = explode('/', $actual);
 
         return isset($split[1])
-            && preg_match('#'.preg_quote($split[0], '#').'/.+\+'.preg_quote($split[1], '#').'#', $type);
+            && preg_match(
+                '#' . preg_quote($split[0], '#') . '/.+\+' . preg_quote($split[1], '#') . '#',
+                $type
+            );
     }
 
     /**
@@ -279,7 +295,7 @@ class Request
      */
     public static function expects_json()
     {
-        return (static::ajax() && ! static::pjax() && $this->accept_any()) || static::wants_json();
+        return (static::ajax() && !static::pjax() && static::accept_any()) || static::wants_json();
     }
 
     /**
@@ -434,7 +450,7 @@ class Request
     {
         return defined('STDIN')
             || 'cli' === php_sapi_name()
-            || ('cgi' === substr(PHP_SAPI, 0, 3) && is_callable('getenv') && getenv('TERM'));
+            || ('cgi' === substr((string) PHP_SAPI, 0, 3) && is_callable('getenv') && getenv('TERM'));
     }
 
     /**
@@ -450,7 +466,7 @@ class Request
     /**
      * Ambil instance http foundation request.
      *
-     * @return System\Faundation\Http\Request
+     * @return \System\Foundation\Http\Request
      */
     public static function foundation()
     {

@@ -23,13 +23,14 @@ return [
         'repositories' => 'Repositories',
         'forum' => 'Forum',
         'vcs' => 'Github',
+        'search' => 'Search...',
     ],
     'content' => [
         'edit' => 'Edit',
     ],
     'footer' => [
         'credit' => 'Made with :love by awesome :contributors. Released under the :license.',
-        'contributors' => 'Contributors',
+        'contributors' => 'Awesome Contributors',
         'license' => 'MIT License',
     ],
 ];

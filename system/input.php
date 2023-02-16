@@ -109,12 +109,12 @@ class Input
      */
     public static function json($as_array = false)
     {
-        if (! is_null(static::$json)) {
+        if (!is_null(static::$json)) {
             return static::$json;
         }
 
         $content = Request::foundation()->getContent();
-        static::$json = json_decode($content, $as_array, 512, JSON_BIGINT_AS_STRING);
+        static::$json = json_decode($content, $as_array);
 
         return static::$json;
     }
@@ -127,10 +127,10 @@ class Input
      *      // Ambil hanya email dari data inputan
      *      $value = Input::only('email');
      *
-     *      // Ambil hanya username dan email dari data inputan
-     *      $input = Input::only(['username', 'email']);
+     *      // Ambil hanya name dan email dari data inputan
+     *      $input = Input::only(['name', 'email']);
      *
-     *      $input = Input::only('username', 'email');
+     *      $input = Input::only('name', 'email');
      *
      * </code>
      *
@@ -149,13 +149,13 @@ class Input
      *
      * <code>.
      *
-     *      // Ambil semua data inputan kecuali username
-     *      $input = Input::except('username');.
+     *      // Ambil semua data inputan kecuali name
+     *      $input = Input::except('name');.
      *
-     *      // Ambil semua data inputan kecuali username dan email
-     *      $input = Input::except(['username', 'email']);
+     *      // Ambil semua data inputan kecuali name dan email
+     *      $input = Input::except(['name', 'email']);
      *
-     *      $input = Input::except('username', 'email');
+     *      $input = Input::except('name', 'email');
      *
      * </code>
      *
@@ -217,7 +217,7 @@ class Input
      * @param string $key
      * @param mixed  $default
      *
-     * @return Upload
+     * @return array
      */
     public static function file($key = null, $default = null)
     {
@@ -233,7 +233,7 @@ class Input
      */
     public static function has_file($key)
     {
-        return mb_strlen(static::file($key.'.tmp_name', ''), '8bit') > 0;
+        return mb_strlen((string) static::file($key . '.tmp_name', ''), '8bit') > 0;
     }
 
     /**

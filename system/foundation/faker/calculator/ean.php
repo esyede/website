@@ -8,6 +8,7 @@ class Ean
 {
     public static function checksum($digits)
     {
+        $digits = (string) $digits;
         $length = mb_strlen($digits, '8bit');
         $even = 0;
 
@@ -26,7 +27,9 @@ class Ean
 
     public static function isValid($ean)
     {
-        if (! preg_match('/^(?:\d{8}|\d{13})$/', $ean)) {
+        $ean = (string) $ean;
+
+        if (!preg_match('/^(?:\d{8}|\d{13})$/', $ean)) {
             return false;
         }
 

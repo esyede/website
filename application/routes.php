@@ -2,6 +2,8 @@
 
 defined('DS') or exit('No direct script access.');
 
+use System\Routing\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Route
@@ -14,6 +16,5 @@ defined('DS') or exit('No direct script access.');
 */
 
 Route::get('/', 'home@index');
-Route::get('key', 'home@key');
 Route::get('download', 'home@download');
 Route::get('repositories/(:any?)', 'home@repositories');

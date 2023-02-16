@@ -2,71 +2,59 @@
 
 namespace System;
 
-defined('DS') or die('No direct script access.');
+defined('DS') or exit('No direct script access.');
 
 class Crypter
 {
     /**
-     * Berisi cipher method.
+     * Enkripsi string.
      *
-     * @var string
-     */
-    protected static $method;
-
-    /**
-     * Enkrispsi string.
-     *
-     * @param string $data
+     * @param string $value
      *
      * @return string
      */
-    public static function encrypt($data)
+    public static function encrypt($value)
     {
-        $method = static::method();
         $iv = Str::bytes(16);
+        $value = openssl_encrypt($value, 'aes-256-cbc', RAKIT_KEY, 0, $iv);
 
-        $hash = openssl_encrypt($data, $method, RAKIT_KEY, OPENSSL_RAW_DATA, $iv);
-        $hmac = hash_hmac('sha256', $hash, RAKIT_KEY, true);
-
-        if (false === $hash) {
-            throw new \Exception('Unable to encrypt the data.');
+        if (false === $value) {
+            throw new \Exception('Could not encrypt the data.');
         }
 
-        return base64_encode($iv.$hmac.$hash);
+        $iv = base64_encode($iv);
+        $mac = hash_hmac('sha256', $iv . $value, RAKIT_KEY);
+        $value = json_encode(compact('iv', 'value', 'mac'), JSON_UNESCAPED_SLASHES);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception('Could not encrypt the data.');
+        }
+
+        return base64_encode($value);
     }
 
     /**
      * Dekripsi string.
      *
-     * @param string $hash
+     * @param string $value
      *
      * @return string
      */
-    public static function decrypt($hash)
+    public static function decrypt($value)
     {
-        $method = static::method();
-        $hash = base64_decode($hash);
+        $value = static::payload($value);
+        $iv = base64_decode($value['iv']);
+        $value = openssl_decrypt($value['value'], 'aes-256-cbc', RAKIT_KEY, 0, $iv);
 
-        $iv = mb_substr($hash, 0, 16, '8bit');
-        $hmac = mb_substr($hash, 16, 32, '8bit');
-        $cipher = mb_substr($hash, 48, null, '8bit');
-        $hmac2 = hash_hmac('sha256', $cipher, RAKIT_KEY, true);
-
-        if (! static::equals($hmac, $hmac2)) {
-            throw new \Exception('Hash verification failed.');
+        if (false === $value) {
+            throw new \Exception('Could not decrypt the data.');
         }
 
-        $data = openssl_decrypt($cipher, $method, RAKIT_KEY, OPENSSL_RAW_DATA, $iv);
-
-        if (false === $data) {
-            throw new \Exception('Unable to decrypt the data.');
-        }
-
-        return $data;
+        return $value;
     }
 
     /**
-     * Cek kesamaan antara 2 hash.
+     * Cek kesamaan antara 2 string.
      *
      * @param string $known
      * @param string $compared
@@ -75,12 +63,12 @@ class Crypter
      */
     public static function equals($known, $compared)
     {
-        if (! is_string($known) || ! is_string($compared)) {
+        if (!is_string($known) || !is_string($compared)) {
             return false;
         }
 
-        $length1 = mb_strlen($known, '8bit');
-        $length2 = mb_strlen($compared, '8bit');
+        $length1 = strlen($known);
+        $length2 = strlen($compared);
 
         if ($length1 !== $length2) {
             return false;
@@ -96,31 +84,50 @@ class Crypter
     }
 
     /**
-     * Ambil method untuk cipher.
-     * OpenSSL 1.1.1+ mereturn nama method dalam bentuk lowercase.
+     * Ambil data payload.
      *
-     * Lihat: https://php.net/manual/en/function.openssl-get-cipher-methods.php#123319
-     * Lihat: https://github.com/oerdnj/deb.sury.org/issues/990
+     * @param string $value
      *
-     * @return string
+     * @return array
      */
-    protected static function method()
+    protected static function payload($value)
     {
-        if (static::$method) {
-            return static::$method;
+        $value = json_decode(base64_decode($value), true);
+
+        if (!static::valid($value)) {
+            throw new \Exception('The payload is invalid.');
         }
 
-        $methods = openssl_get_cipher_methods();
-        $methods = is_array($methods) ? $methods : [$methods];
+        $mac = hash_hmac('sha256', $value['iv'] . $value['value'], RAKIT_KEY);
 
-        if (in_array('AES-128-CBC', $methods)) {
-            static::$method = 'AES-128-CBC';
-        } elseif (in_array('aes-128-cbc', $methods)) {
-            static::$method = 'aes-128-cbc';
-        } else {
-            throw new \Exception('Required AES cipher method is not present on your system.');
+        if (!static::equals($mac, $value['mac'])) {
+            throw new \Exception('The MAC is invalid.');
         }
 
-        return static::$method;
+        return $value;
+    }
+
+    /**
+     * Validasi data payload.
+     *
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    protected static function valid($value)
+    {
+        if (!is_array($value)) {
+            return false;
+        }
+
+        $keys = ['iv', 'value', 'mac'];
+
+        foreach ($keys as $key) {
+            if (!isset($value[$key]) || !is_string($value[$key])) {
+                return false;
+            }
+        }
+
+        return strlen(base64_decode($value['iv'], true)) === 16;
     }
 }

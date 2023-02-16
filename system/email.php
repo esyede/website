@@ -40,11 +40,10 @@ class Email
     {
         $driver = is_null($driver) ? Config::get('email.driver') : $driver;
 
-        if (isset(static::$drivers[$driver])) {
-            return static::$drivers[$driver];
+        if (!isset(static::$drivers[$driver])) {
+            static::$drivers[$driver] = static::factory($driver);
         }
 
-        static::$drivers[$driver] = static::factory($driver);
         return static::$drivers[$driver];
     }
 
@@ -62,12 +61,23 @@ class Email
             return $resolver();
         }
 
+        $email = Config::get('email');
+
         switch ($driver) {
-            case 'mail':     return new Email\Drivers\Mail(Config::get('email'));
-            case 'smtp':     return new Email\Drivers\Smtp(Config::get('email'));
-            case 'sendmail': return new Email\Drivers\Sendmail(Config::get('email'));
-            case 'dummy':    return new Email\Drivers\Dummy(Config::get('email'));
-            default:         throw new \Exception(sprintf('Unsupported email driver: %s', $driver));
+            case 'mail':
+                return new Email\Drivers\Mail($email);
+
+            case 'smtp':
+                return new Email\Drivers\Smtp($email);
+
+            case 'sendmail':
+                return new Email\Drivers\Sendmail($email);
+
+            case 'dummy':
+                return new Email\Drivers\Log($email);
+
+            default:
+                throw new \Exception(sprintf('Unsupported email driver: %s', $driver));
         }
     }
 

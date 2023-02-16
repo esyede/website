@@ -25,8 +25,8 @@ class Luhn
 
     public static function computeCheckDigit($partialNumber)
     {
-        $checkDigit = self::checksum($partialNumber.'0');
-        return (0 === $checkDigit) ? 0 : ((string) (10 - $checkDigit));
+        $digit = self::checksum($partialNumber . '0');
+        return (0 === $digit) ? 0 : ((string) (10 - $digit));
     }
 
     public static function isValid($number)
@@ -36,10 +36,10 @@ class Luhn
 
     public static function generateLuhnNumber($partialValue)
     {
-        if (! preg_match('/^\d+$/', $partialValue)) {
+        if (!preg_match('/^\d+$/', $partialValue)) {
             throw new \InvalidArgumentException('Argument should be an integer.');
         }
 
-        return $partialValue.Luhn::computeCheckDigit($partialValue);
+        return $partialValue . Luhn::computeCheckDigit($partialValue);
     }
 }

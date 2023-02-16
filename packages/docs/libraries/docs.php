@@ -4,7 +4,8 @@ namespace Docs\Libraries;
 
 defined('DS') or exit('No direct script access.');
 
-use Markdown;
+use System\Cache;
+use System\Markdown;
 
 class Docs
 {
@@ -29,7 +30,7 @@ class Docs
      */
     public static function path($name)
     {
-        return dirname(__DIR__).DS.'data'.DS.str_replace(['/', '\\'], DS, $name).'.md';
+        return dirname(__DIR__) . DS . 'data' . DS . str_replace(['/', '\\'], DS, $name) . '.md';
     }
 
     /**
@@ -41,7 +42,19 @@ class Docs
      */
     public static function render($name)
     {
-        return Markdown::render(static::path($name));
+        $name = static::path($name);
+
+        if (filemtime($name) < (int) Cache::get('docs.' . md5($name) . '.mtime')) {
+            return base64_decode(Cache::get('docs.' . md5($name) . '.content'));
+        }
+
+        $content = Markdown::render($name);
+        Cache::forever('docs.' . md5($name), [
+            'content' => base64_encode($content),
+            'mtime' => filemtime($name),
+        ]);
+
+        return $content;
     }
 
     /**
@@ -54,10 +67,7 @@ class Docs
     public static function title($title)
     {
         $title = strpos($title, '/') ? explode('/', $title) : [$title];
-        $title = array_map('ucwords', $title);
-        $title = str_replace('/', ' ~ ', implode('/', $title));
-
-        return $title;
+        return str_replace('/', ' ~ ', implode('/', array_map('ucwords', $title)));
     }
 
     /**

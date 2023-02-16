@@ -75,8 +75,8 @@ class Redis
      */
     public static function db($name = 'default')
     {
-        if (! isset(static::$databases[$name])) {
-            if (empty($config = Config::get('database.redis.'.$name, []))) {
+        if (!isset(static::$databases[$name])) {
+            if (empty($config = Config::get('database.redis.' . $name, []))) {
                 throw new \Exception(sprintf('Redis database config is not configured: %s', $name));
             }
 
@@ -119,13 +119,25 @@ class Redis
      */
     protected function parse($response)
     {
-        switch (substr($response, 0, 1)) {
-            case '-': throw new \Exception(sprintf('Redis error: %s', substr(trim($response), 4)));
+        $response = (string) $response;
+        $type = substr($response, 0, 1);
+
+        switch ($type) {
+            case '-':
+                throw new \Exception(sprintf('Redis error: %s', substr(trim($response), 4)));
+
             case '+':
-            case ':': return $this->inline($response);
-            case '$': return $this->bulk($response);
-            case '*': return $this->multibulk($response);
-            default:  throw new \Exception(sprintf('Unknown response: %s', substr($response, 0, 1)));
+            case ':':
+                return $this->inline($response);
+
+            case '$':
+                return $this->bulk($response);
+
+            case '*':
+                return $this->multibulk($response);
+
+            default:
+                throw new \Exception(sprintf("Unknown response type: '%s'", $type));
         }
     }
 
@@ -136,7 +148,7 @@ class Redis
      */
     protected function connect()
     {
-        if (! is_null($this->connection)) {
+        if (!is_null($this->connection)) {
             return $this->connection;
         }
 
@@ -170,10 +182,12 @@ class Redis
      */
     protected function command($method, array $parameters)
     {
-        $command = '*'.(count($parameters) + 1).CRLF.'$'.mb_strlen($method, '8bit').CRLF.strtoupper($method).CRLF;
+        $method = (string) $method;
+        $command = '*' . (count($parameters) + 1) . CRLF .
+            '$' . mb_strlen($method, '8bit') . CRLF . strtoupper($method) . CRLF;
 
         foreach ($parameters as $parameter) {
-            $command .= '$'.mb_strlen($parameter, '8bit').CRLF.$parameter.CRLF;
+            $command .= '$' . mb_strlen((string) $parameter, '8bit') . CRLF . $parameter . CRLF;
         }
 
         return $command;
@@ -188,7 +202,7 @@ class Redis
      */
     protected function inline($response)
     {
-        return substr(trim($response), 1);
+        return substr(trim((string) $response), 1);
     }
 
     /**
@@ -204,7 +218,7 @@ class Redis
             return;
         }
 
-        list($read, $response, $size) = [0, '', substr($head, 1)];
+        list($read, $response, $size) = [0, '', substr((string) $head, 1)];
 
         if ($size > 0) {
             do {
@@ -228,14 +242,17 @@ class Redis
      */
     protected function multibulk($head)
     {
-        if ('-1' === ($count = substr($head, 1))) {
+        $count = substr((string) $head, 1);
+
+        if ('-1' === $count) {
             return;
         }
 
         $response = [];
+        $count = (int) $count;
 
         for ($i = 0; $i < $count; ++$i) {
-            $response[] = $this->parse(trim(fgets($this->connection, 512)));
+            $response[] = $this->parse(trim((string) fgets($this->connection, 512)));
         }
 
         return $response;
@@ -243,6 +260,11 @@ class Redis
 
     /**
      * Tangani pemanggilan method secara dinamis.
+     *
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @return mixed
      */
     public function __call($method, array $parameters)
     {
@@ -251,6 +273,11 @@ class Redis
 
     /**
      * Tangani pemanggilan static method secara dinamis.
+     *
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @return mixed
      */
     public static function __callStatic($method, array $parameters)
     {

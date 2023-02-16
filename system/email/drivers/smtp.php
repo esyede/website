@@ -36,7 +36,7 @@ class Smtp extends Driver
                 $this->disconnect();
             }
 
-            throw new \Exception('Failed sending email through smtp: '.$e->getMessage());
+            throw new \Exception('Failed sending email through smtp: ' . $e->getMessage());
         }
     }
 
@@ -54,8 +54,8 @@ class Smtp extends Driver
         }
 
         $authenticate = (empty($this->connection)
-            && ! empty($this->config['smtp']['username'])
-            && ! empty($this->config['smtp']['password']));
+            && !empty($this->config['smtp']['username'])
+            && !empty($this->config['smtp']['password']));
 
         $this->connect();
 
@@ -67,13 +67,13 @@ class Smtp extends Driver
             ? $this->config['from']['email']
             : $this->config['return_path'];
 
-        $this->command('MAIL FROM: <'.$retpath.'>', 250);
+        $this->command('MAIL FROM: <' . $retpath . '>', 250);
 
         $lists = ['to', 'cc', 'bcc'];
 
         foreach ($lists as $list) {
             foreach ($this->{$list} as $recipient) {
-                $this->command('RCPT TO: <'.$recipient['email'].'>', [250, 251]);
+                $this->command('RCPT TO: <' . $recipient['email'] . '>', [250, 251]);
             }
         }
 
@@ -81,17 +81,17 @@ class Smtp extends Driver
 
         $lines = explode(
             $this->config['newline'],
-            $message['header'].preg_replace('/^\./m', '..$1', $message['body'])
+            $message['header'] . preg_replace('/^\./m', '..$1', $message['body'])
         );
 
         foreach ($lines as $line) {
-            $line = (('.' === substr($line, 0, 1)) ? '.' : '').$line;
-            fputs($this->connection, $line.$this->config['newline']);
+            $line = (('.' === substr((string) $line, 0, 1)) ? '.' : '') . $line;
+            fputs($this->connection, $line . $this->config['newline']);
         }
 
         $this->command('.', 250);
 
-        if (! $this->pipelining) {
+        if (!$this->pipelining) {
             $this->disconnect();
         }
 
@@ -109,19 +109,21 @@ class Smtp extends Driver
             return;
         }
 
-        if (false === strpos($this->config['smtp']['host'], '://')) {
-            $this->config['smtp']['host'] = 'tcp://'.$this->config['smtp']['host'];
+        if (false === strpos((string) $this->config['smtp']['host'], '://')) {
+            $this->config['smtp']['host'] = 'tcp://' . $this->config['smtp']['host'];
         }
 
         $context = stream_context_create();
 
-        if (is_array($this->config['smtp']['options'])
-        && ! empty($this->config['smtp']['options'])) {
+        if (
+            is_array($this->config['smtp']['options'])
+            && !empty($this->config['smtp']['options'])
+        ) {
             stream_context_set_option($context, $this->config['smtp']['options']);
         }
 
         $this->connection = stream_socket_client(
-            $this->config['smtp']['host'].':'.$this->config['smtp']['port'],
+            $this->config['smtp']['host'] . ':' . $this->config['smtp']['port'],
             $errno,
             $errstr,
             $this->config['smtp']['timeout'],
@@ -136,13 +138,17 @@ class Smtp extends Driver
         $this->response();
 
         try {
-            $this->command('EHLO '.Request::server('SERVER_NAME', 'localhost.local'), 250);
+            $this->command('EHLO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
+        } catch (\Throwable $e) {
+            $this->command('HELO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
         } catch (\Exception $e) {
-            $this->command('HELO '.Request::server('SERVER_NAME', 'localhost.local'), 250);
+            $this->command('HELO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
         }
 
-        if (Arr::get($this->config, 'smtp.starttls', false)
-        && 0 === strpos($this->config['smtp']['host'], 'tcp://')) {
+        if (
+            Arr::get($this->config, 'smtp.starttls', false)
+            && 0 === strpos((string) $this->config['smtp']['host'], 'tcp://')
+        ) {
             try {
                 $this->command('STARTTLS', 220);
 
@@ -154,7 +160,7 @@ class Smtp extends Driver
                     $crypto |= STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
                 }
 
-                if (! stream_socket_enable_crypto($this->connection, true, $crypto)) {
+                if (!stream_socket_enable_crypto($this->connection, true, $crypto)) {
                     throw new \Exception('STARTTLS failed, Crypto client can not be enabled.');
                 }
             } catch (\Throwable $e) {
@@ -164,20 +170,20 @@ class Smtp extends Driver
             }
 
             try {
-                $this->command('EHLO '.Request::server('SERVER_NAME', 'localhost.local'), 250);
+                $this->command('EHLO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
             } catch (\Throwable $e) {
-                $this->command('HELO '.Request::server('SERVER_NAME', 'localhost.local'), 250);
+                $this->command('HELO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
             } catch (\Exception $e) {
-                $this->command('HELO '.Request::server('SERVER_NAME', 'localhost.local'), 250);
+                $this->command('HELO ' . Request::server('SERVER_NAME', 'localhost.local'), 250);
             }
         }
 
         try {
-            $this->command('HELP', 214);
+            $this->command('HELP', false);
         } catch (\Throwable $e) {
-            throw new \Exception('Unable to send help command: '.$e->getMessage());
+            throw new \Exception('Unable to send help command: ' . $e->getMessage());
         } catch (\Exception $e) {
-            throw new \Exception('Unable to send help command: '.$e->getMessage());
+            throw new \Exception('Unable to send help command: ' . $e->getMessage());
         }
     }
 
@@ -229,13 +235,13 @@ class Smtp extends Driver
      */
     protected function command($command, $expecting, $return_number = false)
     {
-        if (! is_array($expecting) && false !== $expecting) {
+        if (!is_array($expecting) && false !== $expecting) {
             $expecting = [$expecting];
         }
 
         stream_set_timeout($this->connection, $this->config['smtp']['timeout']);
 
-        if (! fputs($this->connection, $command.$this->config['newline'])) {
+        if (!fputs($this->connection, $command . $this->config['newline'])) {
             if (false === $expecting) {
                 return false;
             }
@@ -250,12 +256,14 @@ class Smtp extends Driver
         }
 
         $response = $this->response();
-        $number = (int) substr(trim($response), 0, 3);
+        $number = (int) substr(trim((string) $response), 0, 3);
 
-        if (false !== $expecting && ! in_array($number, $expecting)) {
+        if (false !== $expecting && !in_array($number, $expecting)) {
             throw new \Exception(sprintf(
                 'Got an unexpected response from host on command: [%s] expecting: %s received: %s',
-                $command, implode(' or ', $expecting), $response
+                $command,
+                implode(' or ', $expecting),
+                $response
             ));
         }
 
@@ -273,7 +281,7 @@ class Smtp extends Driver
 
         stream_set_timeout($this->connection, $this->config['smtp']['timeout']);
 
-        while ($str = fgets($this->connection, 512)) {
+        while ($str = (string) fgets($this->connection, 512)) {
             $info = stream_get_meta_data($this->connection);
 
             if (isset($info['timed_out']) && $info['timed_out']) {

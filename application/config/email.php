@@ -12,7 +12,7 @@ return [
     | Tentu saja, beberapa driver bawaan juga sudah disediakan agar
     | anda bisa langsung mengirim email secara sederhana dan mudah.
     |
-    | Driver tersedia: 'mail', 'smtp', 'sendmail' atau 'dummy' (testing).
+    | Driver tersedia: 'mail', 'smtp', 'sendmail' atau 'log' (testing).
     |
     */
 
@@ -99,7 +99,7 @@ return [
     |
     */
 
-    'priority' => Email::NORMAL,
+    'priority' => System\Email::NORMAL,
 
     /*
     |--------------------------------------------------------------------------
@@ -111,8 +111,8 @@ return [
     */
 
     'from' => [
-        'email' => null,
-        'name' => null,
+        'email' => 'noreply@example.com',
+        'name' => 'Support Division',
     ],
 
     /*
@@ -217,15 +217,4 @@ return [
     */
 
     'protocol_replacement' => false,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Mailer Agent
-    |--------------------------------------------------------------------------
-    |
-    | User agent untuk email anda.
-    |
-    */
-
-    'mailer' => 'Rakit Mail',
 ];

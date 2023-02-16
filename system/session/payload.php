@@ -9,7 +9,6 @@ use System\Str;
 use System\Config;
 use System\Cookie;
 use System\Session;
-use System\Session\Drivers\Driver;
 use System\Session\Drivers\Sweeper;
 
 class Payload
@@ -24,7 +23,7 @@ class Payload
     /**
      * Berisi nama driver yang sedang digunakan.
      *
-     * @var Driver
+     * @var \System\Session\Drivers\Driver
      */
     public $driver;
 
@@ -38,15 +37,17 @@ class Payload
     /**
      * Buat instance payload baru.
      *
-     * @param Driver $driver
+     * @param \System\Session\Drivers\Driver $driver
      */
-    public function __construct(Driver $driver)
+    public function __construct($driver)
     {
-        $this->driver = $driver;
+        if ($driver instanceof Drivers\Driver) {
+            $this->driver = $driver;
+        }
     }
 
     /**
-     * Ambil semua data session
+     * Ambil semua data session.
      *
      * @return array
      */
@@ -62,7 +63,7 @@ class Payload
      */
     public function load($id)
     {
-        if (! is_null($id)) {
+        if (!is_null($id)) {
             $this->session = $this->driver->load($id);
         }
 
@@ -71,7 +72,7 @@ class Payload
             $this->session = $this->driver->fresh();
         }
 
-        if (! $this->has(Session::TOKEN)) {
+        if (!$this->has(Session::TOKEN)) {
             $this->put(Session::TOKEN, Str::random(40));
         }
     }
@@ -99,7 +100,7 @@ class Payload
      */
     public function has($key)
     {
-        return ! is_null($this->get($key));
+        return !is_null($this->get($key));
     }
 
     /**
@@ -123,15 +124,15 @@ class Payload
      */
     public function get($key, $default = null)
     {
-        if (! isset($this->session['data'])) {
+        if (!isset($this->session['data'])) {
             return value($default);
         }
 
-        if (! is_null($value = Arr::get($this->session['data'], $key))) {
+        if (!is_null($value = Arr::get($this->session['data'], $key))) {
             return $value;
-        } elseif (! is_null($value = Arr::get($this->session['data'][':new:'], $key))) {
+        } elseif (!is_null($value = Arr::get($this->session['data'][':new:'], $key))) {
             return $value;
-        } elseif (! is_null($value = Arr::get($this->session['data'][':old:'], $key))) {
+        } elseif (!is_null($value = Arr::get($this->session['data'][':old:'], $key))) {
             return $value;
         }
 

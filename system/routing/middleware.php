@@ -4,7 +4,6 @@ namespace System\Routing;
 
 defined('DS') or exit('No direct script access.');
 
-use System\Str;
 use System\Package;
 
 class Middleware
@@ -48,11 +47,9 @@ class Middleware
      */
     public static function register($name, callable $handler)
     {
-        if (isset(static::$aliases[$name])) {
-            $name = static::$aliases[$name];
-        }
+        $name = (string) (isset(static::$aliases[$name]) ? static::$aliases[$name] : $name);
 
-        if (Str::starts_with($name, 'pattern: ')) {
+        if (0 === strpos($name, 'pattern: ')) {
             $patterns = explode(', ', substr($name, 9));
 
             foreach ($patterns as $pattern) {
@@ -105,14 +102,14 @@ class Middleware
 
                 Package::boot(Package::name($middleware));
 
-                if (! isset(static::$middlewares[$middleware])) {
+                if (!isset(static::$middlewares[$middleware])) {
                     continue;
                 }
 
                 $callback = static::$middlewares[$middleware];
                 $response = call_user_func_array($callback, array_merge($pass, $parameters));
 
-                if (! is_null($response) && $override) {
+                if (!is_null($response) && $override) {
                     return $response;
                 }
             }

@@ -2,6 +2,9 @@
 
 defined('DS') or exit('No direct script access.');
 
+use System\Storage;
+use System\Request;
+
 class Stuff
 {
     protected static $packages;

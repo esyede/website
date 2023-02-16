@@ -27,7 +27,7 @@ return [
     ],
     'card_1' => [
         'head' => 'Strong Foundation',
-        'text' =>"Take advantage of the rakit's built-in features. Develop truly great applications. Rakit gives you a solid foundation, a mature code base, and a sensible approach to writing web applications.",
+        'text' => "Take advantage of the rakit's built-in features. Develop truly great applications. Rakit gives you a solid foundation, a mature code base, and a sensible approach to writing web applications.",
     ],
     'card_2' => [
         'head' => 'Get Started Quickly',
@@ -69,7 +69,7 @@ return [
         'license' => 'MIT License',
     ],
     'news' => [
-        'text' => 'Latest version of rakit (:version) is out! :more',
-        'more' => 'Read more..',
+        'text' => 'Connect with other developers through our discussion board :more',
+        'more' => 'Learn more..',
     ],
 ];

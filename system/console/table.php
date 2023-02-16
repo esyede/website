@@ -1,4 +1,5 @@
 <?php
+
 namespace System\Console;
 
 defined('DS') or exit('No direct script access.');
@@ -169,7 +170,7 @@ class Table
 
         foreach ($this->data as $y => $row) {
             if (self::HORIZONTAL_ROW === $row) {
-                if (! $this->all_borders) {
+                if (!$this->all_borders) {
                     $output .= $this->get_border_line();
                     unset($this->data[$y]);
                 }
@@ -192,11 +193,11 @@ class Table
             }
         }
 
-        if (! $this->all_borders) {
+        if (!$this->all_borders) {
             $output .= $this->border ? $this->get_border_line() : '';
         }
 
-        return is_cli() ? $output : '<pre>'.$output.'</pre>';
+        return is_cli() ? $output : '<pre>' . $output . '</pre>';
     }
 
     /**
@@ -224,22 +225,21 @@ class Table
             $output .= '+';
         }
 
-        return $output.PHP_EOL;
+        return $output . PHP_EOL;
     }
 
     /**
      * Ambil output sel.
      *
-     * @param int $index
-     * @param int $row
+     * @param int   $index
+     * @param array $row
      *
      * @return string
      */
-    private function get_cell_output($index, $row = null)
+    private function get_cell_output($index, array $row = [])
     {
-        $cell = $row ? $row[$index] : '-';
+        $cell = $row ? (string) $row[$index] : '-';
         $width = $this->column_widths[$index];
-        $pad = $row ? $width - mb_strlen($cell, 'UTF-8') : $width;
         $padding = str_repeat($row ? ' ' : '-', $this->padding);
 
         $output = (0 === $index) ? str_repeat(' ', $this->indent) : '';
@@ -252,7 +252,7 @@ class Table
 
         $output .= $this->strpad($cell, $width + $delta, $row ? ' ' : '-');
         $output .= $padding;
-        $output .= ($row && $index === count($row) - 1 && $this->border) ? ($row ? '|' : '+') : '';
+        $output .= ($row && $index === (count($row) - 1) && $this->border) ? ($row ? '|' : '+') : '';
 
         return $output;
     }
@@ -267,13 +267,13 @@ class Table
         foreach ($this->data as $y => $row) {
             if (is_array($row)) {
                 foreach ($row as $x => $col) {
-                    $width = mb_strlen(preg_replace('/\x1b[[][^A-Za-z]*[A-Za-z]/', '', $col), 'UTF-8');
+                    $width = strlen((string) preg_replace('/\x1b[[][^A-Za-z]*[A-Za-z]/', '', $col));
 
-                    if (! isset($this->column_widths[$x])) {
-                        $this->column_widths[$x] = mb_strlen($width, '8bit');
+                    if (!isset($this->column_widths[$x])) {
+                        $this->column_widths[$x] = $width;
                     } else {
-                        if (strlen($width) > $this->column_widths[$x]) {
-                            $this->column_widths[$x] = mb_strlen($width, '8bit');
+                        if ($width > $this->column_widths[$x]) {
+                            $this->column_widths[$x] = $width;
                         }
                     }
                 }
@@ -295,14 +295,14 @@ class Table
      */
     private function strpad($str, $amount, $content = ' ', $direction = STR_PAD_RIGHT)
     {
-        $len = mb_strlen($str, 'UTF-8');
-        $padlen = mb_strlen($content, 'UTF-8');
+        $len = mb_strlen((string) $str, 'UTF-8');
+        $padlen = mb_strlen((string) $content, 'UTF-8');
 
-        if (! $len && (STR_PAD_RIGHT === $direction || STR_PAD_LEFT === $direction)) {
+        if (!$len && (STR_PAD_RIGHT === $direction || STR_PAD_LEFT === $direction)) {
             $len = 1;
         }
 
-        if (! $amount || ! $padlen || $amount <= $len) {
+        if (!$amount || !$padlen || $amount <= $len) {
             return $str;
         }
 
@@ -310,16 +310,14 @@ class Table
         $repeat = ceil($len - $padlen + $amount);
 
         if (STR_PAD_RIGHT === $direction) {
-            $result = $str.str_repeat($content, $repeat);
-            $result = mb_substr($result, 0, $amount, 'UTF-8');
+            $result = mb_substr($str . str_repeat($content, $repeat), 0, $amount, 'UTF-8');
         } elseif (STR_PAD_LEFT === $direction) {
-            $result = str_repeat($content, $repeat).$str;
-            $result = mb_substr($result, -$amount, null, 'UTF-8');
+            $result = mb_substr(str_repeat($content, $repeat) . $str, -$amount, null, 'UTF-8');
         } elseif (STR_PAD_BOTH === $direction) {
             $length = ($amount - $len) / 2;
-            $repeat = ceil($length / $padlen);
-            $result = mb_substr(str_repeat($content, $repeat), 0, floor($length), 'UTF-8').
-                $str.mb_substr(str_repeat($content, $repeat), 0, ceil($length), 'UTF-8');
+            $repeat = str_repeat((string) $content, ceil($length / $padlen));
+            $result = mb_substr($repeat, 0, floor($length), 'UTF-8') .
+                $str . mb_substr($repeat, 0, ceil($length), 'UTF-8');
         }
 
         return $result;

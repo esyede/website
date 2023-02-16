@@ -53,10 +53,10 @@ Package::boot(DEFAULT_PACKAGE);
 
 use System\Foundation\Oops\Debugger;
 
-Debugger::enable(false, path('storage').'logs');
+Debugger::enable(false, path('storage') . 'logs');
 
 $debugger = Config::get('debugger');
-$template = path('app').'views'.DS.'error'.DS.'500.blade.php';
+$template = path('app') . 'views' . DS . 'error' . DS . '500.blade.php';
 
 Debugger::$productionMode = (false === (bool) $debugger['activate']);
 Debugger::$strictMode = (bool) $debugger['strict'];
@@ -122,7 +122,6 @@ Routing\Router::register('*', '(:all)', function () {
 |
 */
 
-$uri = URI::current();
 $languages = Config::get('application.languages', []);
 $languages[] = Config::get('application.language');
 
@@ -137,10 +136,12 @@ $languages[] = Config::get('application.language');
 |
 */
 
+$uri = URI::current();
+
 foreach ($languages as $language) {
-    if (preg_match('#^'.$language.'(?:$|/)#i', $uri)) {
+    if (preg_match('#^' . $language . '(?:$|/)#i', $uri)) {
         Config::set('application.language', $language);
-        $uri = trim(substr($uri, mb_strlen($language, '8bit')), '/');
+        $uri = trim(substr($uri, strlen($language), '/'));
         break;
     }
 }

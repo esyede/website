@@ -2,6 +2,9 @@
 
 defined('DS') or exit('No direct script access.');
 
+use System\Config;
+use System\Database\Schema;
+
 class Create_Session_Table
 {
 	/**
@@ -11,7 +14,7 @@ class Create_Session_Table
 	 */
 	public function up()
 	{
-        Schema::create_if_not_exists(Config::get('session.table'), function ($table) {
+        Schema::create_if_not_exists('sessions', function ($table) {
             $table->string('id')->length(60)->primary('session_primary');
             $table->integer('last_activity');
             $table->text('data');
@@ -25,6 +28,6 @@ class Create_Session_Table
 	 */
 	public function down()
 	{
-        Schema::drop_if_exists(Config::get('session.table'));
+        Schema::drop_if_exists('sessions');
 	}
 }

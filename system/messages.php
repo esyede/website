@@ -60,7 +60,7 @@ class Messages
      */
     protected function unique($key, $message)
     {
-        return (! isset($this->messages[$key]) || ! in_array($message, $this->messages[$key]));
+        return (!isset($this->messages[$key]) || !in_array($message, $this->messages[$key]));
     }
 
     /**
@@ -79,7 +79,8 @@ class Messages
      */
     public function has($key)
     {
-        return '' !== $this->first($key);
+        $key = $this->first($key);
+        return '' !== $key && !is_null($key);
     }
 
     /**
@@ -168,7 +169,9 @@ class Messages
     public function get($key, $format = null)
     {
         $format = is_null($format) ? $this->format : $format;
-        return array_key_exists($key, $this->messages) ? $this->transform($this->messages[$key], $format) : [];
+        return array_key_exists($key, $this->messages)
+            ? $this->transform($this->messages[$key], $format)
+            : [];
     }
 
     /**

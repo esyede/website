@@ -28,17 +28,17 @@ class RSA
     public static function encrypt($data)
     {
         static::generate();
-        $data = gzcompress($data);
         $pub = openssl_pkey_get_public(static::$details['public_key']);
         $length = ceil(openssl_pkey_get_details($pub)['bits'] / 8) - 11;
+        $data = (string) $data;
         $result = '';
 
         while ($data) {
-            $chunk = substr($data, 0, $length);
-            $data = substr($data, $length);
+            $chunk = mb_substr($data, 0, $length, '8bit');
+            $data = mb_substr($data, $length, null, '8bit');
             $temp = '';
 
-            if (! openssl_public_encrypt($chunk, $temp, $pub)) {
+            if (!openssl_public_encrypt($chunk, $temp, $pub)) {
                 throw new \Exception('Failed to encrypt the data');
             }
 
@@ -63,8 +63,12 @@ class RSA
     {
         static::generate();
 
-        if (! ($priv = openssl_pkey_get_private(static::$details['private_key']))) {
-            throw new \Exception(sprintf('Failed to obtain private key: %s (%s)', $priv, gettype($priv)));
+        if (!($priv = openssl_pkey_get_private(static::$details['private_key']))) {
+            throw new \Exception(sprintf(
+                'Failed to obtain private key: %s (%s)',
+                $priv,
+                gettype($priv)
+            ));
         }
 
         $key = openssl_pkey_get_details($priv);
@@ -72,11 +76,12 @@ class RSA
         $result = '';
 
         while ($encrypted) {
-            $chunk = substr($encrypted, 0, $length);
-            $encrypted = substr($encrypted, $length);
+            $encrypted = (string) $encrypted;
+            $chunk = mb_substr($encrypted, 0, $length, '8bit');
+            $encrypted = mb_substr($encrypted, $length, null, '8bit');
             $temp = '';
 
-            if (! openssl_private_decrypt($chunk, $temp, $priv)) {
+            if (!openssl_private_decrypt($chunk, $temp, $priv)) {
                 throw new \Exception('Failed to decrypt the data');
             }
 
@@ -87,7 +92,7 @@ class RSA
             openssl_free_key($priv);
         }
 
-        return gzuncompress($result);
+        return $result;
     }
 
     /**
@@ -97,13 +102,15 @@ class RSA
      */
     private static function generate()
     {
-        if (! static::$details['private_key'] || ! static::$details['public_key']) {
-            $config = path('storage').'openssl.conf';
-            $randfile = path('storage').'.rnd';
+        if (!static::$details['private_key'] || !static::$details['public_key']) {
+            $config = path('storage') . 'openssl.conf';
+            $randfile = path('storage') . '.rnd';
 
             static::$details['config'] = sprintf(
-                "HOME=%s\nRANDFILE=%s\n[req]\ndefault_bits=%s\n[v3_ca]",
-                path('storage'), $randfile, 2048
+                "HOME=%s\nRANDFILE=%s\n[req]\ndefault_bits=%s\n[v3_ca]\n",
+                path('storage'),
+                $randfile,
+                2048
             );
 
             static::$details['options'] = [
@@ -118,31 +125,35 @@ class RSA
 
             file_put_contents($config, static::$details['config'], LOCK_EX);
 
-            if (! static::$details['private_key']) {
+            if (!static::$details['private_key']) {
                 $priv = openssl_pkey_new(static::$details['options']);
+                $conf = ['config' => $config];
 
-                if (! openssl_pkey_export($priv, static::$details['private_key'], null, compact('config'))) {
+                if (!openssl_pkey_export($priv, static::$details['private_key'], null, $conf)) {
                     $errors = null;
 
-                    while (false !== ($mesage = openssl_error_string())) {
-                        $errors .= $message.PHP_EOL;
+                    while (false !== ($message = openssl_error_string())) {
+                        $errors .= $message . PHP_EOL;
                     }
 
                     throw new \Exception(sprintf('Failed to export private key: %s', $errors));
                 }
             }
 
-            if (! static::$details['public_key']) {
+            if (!static::$details['public_key']) {
                 $details = openssl_pkey_get_details($priv);
 
-                if (! isset($details['key'])) {
+                if (!isset($details['key'])) {
                     throw new \Exception('Failed to extract public key');
                 }
 
                 static::$details['public_key'] = $details['key'];
             }
 
-            if ((static::$details['private_key'] || static::$details['public_key']) && PHP_VERSION_ID < 80000) {
+            if (
+                (static::$details['private_key'] || static::$details['public_key'])
+                && PHP_VERSION_ID < 80000
+            ) {
                 openssl_free_key($priv);
             }
 

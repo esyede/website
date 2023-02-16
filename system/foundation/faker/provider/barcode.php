@@ -9,15 +9,17 @@ class Barcode extends Base
     private function ean($length = 13)
     {
         $code = $this->numerify(str_repeat('#', $length - 1));
-        return $code.static::eanChecksum($code);
+        return $code . static::eanChecksum($code);
     }
 
     protected static function eanChecksum($input)
     {
+        $input = (string) $input;
         $sequence = (8 === (mb_strlen($input, '8bit') - 1)) ? [3, 1] : [1, 3];
+        $inputs = str_split($input);
         $sums = 0;
 
-        foreach (str_split($input) as $n => $digit) {
+        foreach ($inputs as $n => $digit) {
             $sums += $digit * $sequence[$n % 2];
         }
 
@@ -26,6 +28,7 @@ class Barcode extends Base
 
     protected static function isbnChecksum($input)
     {
+        $input = (string) $input;
         $length = 9;
 
         if ($length !== mb_strlen($input, '8bit')) {
@@ -38,7 +41,6 @@ class Barcode extends Base
         });
 
         $result = (11 - array_sum($digits) % 11) % 11;
-
         return ($result < 10) ? $result : 'X';
     }
 
@@ -55,12 +57,12 @@ class Barcode extends Base
     public function isbn10()
     {
         $code = $this->numerify(str_repeat('#', 9));
-        return $code.static::isbnChecksum($code);
+        return $code . static::isbnChecksum($code);
     }
 
     public function isbn13()
     {
-        $code = '97'.static::numberBetween(8, 9).$this->numerify(str_repeat('#', 9));
-        return $code.static::eanChecksum($code);
+        $code = '97' . static::numberBetween(8, 9) . $this->numerify('#########');
+        return $code . static::eanChecksum($code);
     }
 }

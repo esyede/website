@@ -1,0 +1,67 @@
+<?php
+
+defined('DS') or exit('No direct script access.');
+
+use System\Routing\Controller;
+use System\View;
+use System\Validator;
+use System\Redirect;
+use System\Database as DB;
+use System\Input;
+use System\Auth;
+use System\Hash;
+use System\Date;
+
+class Auth_Register_Controller extends Controller
+{
+    /**
+     * Buat instance controller baru.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('before', 'csrf|throttle:60,1');
+    }
+
+    /**
+     * Tampilkan formulir registrasi.
+     *
+     * @return \System\Response
+     */
+    public function action_show()
+    {
+        return View::make('auth.register');
+    }
+
+    /**
+     * Tangani permintaan registrasi.
+     *
+     * @return \System\Response
+     */
+    public function action_register()
+    {
+        $validation = Validator::make(Input::all(), [
+            'name' => 'required|min:3|max:191',
+            'email' => 'required|email|unique:users|max:191',
+            'password' => 'required|confirmed|min:8|max:191',
+        ]);
+
+        if ($validation->fails()) {
+            return Redirect::back()
+                ->with_input()
+                ->with_errors($validation);
+        }
+
+        $user_id = DB::table('users')->insert_get_id([
+            'name' => Input::get('name'),
+            'email' => Input::get('email'),
+            'password' => Hash::make(Input::get('password')),
+            'created_at' => Date::make(),
+        ]);
+
+        Auth::login($user_id);
+
+        return Redirect::to('/dashboard');
+    }
+}

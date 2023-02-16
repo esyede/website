@@ -82,10 +82,10 @@ class Arr
         $results = [];
 
         foreach ($array as $key => $value) {
-            if (is_array($value) && ! empty($value)) {
-                $results = array_merge($results, static::dot($value, $prepend.$key.'.'));
+            if (is_array($value) && !empty($value)) {
+                $results = array_merge($results, static::dot($value, $prepend . $key . '.'));
             } else {
-                $results[$prepend.$key] = $value;
+                $results[$prepend . $key] = $value;
             }
         }
 
@@ -193,8 +193,9 @@ class Arr
      *
      * @return array
      */
-    public static function flatten($array, $depth = INF)
+    public static function flatten($array, $depth = PHP_INT_MAX)
     {
+        $depth = ($depth < 1) ? 1 : (int) $depth;
         $result = [];
 
         foreach ($array as $item) {
@@ -263,7 +264,7 @@ class Arr
      */
     public static function get($array, $key, $default = null)
     {
-        if (! static::accessible($array)) {
+        if (!static::accessible($array)) {
             return value($default);
         }
 
@@ -278,11 +279,11 @@ class Arr
         $segments = explode('.', $key);
 
         foreach ($segments as $segment) {
-            if (static::accessible($array) && static::exists($array, $segment)) {
-                $array = $array[$segment];
-            } else {
+            if (!static::accessible($array) || !static::exists($array, $segment)) {
                 return value($default);
             }
+
+            $array = $array[$segment];
         }
 
         return $array;
@@ -298,7 +299,7 @@ class Arr
      */
     public static function has($array, $key)
     {
-        if (! $array || is_null($key)) {
+        if (!$array || is_null($key)) {
             return false;
         }
 
@@ -309,11 +310,11 @@ class Arr
         $segments = explode('.', $key);
 
         foreach ($segments as $segment) {
-            if (static::accessible($array) && static::exists($array, $segment)) {
-                $array = $array[$segment];
-            } else {
+            if (!static::accessible($array) || !static::exists($array, $segment)) {
                 return false;
             }
+
+            $array = $array[$segment];
         }
 
         return true;
@@ -330,12 +331,42 @@ class Arr
      */
     public static function associative($array)
     {
-        if (! is_array($array)) {
+        if (!is_array($array)) {
             return false;
         }
 
         $keys = array_keys($array);
         return (array_keys($keys) !== $keys);
+    }
+
+    /**
+     * Cek apakah sebuah array merupakan array sequential atau bukan.
+     * Sebuah array dianggap sequential jika key-nya terdiri atas
+     * angka berurutan dari 0 hingga count($array)-1.
+     *
+     * @param array $array
+     *
+     * @return bool
+     */
+    public static function sequential($array)
+    {
+        if (!is_array($array)) {
+            return false;
+        }
+
+        if ([] === $array || $array === array_values($array)) {
+            return true;
+        }
+
+        $next = -1;
+
+        foreach ($array as $key => $value) {
+            if ($key !== ++$next) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -434,7 +465,8 @@ class Arr
         if ($requested > $available) {
             throw new \InvalidArgumentException(sprintf(
                 'You requested %s items, but there are only %s items available.',
-                $requested, $available
+                $requested,
+                $available
             ));
         }
 
@@ -477,7 +509,7 @@ class Arr
         while (count($keys) > 1) {
             $key = array_shift($keys);
 
-            if (! isset($array[$key]) || ! is_array($array[$key])) {
+            if (!isset($array[$key]) || !is_array($array[$key])) {
                 $array[$key] = [];
             }
 

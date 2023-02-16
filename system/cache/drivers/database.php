@@ -35,7 +35,7 @@ class Database extends Driver
      */
     public function has($key)
     {
-        return ! is_null($this->get($key));
+        return !is_null($this->get($key));
     }
 
     /**
@@ -47,9 +47,9 @@ class Database extends Driver
      */
     protected function retrieve($key)
     {
-        $cache = $this->table()->where('key', '=', $this->key.$key)->first();
+        $cache = $this->table()->where('key', '=', $this->key . $key)->first();
 
-        if (! is_null($cache)) {
+        if (!is_null($cache)) {
             return (time() >= $cache->expiration) ? $this->forget($key) : unserialize($cache->value);
         }
     }
@@ -70,7 +70,7 @@ class Database extends Driver
      */
     public function put($key, $value, $minutes)
     {
-        $key = $this->key.$key;
+        $key = $this->key . $key;
         $value = serialize($value);
         $expiration = $this->expiration($minutes);
 
@@ -84,24 +84,13 @@ class Database extends Driver
     }
 
     /**
-     * Simpan item ke cache untuk selamanya (atau 5 tahun).
-     *
-     * @param string $key
-     * @param mixed  $value
-     */
-    public function forever($key, $value)
-    {
-        return $this->put($key, $value, 2628000);
-    }
-
-    /**
      * Hapus item dari cache.
      *
      * @param string $key
      */
     public function forget($key)
     {
-        $this->table()->where('key', '=', $this->key.$key)->delete();
+        $this->table()->where('key', '=', $this->key . $key)->delete();
     }
 
     /**

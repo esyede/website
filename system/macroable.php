@@ -40,7 +40,7 @@ trait Macroable
             ->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED);
 
         foreach ($methods as $method) {
-            if ($replace || ! static::has_macro($method->name)) {
+            if ($replace || !static::has_macro($method->name)) {
                 $method->setAccessible(true);
                 static::macro($method->name, $method->invoke($mixin));
             }
@@ -63,13 +63,13 @@ trait Macroable
      * Invoke static.
      *
      * @param string $method
-     * @param array $parameters
+     * @param array  $parameters
      *
      * @return mixed
      */
     public static function __callStatic($method, array $parameters)
     {
-        if (! static::has_macro($method)) {
+        if (!static::has_macro($method)) {
             throw new \BadMethodCallException(sprintf('Method does not exist: %s', $method));
         }
 
@@ -86,13 +86,13 @@ trait Macroable
      * Invoke object.
      *
      * @param string $method
-     * @param array $parameters
+     * @param array  $parameters
      *
      * @return mixed
      */
     public function __call($method, array $parameters)
     {
-        if (! static::has_macro($method)) {
+        if (!static::has_macro($method)) {
             throw new \BadMethodCallException(sprintf('Method does not exist: %s', $method));
         }
 

@@ -65,18 +65,20 @@ class Middlewares
      */
     public function get($middleware)
     {
-        if (! is_null($this->parameters)) {
+        if (!is_null($this->parameters)) {
             return [$middleware, $this->parameters()];
         }
 
-        if (false !== ($colon = strpos(Package::element($middleware), ':'))) {
-            $parameters = explode(',', substr(Package::element($middleware), $colon + 1));
+        $element = (string) Package::element($middleware);
+
+        if (false !== ($colon = strpos($element, ':'))) {
+            $parameters = explode(',', substr($element, $colon + 1));
 
             if (DEFAULT_PACKAGE !== ($package = Package::name($middleware))) {
-                $colon = mb_strlen($package.'::', '8bit') + $colon;
+                $colon = mb_strlen(((string) $package) . '::', '8bit') + $colon;
             }
 
-            return [substr($middleware, 0, $colon), $parameters];
+            return [substr((string) $middleware, 0, $colon), $parameters];
         }
 
         return [$middleware, []];
@@ -105,7 +107,7 @@ class Middlewares
      */
     public function applies($method)
     {
-        if (count($this->only) > 0 && ! in_array($method, $this->only)) {
+        if (count($this->only) > 0 && !in_array($method, $this->only)) {
             return false;
         }
 
@@ -113,7 +115,7 @@ class Middlewares
             return false;
         }
 
-        $method = strtolower(Request::method());
+        $method = strtolower((string) Request::method());
         return count($this->methods) < 1 || in_array($method, $this->methods);
     }
 

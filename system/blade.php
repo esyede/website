@@ -32,6 +32,12 @@ class Blade
         'else',
         'unless',
         'endunless',
+        'error',
+        'enderror',
+        'guest',
+        'endguest',
+        'auth',
+        'endauth',
         'include',
         'render_each',
         'render',
@@ -57,18 +63,17 @@ class Blade
     public static function sharpen()
     {
         Event::listen(View::ENGINE, function ($view) {
-            if (! Str::ends_with($view->path, '.blade.php')) {
+            if (!Str::ends_with($view->path, '.blade.php')) {
                 return;
             }
 
             $compiled = static::compiled($view->path);
 
-            if (! is_file($compiled) || static::expired($view->view, $view->path)) {
-                Storage::put($compiled, static::compile($view), LOCK_EX);
+            if (!is_file($compiled) || static::expired($view->path)) {
+                file_put_contents($compiled, static::compile($view), LOCK_EX);
             }
 
             $view->path = $compiled;
-
             return ltrim($view->get());
         });
     }
@@ -94,12 +99,11 @@ class Blade
     /**
      * Periksa apakah view sudah "kadaluwarsa" dan perlu dikompilasi ulang.
      *
-     * @param string $view
      * @param string $path
      *
      * @return bool
      */
-    public static function expired($view, $path)
+    public static function expired($path)
     {
         return filemtime($path) > filemtime(static::compiled($path));
     }
@@ -129,11 +133,11 @@ class Blade
         $compilers = static::$compilers;
 
         foreach ($compilers as $compiler) {
-            if ('csrf' === $compiler && ! Str::contains($value, '@csrf')) {
+            if ('csrf' === $compiler && false === strpos($value, '@csrf')) {
                 continue;
             }
 
-            $value = static::{'compile_'.$compiler}($value, $view);
+            $value = static::{'compile_' . $compiler}($value, $view);
         }
 
         return $value;
@@ -149,7 +153,7 @@ class Blade
     public static function compile_php_block($value)
     {
         return preg_replace_callback('/(?<!@)@php(.*?)@endphp/s', function ($matches) {
-            return '<?php '.$matches[1].'?>';
+            return '<?php ' . $matches[1] . '?>';
         }, $value);
     }
 
@@ -162,7 +166,7 @@ class Blade
      */
     protected static function compile_layout($value)
     {
-        if (! Str::starts_with($value, '@layout')) {
+        if (!Str::starts_with($value, '@layout')) {
             return $value;
         }
 
@@ -201,22 +205,24 @@ class Blade
         // {{{  }}}
         $regex = '/\{\{\{\s*(.+?)\s*\}\}\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
-            $ws = empty($matches[2]) ? '' : $matches[2].$matches[2];
-            return '<?php echo e('.$compiler($matches[1]).') ?>'.$ws;
+            $ws = empty($matches[2]) ? '' : $matches[2] . $matches[2];
+            return '<?php echo e(' . $compiler($matches[1]) . ') ?>' . $ws;
         }, $value);
 
         // {!!  !!}
         $regex = '/\{\!!\s*(.+?)\s*!!\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
-            $ws = empty($matches[2]) ? '' : $matches[2].$matches[2];
-            return '<?php echo '.$compiler($matches[1]).' ?>'.$ws;
+            $ws = empty($matches[2]) ? '' : $matches[2] . $matches[2];
+            return '<?php echo ' . $compiler($matches[1]) . ' ?>' . $ws;
         }, $value);
 
         // @{{  }}, {{  }}
         $regex = '/(@)?\{\{\s*(.+?)\s*\}\}(\r?\n)?/s';
         $value = preg_replace_callback($regex, function ($matches) use ($compiler) {
-            $ws = empty($matches[3]) ? '' : $matches[3].$matches[3];
-            return $matches[1] ? substr($matches[0], 1) : '<?php echo e('.$compiler($matches[2]).') ?>'.$ws;
+            $ws = empty($matches[3]) ? '' : $matches[3] . $matches[3];
+            return $matches[1]
+                ? substr($matches[0], 1)
+                : '<?php echo e(' . $compiler($matches[2]) . ') ?>' . $ws;
         }, $value);
 
         return $value;
@@ -271,11 +277,8 @@ class Blade
 
         foreach ($matches[0] as $forelse) {
             preg_match('/\s*\(\s*(\S*)\s/', $forelse, $variable);
-
-            $if = '<?php if (count('.$variable[1].') > 0): ?>';
             $search = '/(\s*)@forelse(\s*\(.*\))/';
-            $replace = '$1'.$if.'<?php foreach$2: ?>';
-
+            $replace = '$1<?php if (count(' . $variable[1] . ') > 0): ?><?php foreach$2: ?>';
             $blade = preg_replace($search, $replace, $forelse);
             $value = str_replace($forelse, $blade, $value);
         }
@@ -367,6 +370,78 @@ class Blade
     protected static function compile_endunless($value)
     {
         return str_replace('@endunless', '<?php endif; ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @error ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_error($value)
+    {
+        return preg_replace(static::matcher('error'), '$1<?php if ($errors->has$2): ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @enderror ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_enderror($value)
+    {
+        return str_replace('@enderror', '<?php endif; ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @guest ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_guest($value)
+    {
+        return str_replace('@guest', '<?php if (System\Auth::guest()): ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @endguest ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_endguest($value)
+    {
+        return str_replace('@endguest', '<?php endif; ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @auth ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_auth($value)
+    {
+        return str_replace('@auth', '<?php if (System\Auth::check()): ?>', $value);
+    }
+
+    /**
+     * Ubah sintaks @endauth ke bentuk PHP.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_endauth($value)
+    {
+        return str_replace('@endauth', '<?php endif; ?>', $value);
     }
 
     /**
@@ -484,7 +559,7 @@ class Blade
      */
     public static function matcher($function)
     {
-        return '/(\s*)@'.$function.'(\s*\(.*\))/';
+        return '/(\s*)@' . $function . '(\s*\(.*\))/';
     }
 
     /**
@@ -496,6 +571,22 @@ class Blade
      */
     public static function compiled($path)
     {
-        return path('storage').'views'.DS.sprintf('%u', crc32($path)).'.bc.php';
+        $name = Str::replace_last('.blade.php', '', basename($path));
+        $len = strlen($path);
+        $hash = 0xFFFF;
+
+        for ($i = 0; $i < $len; $i++) {
+            $hash ^= (ord($path[$i]) << 8);
+
+            for ($j = 0; $j < 8; $j++) {
+                if (($hash <<= 1) & 0x10000) {
+                    $hash ^= 0x1021;
+                }
+
+                $hash &= 0xFFFF;
+            }
+        }
+
+        return path('storage') . 'views' . DS . sprintf('%s__%u', $name, $hash) . '.bc.php';
     }
 }

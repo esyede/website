@@ -7,13 +7,15 @@ defined('DS') or exit('No direct script access.');
 class Clear extends Command
 {
     /**
-     * Bersihkan seluruh file cache blade.
+     * Bersihkan seluruh file cache views.
+     *
+     * @param array $arguments
      *
      * @return void
      */
-    public function blade(array $arguments = [])
+    public function views(array $arguments = [])
     {
-        $files = glob(path('storage').'views'.DS.'*.bc.php');
+        $files = glob(path('storage') . 'views' . DS . '*.bc.php');
 
         if (is_array($files) && count($files) > 0) {
             foreach ($files as $file) {
@@ -21,7 +23,7 @@ class Clear extends Command
             }
         }
 
-        echo 'Blade cache files cleared successfully.'.PHP_EOL;
+        echo 'View cache files cleared successfully.' . PHP_EOL;
     }
 
     /**
@@ -31,7 +33,7 @@ class Clear extends Command
      */
     public function logs(array $arguments = [])
     {
-        $files = glob(path('storage').'logs'.DS.'*');
+        $files = glob(path('storage') . 'logs' . DS . '*');
 
         if (is_array($files) && count($files) > 0) {
             $preserves = [
@@ -42,12 +44,12 @@ class Clear extends Command
             ];
 
             foreach ($files as $file) {
-                if (! in_array(basename($file), $preserves)) {
+                if (!in_array(basename((string) $file), $preserves)) {
                     @unlink($file);
                 }
             }
         }
 
-        echo 'Log files cleared successfully.'.PHP_EOL;
+        echo 'Log files cleared successfully.' . PHP_EOL;
     }
 }

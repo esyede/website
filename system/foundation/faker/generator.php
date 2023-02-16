@@ -4,8 +4,6 @@ namespace System\Foundation\Faker;
 
 defined('DS') or exit('No direct script access.');
 
-use InvalidArgumentException;
-
 class Generator
 {
     protected $providers = [];
@@ -52,12 +50,16 @@ class Generator
             }
         }
 
-        throw new InvalidArgumentException(sprintf('Unknown formatter: %s', $formatter));
+        throw new \InvalidArgumentException(sprintf('Unknown formatter: %s', $formatter));
     }
 
     public function parse($string)
     {
-        return preg_replace_callback('/\{\{\s?(\w+)\s?\}\}/u', [$this, 'callFormatWithMatches'], $string);
+        return preg_replace_callback(
+            '/\{\{\s?(\w+)\s?\}\}/u',
+            [$this, 'callFormatWithMatches'],
+            $string
+        );
     }
 
     protected function callFormatWithMatches($matches)

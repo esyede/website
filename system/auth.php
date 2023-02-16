@@ -31,11 +31,10 @@ class Auth
     {
         $driver = is_null($driver) ? Config::get('auth.driver') : $driver;
 
-        if (isset(static::$drivers[$driver])) {
-            return static::$drivers[$driver];
+        if (!isset(static::$drivers[$driver])) {
+            static::$drivers[$driver] = static::factory($driver);
         }
 
-        static::$drivers[$driver] = static::factory($driver);
         return static::$drivers[$driver];
     }
 
@@ -54,9 +53,14 @@ class Auth
         }
 
         switch ($driver) {
-            case 'magic':  return new Auth\Drivers\Magic(Config::get('auth.table'));
-            case 'facile': return new Auth\Drivers\Facile(Config::get('auth.model'));
-            default:       throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
+            case 'magic':
+                return new Auth\Drivers\Magic(Config::get('auth.table'));
+
+            case 'facile':
+                return new Auth\Drivers\Facile(Config::get('auth.model'));
+
+            default:
+                throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
         }
     }
 

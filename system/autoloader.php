@@ -57,7 +57,9 @@ class Autoloader
         }
 
         foreach (static::$namespaces as $namespace => $directory) {
-            if ('' !== $namespace && $namespace === substr($class, 0, mb_strlen($namespace, '8bit'))) {
+            $class_namespace = substr((string) $class, 0, strlen((string) $namespace));
+
+            if ('' !== $namespace && $namespace === $class_namespace) {
                 return static::load_namespaced($class, $namespace, $directory);
             }
         }
@@ -74,7 +76,7 @@ class Autoloader
      */
     protected static function load_namespaced($class, $namespace, $directory)
     {
-        return static::load_psr(substr($class, mb_strlen($namespace, '8bit')), $directory);
+        return static::load_psr(substr((string) $class, strlen((string) $namespace)), $directory);
     }
 
     /**
@@ -85,14 +87,14 @@ class Autoloader
      */
     protected static function load_psr($class, $directory = null)
     {
-        $file = str_replace(['\\', '_', '/'], DS, $class);
+        $file = str_replace(['\\', '_', '/'], DS, (string) $class);
         $lowercased = strtolower($file);
         $directories = $directory ? (array) $directory : static::$directories;
 
         foreach ($directories as $directory) {
-            if (is_file($path = $directory.$lowercased.'.php')) {
+            if (is_file($path = $directory . $lowercased . '.php')) {
                 return require $path;
-            } elseif (is_file($path = $directory.$file.'.php')) {
+            } elseif (is_file($path = $directory . $file . '.php')) {
                 return require $path;
             }
         }
@@ -164,8 +166,10 @@ class Autoloader
      */
     protected static function format_mappings(array $mappings, $append)
     {
+        $namespaces = [];
+
         foreach ($mappings as $namespace => $directory) {
-            $namespace = trim($namespace, $append).$append;
+            $namespace = trim($namespace, $append) . $append;
             unset(static::$namespaces[$namespace]);
             $namespaces[$namespace] = head(static::format((array) $directory));
         }
@@ -184,7 +188,7 @@ class Autoloader
     protected static function format(array $directories)
     {
         return array_map(function ($directory) {
-            return rtrim($directory, DS).DS;
+            return rtrim($directory, DS) . DS;
         }, $directories);
     }
 }

@@ -4,13 +4,17 @@ namespace System\Routing;
 
 defined('DS') or exit('No direct script access.');
 
+use System\Arr;
 use System\Str;
 use System\View;
+use System\Input;
 use System\Event;
 use System\Package;
 use System\Request;
-use System\Container;
 use System\Response;
+use System\Redirect;
+use System\Container;
+use System\Validator;
 
 abstract class Controller
 {
@@ -54,7 +58,7 @@ abstract class Controller
      */
     public function __construct()
     {
-        if (! is_null($this->layout)) {
+        if (!is_null($this->layout)) {
             $this->layout = $this->layout();
         }
     }
@@ -70,8 +74,8 @@ abstract class Controller
     public static function detect($package = DEFAULT_PACKAGE, $directory = null)
     {
         $package_path = Package::path($package);
-        $root = $package_path.'controllers'.DS;
-        $directory = is_null($directory) ? $package_path.'controllers' : $directory;
+        $root = $package_path . 'controllers' . DS;
+        $directory = is_null($directory) ? $package_path . 'controllers' : $directory;
         $items = new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS);
 
         $controllers = [];
@@ -99,7 +103,7 @@ abstract class Controller
      *      $response = Controller::call('user@show');
      *
      *      // Panggil method User_Admin_Controller::profile() dan oper parameter
-     *      $response = Controller::call('user.admin@profile', [$username]);
+     *      $response = Controller::call('user.admin@profile', [$name]);
      *
      * </code>
      *
@@ -111,21 +115,21 @@ abstract class Controller
     public static function call($destination, array $parameters = [])
     {
         static::references($destination, $parameters);
-
         list($package, $destination) = Package::parse($destination);
 
         Package::boot($package);
 
         list($name, $method) = explode('@', $destination);
-
         $controller = static::resolve($package, $name);
 
-        if (! is_null($route = Request::route())) {
+        if (!is_null($route = Request::route())) {
             $route->controller = $name;
             $route->controller_action = $method;
         }
 
-        return is_null($controller) ? Event::first('404') : $controller->execute($method, $parameters);
+        return is_null($controller)
+            ? Event::first('404')
+            : $controller->execute($method, $parameters);
     }
 
     /**
@@ -139,11 +143,11 @@ abstract class Controller
     protected static function references(&$destination, array &$parameters)
     {
         foreach ($parameters as $key => $value) {
-            if (! is_string($value)) {
+            if (!is_string($value)) {
                 continue;
             }
 
-            $destination = str_replace('(:'.($key + 1).')', $value, $destination, $count);
+            $destination = str_replace('(:' . ($key + 1) . ')', $value, $destination, $count);
 
             if ($count > 0) {
                 unset($parameters[$key]);
@@ -163,18 +167,21 @@ abstract class Controller
      */
     public static function resolve($package, $controller)
     {
-        if (! static::load($package, $controller)) {
+        if (!static::load($package, $controller)) {
             return;
         }
 
         $identifier = Package::identifier($package, $controller);
 
-        if (Container::registered('controller: '.$identifier)) {
-            return Container::resolve('controller: '.$identifier);
+        if (Container::registered('controller: ' . $identifier)) {
+            return Container::resolve('controller: ' . $identifier);
         }
 
         $controller = static::format($package, $controller);
-        return Event::exists(static::FACTORY) ? Event::first(static::FACTORY, $controller) : new $controller();
+
+        return Event::exists(static::FACTORY)
+            ? Event::first(static::FACTORY, [$controller])
+            : new $controller();
     }
 
     /**
@@ -187,8 +194,8 @@ abstract class Controller
      */
     protected static function load($package, $controller)
     {
-        $controller = strtolower(str_replace(['.', '/'], DS, $controller));
-        $controller = Package::path($package).'controllers'.DS.$controller.'.php';
+        $controller = strtolower(str_replace(['.', '/'], DS, (string) $controller));
+        $controller = Package::path($package) . 'controllers' . DS . $controller . '.php';
 
         if (is_file($controller)) {
             require_once $controller;
@@ -208,7 +215,7 @@ abstract class Controller
      */
     protected static function format($package, $controller)
     {
-        return Package::class_prefix($package).Str::classify($controller).'_Controller';
+        return Package::class_prefix($package) . Str::classify($controller) . '_Controller';
     }
 
     /**
@@ -251,10 +258,10 @@ abstract class Controller
      */
     public function response($method, array $parameters = [])
     {
-        $action = $this->restful ? strtolower(Request::method()).'_'.$method : 'action_'.$method;
+        $action = $this->restful ? strtolower((string) Request::method()) . '_' . $method : 'action_' . $method;
         $response = call_user_func_array([$this, $action], $parameters);
 
-        return (is_null($response) && ! is_null($this->layout)) ? $this->layout : $response;
+        return (is_null($response) && !is_null($this->layout)) ? $this->layout : $response;
     }
 
     /**
@@ -292,7 +299,7 @@ abstract class Controller
      */
     protected function middlewares($event, $method)
     {
-        if (! isset($this->middlewares[$event])) {
+        if (!isset($this->middlewares[$event])) {
             return [];
         }
 
@@ -314,9 +321,28 @@ abstract class Controller
      */
     public function layout()
     {
-        return Str::starts_with($this->layout, 'name: ')
-            ? View::of(substr($this->layout, 6))
-            : View::make($this->layout);
+        $layout = (string) $this->layout;
+        return (0 === strpos($layout, 'name: ')) ? View::of(substr($layout, 6)) : View::make($layout);
+    }
+
+    /**
+     * Validasi input.
+     *
+     * @param array $rules
+     *
+     * @return \System\Redirect|null
+     */
+    public function validate(array $rules)
+    {
+        if (!Arr::associative($rules)) {
+            throw new \Exception('Validation rules should be an associative array.');
+        }
+
+        $validation = Validator::make(Input::all(), $rules);
+
+        if ($validation->fails()) {
+            return Redirect::back()->with_input()->with_errors($validation);
+        }
     }
 
     /**

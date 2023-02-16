@@ -49,7 +49,7 @@ abstract class Grammar
             $prefix = $this->connection->config['prefix'];
         }
 
-        return $this->wrap($prefix.$table);
+        return $this->wrap($prefix . $table);
     }
 
     /**
@@ -65,12 +65,9 @@ abstract class Grammar
             return $value->get();
         }
 
-        if (false !== strpos(strtolower($value), ' as ')) {
+        if (false !== strpos(strtolower((string) $value), ' as ')) {
             $segments = explode(' ', $value);
-            $segments[0] = $this->wrap($segments[0]);
-            $segments[2] = $this->wrap($segments[2]);
-
-            return sprintf('%s AS %s', $segments[0], $segments[2]);
+            return sprintf('%s AS %s', $this->wrap($segments[0]), $this->wrap($segments[2]));
         }
 
         $segments = explode('.', $value);
