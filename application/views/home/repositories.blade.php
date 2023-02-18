@@ -39,7 +39,7 @@
                         ]) !!}<br>
                         {{ trans('repo.modal.share.text3') }}<br>
                         {!! trans('repo.modal.share.text4', [
-                            'sub' => '<a href="' . url('forum/forum6-paket-library.html') . '" target="_blank">Paket & library</a>',
+                            'sub' => '<a href="https://github.com/esyede/rakit/discussions" target="_blank">Paket & library</a>',
                         ]) !!}<br>
                     </small>
                 </p>
@@ -91,7 +91,7 @@
                             <li>
                                 <a href="{{ url('repositories') }}">{{ trans('repo.content.all') }}
                                     <span class="tag is-info is-light is-rounded">
-                                        {{ $totalcount }}
+                                        {{ $count }}
                                     </span>
                                 </a>
                             </li>
@@ -100,7 +100,7 @@
                 </div>
                 <div class="column is-9-desktop is-9-tablet">
                     <div class="container">
-                        <p class="menu-label is-size-6">{{ $catname }}</p>
+                        <p class="menu-label is-size-6">{{ $category['name'] }}</p>
                         <br>
                         @for ($i = 0; $i < count($packages); $i++)
                             <div class="box">
@@ -145,16 +145,16 @@
                         @endfor
 
                         <nav class="pagination is-rounded" role="navigation">
-                            @if ($currpage > 1)
-                                <a class="pagination-previous" href="?page={{ $currpage - 1 }}">&laquo;
+                            @if ($current > 1)
+                                <a class="pagination-previous" href="?page={{ $current - 1 }}">&laquo;
                                     {{ trans('pagination.previous') }}</a>
                             @else
                                 <a class="pagination-previous" href="#" disabled>&laquo;
                                     {{ trans('pagination.previous') }}</a>
                             @endif
 
-                            @if ($currpage < $totalpage)
-                                <a class="pagination-next" href="?page={{ $currpage + 1 }}">{{ trans('pagination.next') }}
+                            @if ($current < $last)
+                                <a class="pagination-next" href="?page={{ $current + 1 }}">{{ trans('pagination.next') }}
                                     &raquo;</a>
                             @else
                                 <a class="pagination-next" href="#" disabled>{{ trans('pagination.next') }}

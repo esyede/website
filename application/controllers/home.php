@@ -4,7 +4,6 @@ defined('DS') or exit('No direct script access.');
 
 use System\Routing\Controller;
 use System\Request;
-use System\Config;
 use System\Str;
 use System\URI;
 use System\View;
@@ -15,6 +14,18 @@ use System\Response;
 
 class Home_Controller extends Controller
 {
+    /**
+     * Bahasa default.
+     *
+     * @var string
+     */
+    private $lang = 'id';
+
+    /**
+     * Halaman saat ini.
+     *
+     * @var int
+     */
     private $page;
 
     /**
@@ -24,13 +35,10 @@ class Home_Controller extends Controller
     {
         $this->middleware('before', 'csrf|throttle:60,1');
 
-        $language = (Request::foundation()->getPreferredLanguage() == 'id_ID') ? 'id' : 'en';
-        Config::set('application.language', $language);
-
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
-        $page = Str::title($page) . ' | ' . trans('home.hero.slogan');
-        $this->page = $page;
+        $this->page = Str::title($page) . ' | ' . trans('home.hero.slogan');
+        $this->lang = (Request::getPreferredLanguage() == 'id_ID') ? 'id' : 'en';
     }
 
     /**
@@ -69,32 +77,32 @@ class Home_Controller extends Controller
     public function action_repositories($name = null)
     {
         $perpage = 5;
-        $verbatim = Stuff::packages();
-        $view = view('home.repositories');
+        $packages = Repo::packages();
+        $view = View::make('home.repositories');
 
         $view->brand = 'Rakit';
         $view->tagline = trans('home.hero.slogan');
         $view->page = $this->page;
-        $view->totalcount = count($verbatim);
+        $view->count = count($packages);
 
-        $categorized = Stuff::categorize($verbatim, 'category');
-        $keys = array_keys($categorized);
+        $items = Repo::categorize($packages, 'category');
+        $keys = array_keys($items);
         asort($keys);
 
         $categories = [];
 
         foreach ($keys as $key) {
-            $categories[] = ['name' => $key, 'count' => count($categorized[$key])];
+            $categories[] = ['name' => $key, 'count' => count($items[$key])];
         }
 
         if (is_null($name)) {
-            $view->catname = Str::slug(trans('repo.content.all'));
+            $view->all = Str::slug(trans('repo.content.all'));
             $view->categories = $categories;
-            $view->currpage = Stuff::currpage();
-            $view->totalpage = (int) ceil(count($verbatim) / $perpage);
-            $view->packages = Stuff::paging($verbatim, Stuff::currpage(), $perpage);
+            $view->current = Repo::current();
+            $view->last = (int) ceil(count($packages) / $perpage);
+            $view->packages = Repo::paginate($packages, Repo::current(), $perpage);
 
-            if (empty($view->packages) || $view->currpage > $view->totalpage) {
+            if (empty($view->packages) || $view->current > $view->last) {
                 return Response::error(404);
             }
         } else {
@@ -102,13 +110,13 @@ class Home_Controller extends Controller
                 return Response::error(404);
             }
 
-            $view->catname = Str::slug($name);
+            $view->category = Str::slug($name);
             $view->categories = $categories;
-            $view->currpage = Stuff::currpage();
-            $view->totalpage = (int) ceil(count($categorized[$name]) / $perpage);
-            $view->packages = Stuff::paging($categorized[$name], Stuff::currpage(), $perpage);
+            $view->current = Repo::current();
+            $view->last = (int) ceil(count($items[$name]) / $perpage);
+            $view->packages = Repo::paginate($items[$name], Repo::current(), $perpage);
 
-            if (empty($view->packages) || $view->currpage > $view->totalpage) {
+            if (empty($view->packages) || $view->current > $view->last) {
                 return Response::error(404);
             }
         }
