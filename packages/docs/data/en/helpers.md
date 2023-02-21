@@ -84,7 +84,7 @@ bd($value, 'Breakpoint 1');
 
 <a id="__trans"></a>
 
-### \_\_ and trans
+### \_\_ & trans
 
 The `__` and the `trans` function translates the given translation key using your localization files in the `languages` folder:
 
