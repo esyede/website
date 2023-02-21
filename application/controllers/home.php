@@ -38,7 +38,7 @@ class Home_Controller extends Controller
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
         $this->page = Str::title($page) . ' | ' . trans('home.hero.slogan');
-        $this->lang = (Request::getPreferredLanguage() == 'id_ID') ? 'id' : 'en';
+        $this->lang = stripos(Request::getPreferredLanguage(), 'id') ? 'id' : 'en';
     }
 
     /**
