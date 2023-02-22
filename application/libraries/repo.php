@@ -51,13 +51,7 @@ class Repo
 
     public static function current()
     {
-        $query = Request::getQueryString();
-
-        if (false !== preg_match('/page=[0-9]+$/', $query)) {
-            $page = explode('=', $query);
-            return abs((int) end($page));
-        }
-
-        return 1;
+        $qs = Request::getQueryString();
+        return (false !== preg_match('/page=[0-9]+$/', $qs)) ? abs((int) last(explode('=', $qs))) : 1;
     }
 }
