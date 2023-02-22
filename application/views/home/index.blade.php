@@ -26,10 +26,10 @@
                         <article class="tile is-child notification">
                             <p class="subtitle">
                                 <span class="icon is-small">
-                                    <svg id="i-code" xmlns="http://www.w3.org/2000/svg" viewBox="0 -13 32 32"
+                                    <svg id="i-lightning" xmlns="http://www.w3.org/2000/svg" viewBox="0 -13 32 32"
                                         width="32" height="32" fill="none" stroke="currentcolor"
                                         stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
-                                        <path d="M10 9 L3 17 10 25 M22 9 L29 17 22 25 M18 7 L14 27" />
+                                        <path d="M18 13 L26 2 8 13 14 19 6 30 24 19 Z" />
                                     </svg>
                                 </span>
                                 <span>{{ trans('home.card_2.head') }}</span>
@@ -41,10 +41,10 @@
                         <article class="tile is-child notification">
                             <p class="subtitle">
                                 <span class="icon is-small">
-                                    <svg id="i-lightning" xmlns="http://www.w3.org/2000/svg" viewBox="0 -13 32 32"
+                                    <svg id="i-code" xmlns="http://www.w3.org/2000/svg" viewBox="0 -13 32 32"
                                         width="32" height="32" fill="none" stroke="currentcolor"
                                         stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
-                                        <path d="M18 13 L26 2 8 13 14 19 6 30 24 19 Z" />
+                                        <path d="M10 9 L3 17 10 25 M22 9 L29 17 22 25 M18 7 L14 27" />
                                     </svg>
                                 </span>
                                 <span>{{ trans('home.card_3.head') }}</span>
