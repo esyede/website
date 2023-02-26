@@ -111,7 +111,7 @@ class Job extends Event
                             Database::table($config['table'])->where('id', $job->id)->delete();
                             static::log(sprintf('Job executed: %s - #%s', $job->name, $job->id));
                         } catch (\Throwable $e) {
-                            $failing = true;
+                            $failing = false;
                             $e = get_class($e)
                                 . (('' === $e->getMessage()) ? '' : ': ' . $e->getMessage())
                                 . ' in ' . $e->getFile() . ':' . $e->getLine() . "\nStack trace:\n"
