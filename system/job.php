@@ -190,18 +190,18 @@ class Job extends Event
                             static::log(sprintf('Job executed: %s - #%s', $job->name, $job->id));
                         } catch (\Throwable $e) {
                             static::log(sprintf('Job failed: %s - #%s', $job->name, $job->id));
-                            return false;
                         } catch (\Exception $e) {
                             static::log(sprintf('Job failed: %s - #%s', $job->name, $job->id));
-                            return false;
                         }
                     }
                 }, 0, $failing);
             } catch (\Throwable $e) {
-                // Skip retry() error.
+                return false;
             } catch (\Exception $e) {
-                // Skip retry() error.
+                return false;
             }
+
+            return true;
         }
     }
 
