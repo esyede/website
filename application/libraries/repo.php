@@ -40,13 +40,9 @@ class Repo
         $end = $start + $limit;
         $total = count($data);
 
-        if ($start < 0 || $total <= $start) {
-            return [];
-        } elseif ($total <= $end) {
-            return array_slice($data, $start);
-        }
-
-        return array_slice($data, $start, $end - $start);
+        return ($start < 0 || $total <= $start)
+            ? []
+            : array_slice($data, $start, ($total <= $end) ? null : ($end - $start));
     }
 
     public static function current()
