@@ -48,6 +48,7 @@ class Home_Controller extends Controller
      */
     public function action_index()
     {
+        return Str::password();
         return View::make('home.index')
             ->with('page', $this->page)
             ->with('news', trans('home.news.text', [
