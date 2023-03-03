@@ -70,6 +70,6 @@ return [
     ],
     'news' => [
         'text' => 'Ngobrol dengan pengembang lain di panel diskusi kami :more',
-        'more' => 'Selangkapnya..',
+        'more' => 'Selengkapnya..',
     ],
 ];
