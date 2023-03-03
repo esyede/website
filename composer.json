@@ -1,7 +1,10 @@
 {
     "name": "esyede/rakit",
     "description": "Rakit Web Framework",
-    "keywords": ["rakit", "framework"],
+    "keywords": [
+        "rakit",
+        "framework"
+    ],
     "homepage": "https://rakit.esyede.my.id/",
     "type": "project",
     "license": "MIT",
@@ -15,10 +18,12 @@
     ],
     "support": {
         "issues": "https://github.com/esyede/rakit/issues?state=open",
-        "forum": "https://rakit.esyede.my.id/forum/",
+        "forum": "https://github.com/esyede/rakit/discussions",
         "source": "https://github.com/esyede/rakit"
     },
-    "bin": ["rakit"],
+    "bin": [
+        "rakit"
+    ],
     "require": {
         "php": ">=5.4.0",
         "ext-json": "*",
@@ -35,22 +40,28 @@
             "phpunit/phpunit-mock-objects": {
                 "Fix PHP 7 and 8 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_mock_objects.patch"
             },
+            "phpunit/php-file-iterator": {
+                "Fix PHP 8.1 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_path_file_iterator.patch"
+            },
             "phpunit/phpunit": {
                 "Fix PHP 7 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_php7.patch",
-                "Fix PHP 8 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_php8.patch"
+                "Fix PHP 8 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_php8.patch",
+                "Fix PHP 8.1 compatibility": "https://cdn.jsdelivr.net/gh/esyede/phpunit-patches/phpunit_php81.patch"
             }
         }
     },
     "scripts": {
-        "post-create-project-cmd": ["@php rakit key:generate"]
-      },
-      "config": {
+        "post-create-project-cmd": [
+            "@php rakit key:generate"
+        ]
+    },
+    "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "allow-plugins": {
             "cweagans/composer-patches": true
         }
-      },
-      "minimum-stability": "dev",
-      "prefer-stable": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
