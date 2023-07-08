@@ -2,9 +2,6 @@
 
 defined('DS') or exit('No direct script access.');
 
-use System\Storage;
-use System\Request;
-
 class Repo
 {
     protected static $packages;
@@ -13,7 +10,7 @@ class Repo
 
     public static function packages()
     {
-        static::$json = static::$json ?: path('base').'repositories.json';
+        static::$json = static::$json ?: path('base') . 'repositories.json';
         static::$mtime = static::$mtime ?: Storage::modified(static::$json);
         static::$packages = static::$packages ?: json_decode(Storage::get(static::$json), true);
 

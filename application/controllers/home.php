@@ -2,16 +2,6 @@
 
 defined('DS') or exit('No direct script access.');
 
-use System\Routing\Controller;
-use System\Request;
-use System\Str;
-use System\URI;
-use System\View;
-use System\URL;
-use System\Log;
-use System\Redirect;
-use System\Response;
-
 class Home_Controller extends Controller
 {
     /**
