@@ -109,8 +109,6 @@ class BelongsTo extends Relationship
     /**
      * Bind objek ke relasi belongs-to menggunakan id-nya.
      *
-     * @param int $id
-     *
      * @return Facile
      */
     public function bind($id)
