@@ -1,6 +1,6 @@
 <?php
 
-defined('DS') or exit('No direct access.');
+defined('DS') or exit('No direct script access.');
 
 class Home_Controller extends Controller
 {
@@ -23,8 +23,6 @@ class Home_Controller extends Controller
      */
     public function __construct()
     {
-        $this->middleware('before', 'csrf|throttle:60,1');
-
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
         $this->page = Str::title($page) . ' | ' . trans('home.hero.slogan');
@@ -112,5 +110,27 @@ class Home_Controller extends Controller
         }
 
         return $view;
+    }
+
+    /**
+     * Handle mocking for testing.
+     *
+     * @return string
+     */
+    public function action_mock($delay = 0)
+    {
+        if ($delay > 0) {
+            sleep(intval($delay));
+        }
+
+        return Response::json([
+            'headers' => Request::headers(),
+            'method' => Request::method(),
+            'queries' => Request::foundation()->query->all(),
+            'data' => array_merge((array) Input::all(), [
+                'json' => Input::json(),
+                'stdin' => file_get_contents('php://input'),
+            ]),
+        ]);
     }
 }
