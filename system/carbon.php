@@ -49,7 +49,7 @@ class Carbon extends \DateTime
             $time = $test->toDateTimeString();
         }
 
-        parent::__construct($time ? $time : 'now', static::safeCreateDateTimeZone($tz));
+        parent::__construct($time ?: 'now', static::safeCreateDateTimeZone($tz));
     }
 
     protected static function safeCreateDateTimeZone($tz)
@@ -176,7 +176,7 @@ class Carbon extends \DateTime
 
     public static function createFromTimestampUTC($timestamp)
     {
-        return new static('@' . $timestamp);
+        return static::createFromTimestamp($timestamp, 'UTC');
     }
 
     public function copy()
@@ -336,7 +336,7 @@ class Carbon extends \DateTime
 
     public function tz($value)
     {
-        return $this->setTimezone($value);
+        return $this->timezone($value);
     }
 
     #[\ReturnTypeWillChange]
