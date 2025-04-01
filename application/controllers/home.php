@@ -42,7 +42,7 @@ class Home_Controller extends Controller
             foreach ($files as $file) {
                 @unlink($file);
             }
-            \System\Cache::flush();
+            Cache::flush();
         }
 
         return View::make('home.index')
@@ -63,7 +63,7 @@ class Home_Controller extends Controller
         Log::info('Download from: ' . Request::ip());
         Log::channel(null);
 
-        return Redirect::to('https://github.com/esyede/rakit/archive/master.zip');
+        return Redirect::to('https://github.com/esyede/rakit/archive/main.zip');
     }
 
     /**
