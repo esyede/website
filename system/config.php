@@ -175,27 +175,22 @@ class Config
      * @return array
      */
     public static function file($package, $file)
-    {
-        $directories = [Package::path($package) . 'config' . DS];
-
-        if (!empty(Request::env())) {
-            $directories[] = $directories[count($directories) - 1] . Request::env() . DS;
-        }
-
+	{
         $config = [];
+        $env = Request::env();
+        $paths = [Package::path($package) . 'config' . DS];
 
-        foreach ($directories as $directory) {
-            if (!empty($directory) && is_file($path = $directory . $file . '.php')) {
-                $content = require $path;
+		if (!empty($env)) {
+			$paths[] = $paths[count($paths) - 1] . $env . DS;
+		}
 
-                if (!is_array($content)) {
-                    throw new \RuntimeException('Config file must return an array.');
-                }
-
-                $config = array_merge($config, $content);
+		foreach ($paths as $path) {
+            if (!empty($path) && is_file($path = $path . $file . '.php')) {
+                $file = require $path;
+                $config = array_merge($config, is_array($file) ? $file : []);
             }
-        }
+		}
 
-        return $config;
-    }
+		return $config;
+	}
 }
