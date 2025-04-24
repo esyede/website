@@ -48,7 +48,10 @@ class Home_Controller extends Controller
         return View::make('home.index')
             ->with('page', $this->page)
             ->with('news', trans('home.news.text', [
-                'more' => '<a href="https://github.com/esyede/rakit/discussions/categories/paket-library" target="_blank">' . trans('home.news.more') . '</a>',
+                'more' => vsprintf('<a href="%s" target="_blank">%s</a>', [
+                    'https://github.com/esyede/rakit/discussions/categories/paket-library',
+                    trans('home.news.more')
+                ]),
             ]));
     }
 
