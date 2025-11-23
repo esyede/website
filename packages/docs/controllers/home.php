@@ -7,6 +7,13 @@ use Docs\Libraries\Docs;
 class Docs_Home_Controller extends Controller
 {
     /**
+     * Aktifkan RESTful controller.
+     *
+     * @var bool
+     */
+    public $restful = true;
+
+    /**
      * Bahasa default.
      *
      * @var string
@@ -28,7 +35,7 @@ class Docs_Home_Controller extends Controller
      *
      * @return View
      */
-    public function action_index($lang = null)
+    public function get_index($lang = null)
     {
         $lang = ($lang ?: $this->lang) . '/';
         return View::make('docs::home')
@@ -46,7 +53,7 @@ class Docs_Home_Controller extends Controller
      *
      * @return Response
      */
-    public function action_page($section, $page = null)
+    public function get_page($section, $page = null)
     {
         $args = func_get_args();
         $lang = (isset($args[0]) ? $args[0] : $this->lang) . '/';
