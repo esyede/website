@@ -14,5 +14,6 @@ defined('DS') or exit('No direct access.');
 */
 
 Route::get('/', 'home@index');
+Route::any('mock', 'home@mock');
 Route::get('download', 'home@download');
 Route::get('repositories/(:any?)', 'home@repositories');

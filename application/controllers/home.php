@@ -5,13 +5,6 @@ defined('DS') or exit('No direct script access.');
 class Home_Controller extends Controller
 {
     /**
-     * Aktifkan RESTful controller.
-     *
-     * @var bool
-     */
-    public $restful = true;
-
-    /**
      * Bahasa default.
      *
      * @var string
@@ -41,7 +34,7 @@ class Home_Controller extends Controller
      *
      * @return View
      */
-    public function get_index()
+    public function action_index()
     {
         // Hapus file tidak terpakai
         $files = glob(path('storage') . 'sessions' . DS . '*.session.php');
@@ -67,7 +60,7 @@ class Home_Controller extends Controller
      *
      * @return Redirect
      */
-    public function get_download()
+    public function action_download()
     {
         Log::channel('downloads');
         Log::info('Download from: ' . Request::ip());
@@ -81,7 +74,7 @@ class Home_Controller extends Controller
      *
      * @return View|Response
      */
-    public function get_repositories($name = null)
+    public function action_repositories($name = null)
     {
         $perpage = 5;
         $packages = Repo::packages();
@@ -136,7 +129,7 @@ class Home_Controller extends Controller
      *
      * @return string
      */
-    public function get_mock($delay = 0)
+    public function action_mock($delay = 0)
     {
         if ($delay > 0) {
             sleep(intval($delay));

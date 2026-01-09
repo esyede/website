@@ -1,5 +1,5 @@
 # Autodetect file teks
-*          text=auto
+*          text=auto   eol=lf
 
 # Perlakukan file - file ini sebagai teks
 *.php      text
