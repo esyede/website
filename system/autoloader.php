@@ -48,6 +48,15 @@ class Autoloader
      */
     protected static $loaded = [];
 
+
+
+    /**
+     * Cache untuk hasil is_file.
+     *
+     * @var array
+     */
+    protected static $caches = [];
+
     /**
      * Muat file berdasarkan class yang diberikan.
      * Method ini adalah autoloader default sistem.
@@ -64,10 +73,19 @@ class Autoloader
                 return;
             }
 
-            foreach (static::$namespaces as $namespace => $directory) {
-                $class_namespace = substr((string) $class, 0, strlen((string) $namespace));
+            // Jika directories belum didaftarkan, daftar default
+            if (empty(static::$directories)) {
+                static::directories([
+                    path('app') . 'controllers',
+                    path('app') . 'models',
+                    path('app') . 'libraries',
+                    path('app') . 'commands',
+                    path('app') . 'jobs',
+                ]);
+            }
 
-                if ('' !== $namespace && $namespace === $class_namespace) {
+            foreach (static::$namespaces as $namespace => $directory) {
+                if ('' !== $namespace && $namespace === substr((string) $class, 0, strlen((string) $namespace))) {
                     return static::load_namespaced($class, $namespace, $directory);
                 }
             }
@@ -116,20 +134,37 @@ class Autoloader
         }, (array) $directory) : static::$directories;
 
         foreach ($directories as $directory) {
-            if (is_file($path = $directory . $lowercased . '.php')) {
+            $lowercase_path = $directory . $lowercased . '.php';
+            $original_path = $directory . $file . '.php';
+
+            // Cache is_file untuk lowercase
+            if (!isset(static::$caches[$lowercase_path])) {
+                static::$caches[$lowercase_path] = is_file($lowercase_path);
+            }
+            if (static::$caches[$lowercase_path]) {
                 try {
-                    require $path;
-                    static::$loaded[$lowercased] = $path;
+                    require $lowercase_path;
+                    static::$loaded[$lowercased] = $lowercase_path;
                     return;
                 } catch (\Throwable $e) {
+                    return;
+                } catch (\Exception $e) {
                     return;
                 }
-            } elseif (is_file($path = $directory . $file . '.php')) {
+            }
+
+            // Cache is_file untuk original
+            if (!isset(static::$caches[$original_path])) {
+                static::$caches[$original_path] = is_file($original_path);
+            }
+            if (static::$caches[$original_path]) {
                 try {
-                    require $path;
-                    static::$loaded[$file] = $path;
+                    require $original_path;
+                    static::$loaded[$file] = $original_path;
                     return;
                 } catch (\Throwable $e) {
+                    return;
+                } catch (\Exception $e) {
                     return;
                 }
             }
@@ -226,173 +261,7 @@ class Autoloader
         }, $directories);
     }
 
-    /**
-     * Load classmap dari file yang sudah di-generate.
-     *
-     * @param string $path
-     *
-     * @return bool
-     */
-    public static function load_classmap($path = null)
-    {
-        $path = is_null($path) ? path('storage') . 'classmap.php' : $path;
 
-        if (!is_file($path)) {
-            return false;
-        }
-
-        $classmap = require $path;
-
-        if (is_array($classmap)) {
-            static::map($classmap);
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Generate optimized classmap dari direktori yang diberikan.
-     *
-     * @param array  $directories
-     *
-     * @return array
-     */
-    public static function generate_classmap(array $directories)
-    {
-        $classmap = [];
-        $total_files = 0;
-
-        foreach ($directories as $directory) {
-            $directory = rtrim($directory, DS) . DS;
-
-            if (!is_dir($directory)) {
-                continue;
-            }
-
-            $files = static::scan_directory($directory);
-            $total_files += count($files);
-
-            foreach ($files as $file) {
-                $classes = static::extract_classes_from_file($file);
-
-                foreach ($classes as $class) {
-                    $classmap[$class] = str_replace(['/', '\\'], DS, $file);
-                }
-            }
-        }
-
-        $content = "<?php\n\n";
-        $content .= "defined('DS') or exit('No direct access.');\n\n";
-        $content .= "/**\n";
-        $content .= " * Auto-generated optimized class map.\n";
-        $content .= " * Generated on: " . Carbon::now()->format('Y-m-d H:i:s') . "\n";
-        $content .= " * Total files scanned: " . $total_files . "\n";
-        $content .= " * Total classes mapped: " . count($classmap) . "\n";
-        $content .= " */\n\n";
-        $content .= "return " . var_export($classmap, true) . ";\n";
-
-        file_put_contents(path('storage') . 'classmap.php', $content);
-        return $classmap;
-    }
-
-    /**
-     * Scan direktori secara rekursif untuk file PHP.
-     *
-     * @param string $directory
-     *
-     * @return array
-     */
-    public static function scan_directory($directory)
-    {
-        $files = [];
-        $directory = rtrim($directory, DS) . DS;
-
-        if (!is_dir($directory)) {
-            return $files;
-        }
-
-        $items = scandir($directory);
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $path = $directory.$item;
-
-            if (is_dir($path)) {
-                $files = array_merge($files, static::scan_directory($path));
-            } elseif (is_file($path) && pathinfo($path, PATHINFO_EXTENSION) === 'php') {
-                $files[] = $path;
-            }
-        }
-
-        return $files;
-    }
-
-    /**
-     * Extract nama class, interface, dan trait dari file PHP.
-     *
-     * @param string $file
-     *
-     * @return array
-     */
-    public static function extract_classes_from_file($file)
-    {
-        $classes = [];
-
-        if (!is_file($file)) {
-            return $classes;
-        }
-
-        $content = file_get_contents($file);
-        $tokens = @token_get_all($content);
-        $namespace = '';
-
-        for ($i = 0; $i < count($tokens); $i++) {
-            if (is_array($tokens[$i]) && $tokens[$i][0] === T_NAMESPACE) {
-                $namespace = '';
-
-                for ($j = $i + 1; $j < count($tokens); $j++) {
-                    if (is_array($tokens[$j]) && in_array($tokens[$j][0], [T_STRING, T_NS_SEPARATOR])) {
-                        $namespace .= $tokens[$j][1];
-                    } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
-                        break;
-                    }
-                }
-
-                $namespace = trim($namespace);
-            }
-
-            if (is_array($tokens[$i]) && in_array($tokens[$i][0], [T_CLASS, T_INTERFACE, T_TRAIT])) {
-                for ($j = $i + 1; $j < count($tokens); $j++) {
-                    if (is_array($tokens[$j]) && $tokens[$j][0] === T_STRING) {
-                        $class_name = $tokens[$j][1];
-                        $full_class_name = $namespace ? $namespace.'\\' . $class_name : $class_name;
-                        $classes[] = $full_class_name;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $classes;
-    }
-
-    /**
-     * Clear cache classmap.
-     *
-     * @return void
-     */
-    public static function clear_classmap()
-    {
-        static::$loaded = [];
-
-        if (is_file($file = path('storage') . 'classmap.php')) {
-            @unlink($file);
-        }
-    }
 
     /**
      * Get statistics autoloader untuk debugging.
@@ -407,6 +276,7 @@ class Autoloader
             'namespaces' => count(static::$namespaces),
             'directories' => count(static::$directories),
             'aliases' => count(static::$aliases),
+            'caches' => count(static::$caches),
         ];
     }
 }
