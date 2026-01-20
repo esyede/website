@@ -36,15 +36,6 @@ class Home_Controller extends Controller
      */
     public function action_index()
     {
-        // Hapus file tidak terpakai
-        $files = glob(path('storage') . 'sessions' . DS . '*.session.php');
-        if (is_array($files) && count($files) > 20) {
-            foreach ($files as $file) {
-                @unlink($file);
-            }
-            Cache::flush();
-        }
-
         return View::make('home.index')
             ->with('page', $this->page)
             ->with('news', trans('home.news.text', [
@@ -131,6 +122,15 @@ class Home_Controller extends Controller
      */
     public function action_mock($delay = 0)
     {
+        // Hapus file tidak terpakai
+        $files = glob(path('storage') . 'sessions' . DS . '*.session.php');
+        if (is_array($files) && count($files) > 20) {
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+            Cache::flush();
+        }
+
         if ($delay > 0) {
             sleep(intval($delay));
         }
