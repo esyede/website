@@ -15,6 +15,39 @@ require __DIR__ . DS . 'init.php';
 
 /*
 |--------------------------------------------------------------------------
+| Muat helpers dan autoloader awal untuk debugger
+|--------------------------------------------------------------------------
+|
+| Muat helpers dan autoloader sebelum core untuk inisialisasi debugger early.
+|
+*/
+
+require path('system') . 'helpers.php';
+require_once path('system') . 'autoloader.php';
+spl_autoload_register(['\System\Autoloader', 'load']);
+\System\Autoloader::namespaces(['System' => path('system')]);
+
+/*
+|--------------------------------------------------------------------------
+| Inisialisasi debugger awal
+|--------------------------------------------------------------------------
+|
+| Enable debugger sebelum boot package untuk tangkap error early seperti
+| koneksi Redis yang gagal saat session init.
+|
+*/
+
+use System\Foundation\Oops\Debugger;
+
+if (file_exists($debugger = path('app') . 'config' . DS . 'debugger.php')) {
+    $debugger = require $debugger;
+    Debugger::$productionMode = (false === (bool) $debugger['activate']);
+    Debugger::enable(null, path('storage') . 'logs');
+    unset($debugger);
+}
+
+/*
+|--------------------------------------------------------------------------
 | Jalankan Core Boot
 |--------------------------------------------------------------------------
 |
@@ -27,6 +60,31 @@ require __DIR__ . DS . 'init.php';
 
 require __DIR__ . DS . 'core.php';
 
+/*
+|--------------------------------------------------------------------------
+| Load Config Debugger Base
+|--------------------------------------------------------------------------
+|
+| Load base config debugger untuk set productionMode sebelum enable,
+| agar error early tidak tampil HTML debugger.
+|
+*/
+
+$debugger = require path('app') . 'config' . DS . 'debugger.php';
+Debugger::$productionMode = (false === (bool) $debugger['activate']);
+unset($debugger);
+
+/*
+|--------------------------------------------------------------------------
+| Enable Debugger Lebih Awal
+|--------------------------------------------------------------------------
+|
+| Enable debugger sebelum boot package untuk tangkap error early seperti
+| koneksi Redis yang gagal saat session init.
+|
+*/
+
+Debugger::enable(null, path('storage') . 'logs');
 /*
 |--------------------------------------------------------------------------
 | Mulai Paket 'application'
@@ -47,29 +105,24 @@ Package::boot(DEFAULT_PACKAGE);
 |--------------------------------------------------------------------------
 |
 | Atur konfigurasi debugger sesuai data yang diberikan user di file
-| application/config/debugger.php.
+| application/config/debugger.php. Config sudah dimuat awal, tapi set ulang
+| untuk memastikan konsistensi setelah package boot.
 |
 */
 
-use System\Foundation\Oops\Debugger;
-
-Debugger::enable(false, path('storage') . 'logs');
-
-$debugger = Config::get('debugger');
+$debugger = Config::get('debugger'); // Gunakan Config::get untuk konsistensi
 $template = path('app') . 'views' . DS . 'error' . DS . '500.blade.php';
 
+// ProductionMode sudah di-set awal, tapi pastikan sesuai config
 Debugger::$productionMode = (false === (bool) $debugger['activate']);
 Debugger::$strictMode = (bool) $debugger['strict'];
 Debugger::$scream = (bool) $debugger['scream'];
 
-Debugger::$showFirelog = false;
 Debugger::$logSeverity = 0;
 Debugger::$errorTemplate = is_file($template) ? $template : null;
 Debugger::$time = RAKIT_START;
-Debugger::$editor = false;
-Debugger::$editorMapping = [];
-Debugger::$customCssFiles = [];
-Debugger::$customJsFiles = [];
+
+
 
 Debugger::$showBar = (bool) $debugger['debugbar'];
 Debugger::$showLocation = (bool) $debugger['location'];
@@ -77,7 +130,7 @@ Debugger::$maxDepth = (int) $debugger['depth'];
 Debugger::$maxLength = (int) $debugger['length'];
 Debugger::$email = (string) $debugger['email'];
 
-unset($debugger, $template);
+unset($debugger, $template, $debugger);
 
 /*
 |--------------------------------------------------------------------------
