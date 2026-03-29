@@ -124,6 +124,7 @@ class Home_Controller extends Controller
     {
         // Hapus file tidak terpakai
         $files = glob(path('storage') . 'sessions' . DS . '*.session.php');
+
         if (is_array($files) && count($files) > 20) {
             foreach ($files as $file) {
                 @unlink($file);

@@ -3,24 +3,24 @@
 defined('DS') or exit('No direct access.');
 
 use Docs\Libraries\Docs;
+use System\Response;
 
 class Docs_Home_Controller extends Controller
 {
     /**
-     * Bahasa default.
+     * Indicates that the controller is RESTful.
      *
-     * @var string
+     * @var bool
      */
-    private $lang;
+    public $restful = true;
 
     /**
-     * Jalankan CSRF middleware di setiap POST request.
+     * Construtor.
      */
     public function __construct()
     {
-        $this->lang = Request::getPreferredLanguage();
-        $this->lang = (false !== stripos((string) $this->lang, 'id')) ? 'id' : 'en';
-        $this->middleware('before', 'csrf')->on('post');
+        // $this->middleware('before', 'csrf|throttle:60,1')->on('post');
+        Docs::ensure_search_data_exists();
     }
 
     /**
@@ -28,14 +28,13 @@ class Docs_Home_Controller extends Controller
      *
      * @return View
      */
-    public function action_index($lang = null)
+    public function get_index()
     {
-        $lang = ($lang ?: $this->lang) . '/';
-        return View::make('docs::home')
+        return view('docs::home')
             ->with_title(Docs::title('home'))
-            ->with_sidebar(Docs::sidebar(Docs::render($lang . '000-sidebar')))
-            ->with_content(Docs::content(Docs::render($lang . 'home')))
-            ->with_file($lang . 'home');
+            ->with_sidebar(Docs::sidebar(Docs::render('000-sidebar')))
+            ->with_content(Docs::content(Docs::render('home')))
+            ->with_file('home');
     }
 
     /**
@@ -44,23 +43,31 @@ class Docs_Home_Controller extends Controller
      * @param string $section
      * @param string $page
      *
-     * @return Response
+     * @return View
      */
-    public function action_page($section, $page = null)
+    public function get_page($section, $page = null)
     {
         $args = func_get_args();
-        $lang = (isset($args[0]) ? $args[0] : $this->lang) . '/';
         $file = Docs::exists(rtrim(implode('/', $args), '/') . '/home') ? '/home' : '';
         $file = rtrim(implode('/', $args), '/') . $file;
 
-        if (!Docs::exists($file)) {
-            return Response::error(404);
-        }
+        abort_if(!Docs::exists($file), 404);
 
-        return View::make('docs::home')
+        return view('docs::home')
             ->with_title(Docs::title($file))
-            ->with_sidebar(Docs::sidebar(Docs::render($lang . '000-sidebar')))
+            ->with_sidebar(Docs::sidebar(Docs::render('000-sidebar')))
             ->with_content(Docs::content(Docs::render($file)))
             ->with_file($file);
+    }
+
+    /**
+     * Handle GET /docs/search.
+     *
+     * @return Response
+     */
+    public function get_search()
+    {
+        $data = file_get_contents(path('storage') . 'docs-search-data.json');
+        return Response::json(json_decode($data, true));
     }
 }

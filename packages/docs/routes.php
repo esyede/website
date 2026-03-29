@@ -16,5 +16,5 @@ use System\Routing\Route;
 */
 
 Route::get('(:package)', 'docs::home@index');
-Route::get('(:package)/(en|id)', 'docs::home@index');
-Route::get('(:package)/(en|id)/(:any)/(:any?)', 'docs::home@page');
+Route::get('(:package)/search', 'docs::home@search');
+Route::get('(:package)/(:any?)/(:any?)', 'docs::home@page');

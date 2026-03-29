@@ -7,7 +7,7 @@
             <div class="has-text-centered">
                 <a href="{{ url('download') }}"
                     class="button is-success is-inverted is-outlined">{{ trans('home.hero.btn1') }}</a>
-                <a href="{{ url('docs/' . config('application.language')) }}"
+                <a href="{{ url('docs') }}"
                     class="button is-link is-inverted is-outlined">{{ trans('home.hero.btn2') }}</a>
                 <br>
                 <small>{{ trans('home.hero.text') }} {{ RAKIT_VERSION }}</small>

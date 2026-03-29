@@ -12,7 +12,7 @@
             <div class="navbar-end">
                 <a class="navbar-item" href="{{ URL::home() }}">{{ trans('home.navbar.one') }}</a>
                 <a class="navbar-item"
-                    href="{{ url('docs/' . config('application.language')) }}">{{ trans('home.navbar.two') }}</a>
+                    href="{{ url('docs') }}">{{ trans('home.navbar.two') }}</a>
                 <a class="navbar-item" href="{{ url('api/main/index.html') }}"
                     target="_blank">{{ trans('home.navbar.three') }}</a>
                 <a class="navbar-item" href="{{ url('repositories') }}">{{ trans('home.navbar.four') }}</a>
