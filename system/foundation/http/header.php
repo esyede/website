@@ -10,7 +10,7 @@ class Header implements \IteratorAggregate, \Countable
     protected $cacheControl;
 
     /**
-     * Konstruktor.
+     * Constructor.
      *
      * @param array $headers
      */
@@ -25,7 +25,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Return data header dalam bentuk string.
+     * Return string representation of the headers.
      *
      * @return string
      */
@@ -38,9 +38,7 @@ class Header implements \IteratorAggregate, \Countable
         $max = max(array_map(function ($key) {
             return mb_strlen((string) $key, '8bit');
         }, array_keys($this->headers))) + 1;
-
         ksort($this->headers);
-
         $content = '';
 
         foreach ($this->headers as $name => $values) {
@@ -55,7 +53,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Mereturn seluruh data header.
+     * Get all headers.
      *
      * @return array
      */
@@ -65,7 +63,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Meretrn seluruh key header.
+     * Get all header keys.
      *
      * @return array
      */
@@ -75,7 +73,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Ganti seluruh header dengan yang baru.
+     * Replace all headers.
      *
      * @param array $headers
      */
@@ -86,7 +84,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Tambahkan data header baru.
+     * Add array of headers.
      *
      * @param array $headers
      */
@@ -98,7 +96,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Mereturn value header berdasarkan key yang diberikan.
+     * Get header value by key.
      *
      * @param string $key
      * @param mixed  $default
@@ -109,24 +107,13 @@ class Header implements \IteratorAggregate, \Countable
     public function get($key, $default = null, $first = true)
     {
         $key = $this->standardizeKey($key);
-
-        if (!array_key_exists($key, $this->headers)) {
-            if (null === $default) {
-                return $first ? null : [];
-            }
-
-            return $first ? $default : [$default];
-        }
-
-        if ($first) {
-            return count($this->headers[$key]) ? $this->headers[$key][0] : $default;
-        }
-
-        return $this->headers[$key];
+        return array_key_exists($key, $this->headers)
+            ? ($first ? (count($this->headers[$key]) ? $this->headers[$key][0] : $default) : $this->headers[$key])
+            : ((null === $default) ? ($first ? null : []) : ($first ? $default : [$default]));
     }
 
     /**
-     * Set data header berdasarkan key.
+     * Set header value by key.
      *
      * @param string       $key
      * @param string|array $values
@@ -136,9 +123,7 @@ class Header implements \IteratorAggregate, \Countable
     {
         $key = $this->standardizeKey($key);
         $values = array_values((array) $values);
-        $this->headers[$key] = (true === $replace || !isset($this->headers[$key]))
-            ? $values
-            : array_merge($this->headers[$key], $values);
+        $this->headers[$key] = (true === $replace || !isset($this->headers[$key])) ? $values : array_merge($this->headers[$key], $values);
 
         if ('Cache-Control' === $key) {
             $this->cacheControl = $this->parseCacheControl($values[0]);
@@ -146,7 +131,7 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Periksa ada tidaknya suatu header.
+     * Check if header exists by key.
      *
      * @param string $key
      *
@@ -154,12 +139,11 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function has($key)
     {
-        $key = $this->standardizeKey($key);
-        return array_key_exists($key, $this->headers);
+        return array_key_exists($this->standardizeKey($key), $this->headers);
     }
 
     /**
-     * Mereturn TRUE jika header mengandung value yang diberikan.
+     * Check if header contains specific value.
      *
      * @param string $key
      * @param string $value
@@ -172,14 +156,13 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Hapus header berdasarkan key-nya.
+     * Remove header by key.
      *
      * @param string $key
      */
     public function remove($key)
     {
         $key = $this->standardizeKey($key);
-
         unset($this->headers[$key]);
 
         if ('Cache-Control' === $key) {
@@ -188,14 +171,14 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Mereturn value header yang dikonversikan ke bentuk tanggal.
+     * Get header date value by key.
      *
      * @param string    $key
      * @param \DateTime $default
      *
      * @return \DateTime|null
      */
-    public function getDate($key, \DateTime $default = null)
+    public function getDate($key, $default = null)
     {
         if (null === ($value = $this->get($key))) {
             return $default;
@@ -285,7 +268,6 @@ class Header implements \IteratorAggregate, \Countable
     protected function getCacheControlHeader()
     {
         ksort($this->cacheControl);
-
         $parts = [];
 
         foreach ($this->cacheControl as $key => $value) {
@@ -312,19 +294,11 @@ class Header implements \IteratorAggregate, \Countable
      */
     protected function parseCacheControl($header)
     {
-        preg_match_all(
-            '/([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?/',
-            $header,
-            $matches,
-            PREG_SET_ORDER
-        );
-
+        preg_match_all('/([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?/', $header, $matches, PREG_SET_ORDER);
         $parsed = [];
 
         foreach ($matches as $match) {
-            $parsed[strtolower((string) $match[1])] = isset($match[3])
-                ? $match[3]
-                : (isset($match[2]) ? $match[2] : true);
+            $parsed[strtolower((string) $match[1])] = isset($match[3]) ? $match[3] : (isset($match[2]) ? $match[2] : true);
         }
 
         return $parsed;
@@ -339,7 +313,6 @@ class Header implements \IteratorAggregate, \Countable
      */
     protected static function standardizeKey($key)
     {
-        $key = strtr(strtolower((string) $key), '_', '-');
-        return str_replace(' ', '-', ucwords(strtr($key, '-', ' ')));
+        return str_replace(' ', '-', ucwords(strtr(strtr(strtolower((string) $key), '_', '-'), '-', ' ')));
     }
 }

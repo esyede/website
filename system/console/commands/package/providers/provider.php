@@ -10,7 +10,7 @@ use System\Console\Color;
 abstract class Provider
 {
     /**
-     * Download paket yang diberikan.
+     * Download the given package.
      *
      * @param array  $package
      * @param string $path
@@ -20,7 +20,7 @@ abstract class Provider
     abstract public function install(array $package, $path);
 
     /**
-     * Download dan ekstrak arsip paket yang diberikan.
+     * Download and extract the given package.
      *
      * @param string $url
      * @param array  $package
@@ -31,14 +31,11 @@ abstract class Provider
     protected function zipball($url, array $package, $path)
     {
         $zipball = path('storage') . 'console' . DS . 'zipball.zip';
-
-        if (is_file($zipball)) {
-            Storage::delete($zipball);
-        }
+        is_file($zipball) && Storage::delete($zipball);
 
         if (is_dir(path('package') . $package['name'])) {
             echo PHP_EOL . Color::red(sprintf('Package already downloaded: %s', $package['name']));
-            exit;
+            return;
         }
 
         chmod(Storage::latest(path('package'))->getRealPath(), 0755);
@@ -66,7 +63,7 @@ abstract class Provider
                 Storage::cpdir($assets, $destination);
             } else {
                 echo PHP_EOL . Color::red(sprintf('Assets already exists: %s', $destination));
-                exit;
+                return;
             }
         }
 
@@ -74,17 +71,14 @@ abstract class Provider
     }
 
     /**
-     * Download arsip zip milik sebuah paket.
+     * Download the zipball archive of the given package.
      *
      * @param string $url
      * @param string $destination
      */
     protected function download($url, $destination)
     {
-        if (is_dir($destination)) {
-            Storage::delete($destination);
-        }
-
+        is_dir($destination) && Storage::delete($destination);
         $options = [
             CURLOPT_HTTPGET => 1,
             CURLOPT_SSL_VERIFYPEER => 0,
@@ -93,20 +87,12 @@ abstract class Provider
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_VERBOSE => get_cli_option('verbose') ? 1 : 0,
-            CURLOPT_USERAGENT => sprintf(
-                'Mozilla/5.0 (Linux x86_64; rv:%s.0) Gecko/20100101 Firefox/%s.0',
-                mt_rand(90, 110),
-                mt_rand(90, 110)
-            ),
+            CURLOPT_USERAGENT => sprintf('Mozilla/5.0 (Linux x86_64; rv:%s.0) Gecko/20100101 Firefox/%s.0', mt_rand(90, 110), mt_rand(90, 110)),
         ];
 
         $ch = curl_init();
         curl_setopt_array($ch, $options);
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_HEADER => 1,
-            CURLOPT_NOBODY => 1,
-        ]);
+        curl_setopt_array($ch, [CURLOPT_URL => $url, CURLOPT_HEADER => 1, CURLOPT_NOBODY => 1]);
 
         /** @disregard */
         $unused = curl_exec($ch);
@@ -126,22 +112,18 @@ abstract class Provider
                 gettype($type),
                 'application/zip'
             ));
-            exit;
+            return;
         }
 
         try {
             $fopen = fopen($destination, 'w+');
             $ch = curl_init();
             curl_setopt_array($ch, $options);
-            curl_setopt_array($ch, [
-                CURLOPT_URL => $url,
-                CURLOPT_FILE => $fopen,
-                19914 => 1, // Fix deprecated CURLOPT_BINARYTRANSFER constant
-            ]);
+            curl_setopt_array($ch, [CURLOPT_URL => $url, CURLOPT_FILE => $fopen, 19914 => 1]);
 
             if (false === curl_exec($ch)) {
                 echo PHP_EOL . Color::red('Error: ' . curl_error($ch));
-                exit;
+                return;
             }
 
             if (PHP_VERSION_ID < 80000) {
@@ -152,15 +134,15 @@ abstract class Provider
             fclose($fopen);
         } catch (\Throwable $e) {
             echo PHP_EOL . Color::red('Error: ' . $e->getMessage());
-            exit;
+            return;
         } catch (\Exception $e) {
             echo PHP_EOL . Color::red('Error: ' . $e->getMessage());
-            exit;
+            return;
         }
     }
 
     /**
-     * Unzip arsip paket.
+     * Unzip the given package archive.
      *
      * @param string $file
      * @param string $destination
@@ -177,14 +159,14 @@ abstract class Provider
 
         if (!extension_loaded('zip') || !class_exists('\ZipArchive')) {
             echo PHP_EOL . Color::red('Please enable php-zip extension on this server');
-            exit;
+            return;
         }
 
         $zip = new \ZipArchive();
 
         if (!$zip->open($file)) {
             echo PHP_EOL . Color::red(sprintf('Error: Could not open zip file: %s', $file));
-            exit;
+            return;
         }
 
         $zip->extractTo($destination);

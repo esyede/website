@@ -16,11 +16,7 @@ class Carbon extends \DateTime
 
     protected static $now;
     protected static $format = 'Y-m-d H:i:s';
-    protected static $relatives = [
-        'this', 'next', 'last', 'tomorrow',
-        'yesterday', '+', '-', 'first', 'last', 'ago',
-    ];
-
+    protected static $relatives = ['this', 'next', 'last', 'tomorrow', 'yesterday', '+', '-', 'first', 'last', 'ago'];
     protected static $days = [
         self::SUNDAY => 'Sunday',
         self::MONDAY => 'Monday',
@@ -117,15 +113,8 @@ class Carbon extends \DateTime
         return static::createFromTimestamp(~PHP_INT_MAX);
     }
 
-    public static function create(
-        $year = null,
-        $month = null,
-        $day = null,
-        $hour = null,
-        $minute = null,
-        $second = null,
-        $tz = null
-    ) {
+    public static function create($year = null, $month = null, $day = null, $hour = null, $minute = null, $second = null, $tz = null)
+    {
         $dt = new \DateTime();
         $year = ($year === null) ? $dt->format('Y') : $year;
         $month = ($month === null) ? $dt->format('n') : $month;
@@ -188,54 +177,24 @@ class Carbon extends \DateTime
     public function __get($name)
     {
         $formats = [
-            'year' => 'Y',
-            'yearIso' => 'o',
-            'month' => 'n',
-            'day' => 'j',
-            'hour' => 'G',
-            'minute' => 'i',
-            'second' => 's',
-            'micro' => 'u',
-            'dayOfWeek' => 'w',
-            'dayOfYear' => 'z',
-            'weekOfYear' => 'W',
-            'daysInMonth' => 't',
-            'timestamp' => 'U',
+            'year' => 'Y', 'yearIso' => 'o', 'month' => 'n', 'day' => 'j',
+            'hour' => 'G', 'minute' => 'i', 'second' => 's', 'micro' => 'u',
+            'dayOfWeek' => 'w', 'dayOfYear' => 'z', 'weekOfYear' => 'W',
+            'daysInMonth' => 't', 'timestamp' => 'U',
         ];
 
         switch (true) {
-            case array_key_exists($name, $formats):
-                return intval($this->format($formats[$name]));
-
-            case $name === 'weekOfMonth':
-                return intval(ceil($this->day / 7));
-
-            case $name === 'age':
-                return intval($this->diffInYears());
-
-            case $name === 'quarter':
-                return intval(ceil($this->month / 3));
-
-            case $name === 'offset':
-                return $this->getOffset();
-
-            case $name === 'offsetHours':
-                return $this->getOffset() / 60 / 60;
-
-            case $name === 'dst':
-                return $this->format('I') === '1';
-
-            case $name === 'utc':
-                return $this->offset === 0;
-
-            case $name === 'timezone' || $name === 'tz':
-                return $this->getTimezone();
-
-            case $name === 'timezoneName' || $name === 'tzName':
-                return $this->getTimezone()->getName();
-
-            default:
-                throw new \Exception(sprintf("Unknown getter '%s'", $name));
+            case array_key_exists($name, $formats):              return intval($this->format($formats[$name]));
+            case $name === 'weekOfMonth':                        return intval(ceil($this->day / 7));
+            case $name === 'age':                                return intval($this->diffInYears());
+            case $name === 'quarter':                            return intval(ceil($this->month / 3));
+            case $name === 'offset':                             return $this->getOffset();
+            case $name === 'offsetHours':                        return $this->getOffset() / 60 / 60;
+            case $name === 'dst':                                return $this->format('I') === '1';
+            case $name === 'utc':                                return $this->offset === 0;
+            case $name === 'timezone' || $name === 'tz':         return $this->getTimezone();
+            case $name === 'timezoneName' || $name === 'tzName': return $this->getTimezone()->getName();
+            default:                                             throw new \Exception(sprintf("Unknown getter '%s'", $name));
         }
     }
 
@@ -255,41 +214,16 @@ class Carbon extends \DateTime
     public function __set($name, $value)
     {
         switch ($name) {
-            case 'year':
-                $this->setDate($value, $this->month, $this->day);
-                break;
-
-            case 'month':
-                $this->setDate($this->year, $value, $this->day);
-                break;
-
-            case 'day':
-                $this->setDate($this->year, $this->month, $value);
-                break;
-
-            case 'hour':
-                $this->setTime($value, $this->minute, $this->second);
-                break;
-
-            case 'minute':
-                $this->setTime($this->hour, $value, $this->second);
-                break;
-
-            case 'second':
-                $this->setTime($this->hour, $this->minute, $value);
-                break;
-
-            case 'timestamp':
-                parent::setTimestamp($value);
-                break;
-
-            case 'timezone':
             case 'tz':
-                $this->setTimezone($value);
-                break;
-
-            default:
-                throw new \Exception(sprintf("Unknown setter '%s'", $name));
+            case 'timezone':  $this->setTimezone($value); break;
+            case 'timestamp': parent::setTimestamp($value); break;
+            case 'year':      $this->setDate($value, $this->month, $this->day); break;
+            case 'month':     $this->setDate($this->year, $value, $this->day); break;
+            case 'day':       $this->setDate($this->year, $this->month, $value); break;
+            case 'hour':      $this->setTime($value, $this->minute, $this->second); break;
+            case 'minute':    $this->setTime($this->hour, $value, $this->second); break;
+            case 'second':    $this->setTime($this->hour, $this->minute, $value); break;
+            default:          throw new \Exception(sprintf("Unknown setter '%s'", $name));
         }
     }
 
@@ -427,12 +361,12 @@ class Carbon extends \DateTime
 
     public function toAtomString()
     {
-        return $this->format(static::ATOM);
+        return $this->format('Y-m-d\TH:i:sP');
     }
 
     public function toCookieString()
     {
-        return $this->format(static::COOKIE);
+        return $this->format('l, d-M-Y H:i:s T');
     }
 
     public function toIso8601String()
@@ -442,48 +376,48 @@ class Carbon extends \DateTime
 
     public function toRfc822String()
     {
-        return $this->format(static::RFC822);
+        return $this->format('D, d M y H:i:s O');
     }
 
     public function toRfc850String()
     {
-        return $this->format(static::RFC850);
+        return $this->format('l, d-M-y H:i:s T');
     }
 
     public function toRfc1036String()
     {
-        return $this->format(static::RFC1036);
+        return $this->format('D, d M y H:i:s O');
     }
 
     public function toRfc1123String()
     {
-        return $this->format(static::RFC1123);
+        return $this->format('D, d M Y H:i:s O');
     }
 
     public function toRfc2822String()
     {
-        return $this->format(static::RFC2822);
+        return $this->format('D, d M Y H:i:s O');
     }
 
     public function toRfc3339String()
     {
-        return $this->format(static::RFC3339);
+        return $this->format('Y-m-d\TH:i:sP');
     }
 
     public function toRssString()
     {
-        return $this->format(static::RSS);
+        return $this->format('D, d M Y H:i:s O');
     }
 
     public function toW3cString()
     {
-        return $this->format(static::W3C);
+        return $this->format('Y-m-d\TH:i:sP');
     }
 
     public function eq(Carbon $dt)
     {
         $this->checkComparator($dt);
-        return $this == $dt; // '==' memang disengaja
+        return $this == $dt; // '==' intended for value comparison, not object identity
     }
 
     public function ne(Carbon $dt)
@@ -845,7 +779,6 @@ class Carbon extends \DateTime
     {
         $dt = ($dt === null) ? static::now($this->tz) : $dt;
         $value = $dt->getTimestamp() - $this->getTimestamp();
-
         return $abs ? abs($value) : $value;
     }
 
@@ -867,13 +800,13 @@ class Carbon extends \DateTime
         $delta = abs($this->diffInSeconds($other, false));
         $unit = 'second';
         $divs = [
-            'year' => 31536000, // sekitar 365 hari
-            'month' => 2628000, // sekitar 30.44 hari
-            'week' => 604800,   // 7 hari
-            'day' => 86400,     // 24 jam
-            'hour' => 3600,     // 60 menit
-            'minute' => 60,     // 60 detik
-            'second' => 1,      // 1 detik
+            'year' => 31536000, // ~365 days
+            'month' => 2628000, // ~30.44 days
+            'week' => 604800,   // 7 days
+            'day' => 86400,     // 24 hours
+            'hour' => 3600,     // 60 minutes
+            'minute' => 60,     // 60 minutes
+            'second' => 1,      // 1 second
         ];
 
         foreach ($divs as $u => $d) {
@@ -891,11 +824,8 @@ class Carbon extends \DateTime
             return $str;
         }
 
-        if ($now) {
-            return $str . ' ' . Lang::line('carbon.' . ($future ? 'from_now' : 'ago'))->get();
-        }
-
-        return $str . ' ' . Lang::line('carbon.' . ($future ? 'after' : 'before'))->get();
+        $now = $now ? ($future ? 'from_now' : 'ago') : ($future ? 'after' : 'before');
+        return $str . ' ' . Lang::line('carbon.' . $now)->get();
     }
 
     public function startOfDay()

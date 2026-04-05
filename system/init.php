@@ -6,12 +6,12 @@ defined('DS') or exit('No direct access.');
 
 /*
 |--------------------------------------------------------------------------
-| Buat / Baca Rakit Key
+| Auto-generate App Key
 |--------------------------------------------------------------------------
-| Pastikan file key.php sudah ada di base path, buat jika belum ada.
+| Ensure the key.php file exists in the base path, create it if it doesn't.
 */
 
-$dir = __DIR__ . DS . 'foundation' . DS . 'oops' . DS . 'assets' . DS . 'debugger' . DS . 'key';
+$dir = __DIR__ . DS . 'foundation' . DS . 'oops' . DS . 'assets' . DS . 'debugger';
 
 if (is_file($path = path('rakit_key'))) {
     $error = null;
@@ -27,7 +27,11 @@ if (is_file($path = path('rakit_key'))) {
         require $dir . DS . $error;
 
         if (function_exists('fastcgi_finish_request')) {
+            /** @disregard */
             fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            /** @disregard */
+            litespeed_finish_request();
         }
 
         exit(255);
@@ -40,7 +44,11 @@ if (is_file($path = path('rakit_key'))) {
         require $dir . DS . 'unwritable.phtml';
 
         if (function_exists('fastcgi_finish_request')) {
+            /** @disregard */
             fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            /** @disregard */
+            litespeed_finish_request();
         }
 
         exit(255);
@@ -51,6 +59,7 @@ if (is_file($path = path('rakit_key'))) {
 
         foreach ($cookies as $cookie) {
             $parts = explode('=', $cookie);
+
             if (PHP_VERSION_ID < 70300) {
                 setcookie(trim($parts[0]), '', time() - 2628000, '/; samesite=Lax');
                 setcookie(trim($parts[0]), '', time() - 2628000);
@@ -69,6 +78,5 @@ if (is_file($path = path('rakit_key'))) {
 }
 
 if (!is_file($file = dirname(__DIR__) . DS . '_ide_helper.php')) {
-    $stub = __DIR__ . DS . 'console' . DS . 'commands' . DS . 'stubs' . DS . 'system' . DS . '_ide_helper.stub';
-    copy($stub, $file);
+    copy(__DIR__ . DS . 'console' . DS . 'commands' . DS . 'stubs' . DS . 'system' . DS . '_ide_helper.stub', $file);
 }

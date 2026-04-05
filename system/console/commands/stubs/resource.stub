@@ -4,13 +4,13 @@ defined('DS') or exit('No direct access.');
 
 class stub_class_Controller extends Controller
 {
+    /**
+     * Enable RESTful routing.
+     */
     public $restful = true;
 
     /**
-     * Menampilkan daftar record.
      * Handle GET /stub_uri
-     *
-     * @return \System\Response
      */
     public function get_index()
     {
@@ -18,10 +18,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Tampilkan formulir untuk membuat record baru.
      * Handle GET /stub_uri/create
-     *
-     * @return \System\Response
      */
     public function get_create()
     {
@@ -29,10 +26,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Simpan record baru ke recordbase.
      * Handle POST /stub_uri
-     *
-     * @return \System\Response
      */
     public function post_store()
     {
@@ -40,10 +34,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Tampilkan sebuah record.
      * Handle GET /stub_uri/(:id)/show
-     *
-     * @return \System\Response
      */
     public function get_show($id)
     {
@@ -51,10 +42,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Tampilkan formulir untuk mengedit record.
      * Handle GET /stub_uri/(:id)/edit
-     *
-     * @return \System\Response
      */
     public function get_edit($id)
     {
@@ -62,10 +50,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Perbarui sebuah record di database.
      * Handle PUT /stub_uri/(:id)/update
-     *
-     * @return \System\Response
      */
     public function put_update($id)
     {
@@ -73,10 +58,7 @@ class stub_class_Controller extends Controller
     }
 
     /**
-     * Hapus sebuah record di recordbase.
      * Handle DELETE /stub_uri/(:id)/delete
-     *
-     * @return \System\Response
      */
     public function delete_destroy($id)
     {

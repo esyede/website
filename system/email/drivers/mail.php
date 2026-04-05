@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class Mail extends Driver
 {
     /**
-     * Mulai proses transmisi data.
+     * Starts the email transmission.
      *
      * @return bool
      */
@@ -15,18 +15,8 @@ class Mail extends Driver
     {
         try {
             $message = $this->build();
-            $retpath = (false !== $this->config['return_path'])
-                ? $this->config['return_path']
-                : $this->config['from']['email'];
-
-            mail(
-                static::format($this->to),
-                $this->subject,
-                $message['body'],
-                $message['header'],
-                '-oi -f ' . $retpath
-            );
-
+            $retpath = (false !== $this->config['return_path']) ? $this->config['return_path'] : $this->config['from']['email'];
+            mail(static::format($this->to), $this->subject, $message['body'], $message['header'], '-oi -f ' . $retpath);
             return true;
         } catch (\Throwable $e) {
             throw new \Exception('Failed sending email through mail: ' . $e->getMessage());

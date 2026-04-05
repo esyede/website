@@ -94,7 +94,7 @@ class Markdown
     ];
 
     /**
-     * Render file markdown menjadi html.
+     * Render a markdown file to HTML.
      *
      * @param string $file
      *
@@ -106,7 +106,7 @@ class Markdown
     }
 
     /**
-     * Parse string markdown menjadi html.
+     * Parse markdown string into HTML.
      *
      * @param string $string
      *
@@ -118,7 +118,7 @@ class Markdown
     }
 
     /**
-     * Ambil singleton object.
+     * Get singleton object.
      *
      * @return $this
      */
@@ -132,7 +132,7 @@ class Markdown
     }
 
     /**
-     * Ubah string markdown menjadi html.
+     * Translate markdown string into HTML.
      *
      * @param string $string
      *
@@ -141,9 +141,9 @@ class Markdown
     public function translate($string)
     {
         $this->definitions = [];
-        $string = explode("\n", trim(str_replace(["\r\n", "\r"], "\n", $string), "\n"));
+        $string = explode(LF, trim(str_replace([CRLF, CR], LF, $string), LF));
 
-        return trim($this->lines($string), "\n");
+        return trim($this->lines($string), LF);
     }
 
     /**
@@ -202,7 +202,7 @@ class Markdown
     }
 
     /**
-     * Ubah newline menjadi tag HTML '<br />'.
+     * Translate new line into HTML.
      *
      * @param bool $enable
      *
@@ -215,7 +215,7 @@ class Markdown
     }
 
     /**
-     * Aktifkan escape htmlspecialchars.
+     * Enable escaping with htmlspecialchars.
      *
      * @param bool $enable
      *
@@ -228,7 +228,7 @@ class Markdown
     }
 
     /**
-     * Ubah string URL menjadi link aktif.
+     * Translate the hyperlink into HTML.
      *
      * @param bool $enable
      *
@@ -241,7 +241,7 @@ class Markdown
     }
 
     /**
-     * Aktifkan fitur keamanan (basic).
+     * Enable basic security features.
      *
      * @param bool $enable
      *
@@ -331,7 +331,7 @@ class Markdown
             }
 
             if (isset($curr) && !isset($curr['type']) && !isset($curr['interrupted'])) {
-                $curr['element']['text'] .= "\n" . $text;
+                $curr['element']['text'] .= LF . $text;
             } else {
                 $attribs[] = $curr;
                 $curr = $this->paragraph($tag);
@@ -353,11 +353,10 @@ class Markdown
                 continue;
             }
 
-            $markup .= "\n";
-            $markup .= isset($attrib['markup']) ? $attrib['markup'] : $this->element($attrib['element']);
+            $markup .= LF . (isset($attrib['markup']) ? $attrib['markup'] : $this->element($attrib['element']));
         }
 
-        return $markup . "\n";
+        return $markup . LF;
     }
 
     protected function continuable($type)
@@ -370,7 +369,7 @@ class Markdown
         return method_exists($this, 'block_' . $type . '_complete');
     }
 
-    protected function block_code($tag, array $attrib = null)
+    protected function block_code($tag, $attrib = null)
     {
         if (isset($attrib) && !isset($attrib['type']) && !isset($attrib['interrupted'])) {
             return;
@@ -391,11 +390,11 @@ class Markdown
     {
         if ($tag['indent'] >= 4) {
             if (isset($attrib['interrupted'])) {
-                $attrib['element']['text']['text'] .= "\n";
+                $attrib['element']['text']['text'] .= LF;
                 unset($attrib['interrupted']);
             }
 
-            $attrib['element']['text']['text'] .= "\n" . substr((string) $tag['body'], 4);
+            $attrib['element']['text']['text'] .= LF . substr((string) $tag['body'], 4);
             return $attrib;
         }
     }
@@ -434,7 +433,7 @@ class Markdown
             return;
         }
 
-        $attrib['markup'] .= "\n" . $tag['body'];
+        $attrib['markup'] .= LF . $tag['body'];
 
         if (preg_match('/-->$/', $tag['text'])) {
             $attrib['closed'] = true;
@@ -469,7 +468,7 @@ class Markdown
         }
 
         if (isset($attrib['interrupted'])) {
-            $attrib['element']['text']['text'] .= "\n";
+            $attrib['element']['text']['text'] .= LF;
             unset($attrib['interrupted']);
         }
 
@@ -479,7 +478,7 @@ class Markdown
             return $attrib;
         }
 
-        $attrib['element']['text']['text'] .= "\n" . $tag['body'];
+        $attrib['element']['text']['text'] .= LF . $tag['body'];
         return $attrib;
     }
 
@@ -632,7 +631,7 @@ class Markdown
         }
     }
 
-    protected function block_setext(array $tag, array $attrib = null)
+    protected function block_setext(array $tag, $attrib = null)
     {
         if (!isset($attrib) || isset($attrib['type']) || isset($attrib['interrupted'])) {
             return;
@@ -702,11 +701,11 @@ class Markdown
         }
 
         if (isset($attrib['interrupted'])) {
-            $attrib['markup'] .= "\n";
+            $attrib['markup'] .= LF;
             unset($attrib['interrupted']);
         }
 
-        $attrib['markup'] .= "\n" . $tag['body'];
+        $attrib['markup'] .= LF . $tag['body'];
         return $attrib;
     }
 
@@ -726,9 +725,11 @@ class Markdown
         }
     }
 
-    protected function block_table(array $tag, array $attr = null)
+    protected function block_table(array $tag, $attr = null)
     {
-        if (!isset($attr) || isset($attr['type']) || isset($attr['interrupted'])) {
+        $attr = is_array($attr) ? $attr : [];
+
+        if (!isset($attr['element']) || isset($attr['type']) || isset($attr['interrupted'])) {
             return;
         }
 
@@ -1040,8 +1041,8 @@ class Markdown
     protected function unmarked($text)
     {
         return $this->breaks
-            ? preg_replace('/[ ]*\n/', "<br />\n", $text)
-            : str_replace(" \n", "\n", preg_replace('/(?:[ ][ ]+|[ ]*\\\\)\n/', "<br />\n", $text));
+            ? preg_replace('/[ ]*\n/', '<br />' . LF, $text)
+            : str_replace(' ' . LF, LF, preg_replace('/(?:[ ][ ]+|[ ]*\\\\)\n/', "<br />\n", $text));
     }
 
     protected function element(array $elem)
@@ -1090,10 +1091,10 @@ class Markdown
         $markup = '';
 
         foreach ($elems as $elem) {
-            $markup .= "\n" . $this->element($elem);
+            $markup .= LF . $this->element($elem);
         }
 
-        return $markup . "\n";
+        return $markup . LF;
     }
 
     protected function li(array $lines)

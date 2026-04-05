@@ -11,7 +11,7 @@ use System\Session as BaseSession;
 class Session extends Command
 {
     /**
-     * Bersihkan session database yang telah kedaluwarsa.
+     * Clear expired session data from the database.
      *
      * @param array $arguments
      *
@@ -22,8 +22,7 @@ class Session extends Command
         $driver = Config::get('session.driver');
 
         if ('database' === $driver) {
-            $lifetime = Config::get('session.lifetime');
-            DB::table(Config::get('session.table'))->where('last_activity', '<', time() - ($lifetime * 60))->delete();
+            DB::table(Config::get('session.table'))->where('last_activity', '<', time() - (Config::get('session.lifetime') * 60))->delete();
         }
 
         echo $this->info('The session table has been swept!');

@@ -9,7 +9,7 @@ class File extends Parameter
     private static $fileKeys = ['error', 'name', 'size', 'tmp_name', 'type'];
 
     /**
-     * Konstruktor.
+     * Constructor.
      *
      * @param array $parameters
      */
@@ -33,10 +33,7 @@ class File extends Parameter
     public function set($key, $value)
     {
         if (!is_array($value) && !($value instanceof Upload)) {
-            throw new \InvalidArgumentException(
-                'An uploaded file must be an array or an instance of '
-                    . '\System\Foundation\Http\Upload class.'
-            );
+            throw new \InvalidArgumentException('An uploaded file must be an array or an instance of \System\Foundation\Http\Upload class.');
         }
 
         parent::set($key, $this->convertFileInformation($value));
@@ -53,7 +50,7 @@ class File extends Parameter
     }
 
     /**
-     * Ubah data file upload menjadi instance kelas Upload.
+     * Convert file infprmation to Upload instance.
      *
      * @param array|Upload $file
      *
@@ -70,25 +67,20 @@ class File extends Parameter
         if (is_array($file)) {
             $keys = array_keys($file);
             sort($keys);
-
-            if ($keys === self::$fileKeys) {
-                $file = (UPLOAD_ERR_NO_FILE !== $file['error'])
-                    ? new Upload($file['tmp_name'], $file['name'], $file['type'], $file['size'], $file['error'])
-                    : null;
-            } else {
-                $file = array_map([$this, 'convertFileInformation'], $file);
-            }
+            $file = ($keys === self::$fileKeys)
+                ? ((UPLOAD_ERR_NO_FILE !== $file['error']) ? new Upload($file['tmp_name'], $file['name'], $file['type'], $file['size'], $file['error']) : null)
+                : array_map([$this, 'convertFileInformation'], $file);
         }
 
         return $file;
     }
 
     /**
-     * Perbaiki bug pada array $_FILES.
+     * Fix the $_FILES array bug.
      *
-     * PHP memiliki bug yaitu format array $_FILES kadang berbeda,
-     * tergantung pada apakah bidang file yang diunggah memiliki nama yang normal
-     * atau namanya menyerupai array ("normal" vs. "foo[bar]").
+     * PHP has a bug where the format of the $_FILES array is sometimes different,
+     * depending on whether the uploaded file fields have normal names
+     * or names that resemble an array ("normal" vs. "foo[bar]").
      *
      * @param array $data
      *

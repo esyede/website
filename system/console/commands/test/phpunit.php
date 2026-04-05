@@ -1,21 +1,35 @@
 <?php
 
 // --------------------------------------------------------------
-// Definisikan konstanta untuk directory separator.
+// Activate output buffering
 // --------------------------------------------------------------
-define('DS', DIRECTORY_SEPARATOR);
+ob_start();
 
 // --------------------------------------------------------------
-// Include konstanta path milik framework.
+// Record the start timer (for benchmark)
+// --------------------------------------------------------------
+define('RAKIT_START', microtime(true));
+
+// --------------------------------------------------------------
+// Define some useful constants
+// --------------------------------------------------------------
+define('DS', DIRECTORY_SEPARATOR);
+define('CRLF', "\r\n");
+define('TAB', "\t");
+define('CR', "\r");
+define('LF', "\n");
+
+// --------------------------------------------------------------
+// Include path constants
 // --------------------------------------------------------------
 require 'paths.php';
 
 // --------------------------------------------------------------
-// Panggil core bootstrapper.
+// Run the core boot
 // --------------------------------------------------------------
 require path('system') . 'core.php';
 
 // --------------------------------------------------------------
-// Boot paket default.
+// Boot the default package
 // --------------------------------------------------------------
 \System\Package::boot(DEFAULT_PACKAGE);

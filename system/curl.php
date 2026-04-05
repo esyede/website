@@ -8,7 +8,7 @@ class Curl
 {
     /**
      * HTTP method registry.
-     * Lihat: https://www.iana.org/assignments/http-methods/http-methods.xhtml.
+     * See: https://www.iana.org/assignments/http-methods/http-methods.xhtml.
      */
     const GET = 'GET';
     const HEAD = 'HEAD';
@@ -59,26 +59,17 @@ class Curl
     private static $socket_timeout;
     private static $verify_peer = 0;
     private static $verify_host = 0;
-    private static $auth = [
-        'user' => '',
-        'pass' => '',
-        'method' => CURLAUTH_BASIC,
-    ];
-
+    private static $auth = ['user' => '', 'pass' => '', 'method' => CURLAUTH_BASIC];
     private static $proxy = [
         'port' => false,
         'tunnel' => false,
         'address' => false,
         'type' => CURLPROXY_HTTP,
-        'auth' => [
-            'user' => '',
-            'pass' => '',
-            'method' => CURLAUTH_BASIC,
-        ],
+        'auth' => ['user' => '', 'pass' => '', 'method' => CURLAUTH_BASIC],
     ];
 
     /**
-     * Set mode json decode.
+     * Set json options.
      *
      * @param bool $associative
      * @param int  $depth
@@ -92,7 +83,7 @@ class Curl
     }
 
     /**
-     * Verifikasi ssl peer.
+     * Verify ssl peer.
      *
      * @param bool $enabled
      *
@@ -104,7 +95,7 @@ class Curl
     }
 
     /**
-     * Verifikasi ssl host.
+     * Verify ssl host.
      *
      * @param bool $enabled
      *
@@ -116,7 +107,7 @@ class Curl
     }
 
     /**
-     * Set request timeout (dalam detik).
+     * Set request timeout (in seconds).
      *
      * @param int $seconds
      *
@@ -128,7 +119,7 @@ class Curl
     }
 
     /**
-     * Set default request header (batch).
+     * Set default request headers.
      *
      * @param array $headers
      *
@@ -153,7 +144,7 @@ class Curl
     }
 
     /**
-     * Hapus default request headers.
+     * Remove default request headers.
      *
      * @return array
      */
@@ -163,7 +154,7 @@ class Curl
     }
 
     /**
-     * Set curl option (batch).
+     * Set curl options.
      *
      * @param array $options
      *
@@ -188,7 +179,7 @@ class Curl
     }
 
     /**
-     * Hapus curl options.
+     * Remove curl options.
      *
      * @return array
      */
@@ -222,7 +213,7 @@ class Curl
     }
 
     /**
-     * Set metode otentikasi request.
+     * Set request authentication.
      *
      * @param string $username
      * @param string $password
@@ -256,7 +247,7 @@ class Curl
     }
 
     /**
-     * Set mode otentikasi proxy.
+     * Set proxy authentication.
      *
      * @param string $username
      * @param string $password
@@ -272,7 +263,7 @@ class Curl
     }
 
     /**
-     * Jalankan GET request.
+     * Run a GET request.
      *
      * @param string     $url
      * @param array      $headers
@@ -286,7 +277,7 @@ class Curl
     }
 
     /**
-     * Jalankan HEAD request.
+     * Run a HEAD request.
      *
      * @param string     $url
      * @param array      $headers
@@ -300,7 +291,7 @@ class Curl
     }
 
     /**
-     * Jalankan OPTIONS request.
+     * Run an OPTIONS request.
      *
      * @param string     $url
      * @param array      $headers
@@ -314,7 +305,7 @@ class Curl
     }
 
     /**
-     * Jalankan CONNECT request.
+     * Run a CONNECT request.
      *
      * @param string     $url
      * @param array      $headers
@@ -328,7 +319,7 @@ class Curl
     }
 
     /**
-     * Jalankan POST request.
+     * Run a POST request.
      *
      * @param string     $url
      * @param array      $headers
@@ -342,7 +333,7 @@ class Curl
     }
 
     /**
-     * Jalankan DELETE request.
+     * Run a DELETE request.
      *
      * @param string     $url
      * @param array      $headers
@@ -356,7 +347,7 @@ class Curl
     }
 
     /**
-     * Jalankan PUT request.
+     * Run a PUT request.
      *
      * @param string     $url
      * @param array      $headers
@@ -370,7 +361,7 @@ class Curl
     }
 
     /**
-     * Jalankan PATCH request.
+     * Run a PATCH request.
      *
      * @param string     $url
      * @param array      $headers
@@ -384,7 +375,7 @@ class Curl
     }
 
     /**
-     * Jalankan TRACE request.
+     * Run a TRACE request.
      *
      * @param string     $url
      * @param array      $headers
@@ -398,7 +389,7 @@ class Curl
     }
 
     /**
-     * Jalankan curl request.
+     * Run a curl request.
      *
      * @param string     $method
      * @param string     $url
@@ -502,7 +493,7 @@ class Curl
 
         $key = '';
         $headers = [];
-        $items = explode("\n", $raw_headers);
+        $items = explode(LF, $raw_headers);
 
         foreach ($items as $index => $item) {
             $item = explode(':', $item, 2);
@@ -531,8 +522,8 @@ class Curl
     }
 
     /**
-     * Siapkan file untuk request body.
-     * Untuk digunakan di dalam deklarasi parameter request.
+     * Prepare file for request body.
+     * For use in request parameter declaration.
      *
      * @param string $path
      * @param string $alias
@@ -559,7 +550,7 @@ class Curl
     }
 
     /**
-     * Ubah deklarasi parameter menjadi string json.
+     * Prepare a JSON string for request body.
      *
      * @param mixed $data
      * @param int   $json_options
@@ -572,7 +563,7 @@ class Curl
     }
 
     /**
-     * Ubah deklarasi parameter menjadi string form-data.
+     * Prepare a form-data string for request body.
      *
      * @param mixed $data
      *
@@ -588,7 +579,7 @@ class Curl
     }
 
     /**
-     * Ubah deklarasi parameter menjadi string multipart form-data.
+     * Prepare a multipart form-data string for request body.
      *
      * @param mixed $data
      * @param array $files
@@ -613,7 +604,7 @@ class Curl
     }
 
     /**
-     * Format query untuk request.
+     * Build a query string for request body.
      *
      * @param mixed $data
      * @param bool  $parent
@@ -650,7 +641,7 @@ class Curl
     }
 
     /**
-     * Ambil informasi transfer curl.
+     * Get information about the last transfer.
      *
      * @return array
      */
@@ -660,7 +651,7 @@ class Curl
     }
 
     /**
-     * Mereturn curl handler internal.
+     * Get the internal curl handler.
      *
      * @return \CURLHandle|resource
      */
@@ -670,7 +661,7 @@ class Curl
     }
 
     /**
-     * Format request headers.
+     * Format the request headers.
      *
      * @param array $headers
      *
@@ -698,7 +689,7 @@ class Curl
     }
 
     /**
-     * Format curl query.
+     * Format the curl query.
      *
      * @param string $query
      *
@@ -748,7 +739,7 @@ class Curl
     }
 
     /**
-     * Buat user-aget palsu.
+     * Generate a fake user agent string.
      *
      * @return string
      */

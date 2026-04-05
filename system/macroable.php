@@ -7,14 +7,14 @@ defined('DS') or exit('No direct access.');
 trait Macroable
 {
     /**
-     * List macro terdaftar.
+     * Contains list of registered macros.
      *
      * @var array
      */
     protected static $macros = [];
 
     /**
-     * Tambahkan macro baru.
+     * Add a new macro.
      *
      * @param string   $name
      * @param callable $handler
@@ -27,7 +27,7 @@ trait Macroable
     }
 
     /**
-     * Tambahkan mixin baru.
+     * Add a new mixin.
      *
      * @param callable $mixin
      * @param bool     $replace
@@ -36,8 +36,7 @@ trait Macroable
      */
     public static function mixin($mixin, $replace = true)
     {
-        $methods = (new \ReflectionClass($mixin))
-            ->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED);
+        $methods = (new \ReflectionClass($mixin))->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED);
 
         foreach ($methods as $method) {
             if ($replace || !static::has_macro($method->name)) {
@@ -49,7 +48,7 @@ trait Macroable
     }
 
     /**
-     * Cek apakah macro sudah terdaftar.
+     * Check if macro is registered.
      *
      * @param string $name
      *
@@ -61,7 +60,7 @@ trait Macroable
     }
 
     /**
-     * Invoke static.
+     * Invoke static method.
      *
      * @param string $method
      * @param array  $parameters

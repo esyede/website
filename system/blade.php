@@ -7,77 +7,49 @@ defined('DS') or exit('No direct access.');
 class Blade
 {
     /**
-     * Direktori cache view.
+     * Directory where the cached views are stored.
      *
      * @var string
      */
     public static $directory;
 
     /**
-     * List nama-nama compiler milik blade.
+     * List of compiler names.
      *
      * @var array
      */
     protected static $compilers = [
-        'extensions',
-        'layout',
-        'comment',
-        'verbatim',
-        'once',
-        'endonce',
-        'echo',
-        'csrf',
-        'forelse',
-        'empty',
-        'endforelse',
-        'structure_start',
-        'foreach',
-        'structure_end',
-        'else',
-        'unless',
-        'endunless',
-        'error',
-        'enderror',
-        'guest',
-        'endguest',
-        'auth',
-        'endauth',
-        'include',
-        'render_each',
-        'render',
-        'yield',
-        'set',
-        'unset',
-        'json',
-        'show',
-        'section_start',
-        'section_end',
-        'inject',
-        'method',
-        'push',
-        'endpush',
-        'stack',
-        'hassection',
-        'sectionmissing',
-        'php_block',
+        'extensions', 'layout', 'comment', 'verbatim', 'once', 'endonce', 'echo', 'csrf',
+        'forelse', 'empty', 'endforelse', 'structure_start', 'foreach', 'structure_end',
+        'else', 'unless', 'endunless', 'error', 'enderror', 'guest', 'endguest',
+        'auth', 'endauth', 'include', 'render_each', 'render', 'yield', 'set', 'unset',
+        'json', 'show', 'section_start', 'section_end', 'inject', 'method', 'push',
+        'endpush', 'stack', 'hassection', 'sectionmissing', 'php_block',
     ];
 
     /**
-     * Berisi nama-nama compiler kustom yang dibuat user.
+     * Contains the names of sections that should only be rendered once.
+     *
+     * @var array
+     */
+    protected static $onces = [];
+
+    /**
+     * Contains custom compilers names created by the user.
      *
      * @var array
      */
     protected static $extensions = [];
 
     /**
-     * Cache untuk hasil translate blade.
+     * Cache for translated blade.
      *
      * @var array
      */
     protected static $translated = [];
 
     /**
-     * Daftarkan blade engine ke sistem.
+     * Register blade engine.
      */
     public static function sharpen()
     {
@@ -104,7 +76,7 @@ class Blade
     }
 
     /**
-     * Daftarkan compiler kustom baru.
+     * Add custom compiler.
      *
      * <code>
      *
@@ -122,7 +94,7 @@ class Blade
     }
 
     /**
-     * Periksa apakah view sudah "kadaluwarsa" dan perlu dikompilasi ulang.
+     * Check if view is expired and needs to be recompiled.
      *
      * @param string $path
      *
@@ -134,7 +106,7 @@ class Blade
     }
 
     /**
-     * Kompilasi file blade ke bentuk ekspresi PHP yang valid.
+     * Compile the given view.
      *
      * @param string $path
      *
@@ -146,7 +118,7 @@ class Blade
     }
 
     /**
-     * Terjemahkan sintaks blade ke sintaks PHP yang valid.
+     * Translate the given string.
      *
      * @param string       $value
      * @param \System\View $view
@@ -180,7 +152,7 @@ class Blade
     }
 
     /**
-     * Kompilasi sintaks @php dan @endphp.
+     * Translate @php and @endphp.
      *
      * @param string $value
      *
@@ -194,7 +166,7 @@ class Blade
     }
 
     /**
-     * Kompilasi sintaks "@layout" ke bentuk PHP.
+     * Translate @layout.
      *
      * @param string $value
      *
@@ -213,7 +185,7 @@ class Blade
     }
 
     /**
-     * Ubah comment blade ke bentuk PHP.
+     * Translate blade comments.
      *
      * @param string $value
      *
@@ -225,7 +197,7 @@ class Blade
     }
 
     /**
-     * Ubah echo blade ke bentuk PHP.
+     * Translate blade echo.
      *
      * @param string $value
      *
@@ -263,7 +235,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @csrf ke bentuk form HTML.
+     * Translate @csrf.
      *
      * @param string $value
      *
@@ -275,7 +247,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @set() ke bentuk PHP.
+     * Translate @set.
      *
      * @param string $value
      *
@@ -287,7 +259,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @unset() ke bentuk PHP.
+     * Translate @unset.
      *
      * @param string $value
      *
@@ -299,7 +271,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @json() ke bentuk PHP.
+     * Translate @json.
      *
      * @param string $value
      *
@@ -307,7 +279,6 @@ class Blade
      */
     protected static function compile_json($value)
     {
-        $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE;
         $result = $value;
         $offset = 0;
 
@@ -323,12 +294,14 @@ class Blade
                 } elseif ($result[$current] === ')') {
                     $depth--;
                 }
+
                 $current++;
             }
 
             if ($depth === 0) {
                 $expression = substr($result, $start, $current - $start - 1);
                 $original = substr($result, $pos, $current - $pos);
+                $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE;
                 $replacement = '<?php echo json_encode(' . trim($expression) . ', ' . $flags . '); ?>';
                 $result = substr_replace($result, $replacement, $pos, strlen($original));
                 $offset = $pos + strlen($replacement);
@@ -341,7 +314,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @forelse ke bentuk PHP.
+     * Translate @forelse.
      *
      * @param string $value
      *
@@ -361,7 +334,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @empty ke bentuk PHP.
+     * Translate @empty.
      *
      * @param string $value
      *
@@ -373,7 +346,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @forelse ke bentuk PHP.
+     * Translate @endforelse.
      *
      * @param string $value
      *
@@ -385,7 +358,7 @@ class Blade
     }
 
     /**
-     * Ubah control-structure pembuka blade ke bentuk PHP.
+     * Translate control-structure start.
      *
      * @param string $value
      *
@@ -397,7 +370,7 @@ class Blade
     }
 
     /**
-     * Ubah control-structure penutup blade ke bentuk PHP.
+     * Translate control-structure end.
      *
      * @param string $value
      *
@@ -422,7 +395,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @else ke bentuk PHP.
+     * Translate @else.
      *
      * @param string $value
      *
@@ -434,7 +407,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @unless ke bentuk PHP.
+     * Translate @unless.
      *
      * @param string $value
      *
@@ -446,7 +419,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endunless ke bentuk PHP.
+     * Translate @endunless.
      *
      * @param string $value
      *
@@ -458,7 +431,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @error ke bentuk PHP.
+     * Translate @error.
      *
      * @param string $value
      *
@@ -470,7 +443,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @enderror ke bentuk PHP.
+     * Translate @enderror.
      *
      * @param string $value
      *
@@ -482,7 +455,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @guest ke bentuk PHP.
+     * Translate @guest.
      *
      * @param string $value
      *
@@ -494,7 +467,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endguest ke bentuk PHP.
+     * Translate @endguest.
      *
      * @param string $value
      *
@@ -506,7 +479,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @auth ke bentuk PHP.
+     * Translate @auth.
      *
      * @param string $value
      *
@@ -518,7 +491,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endauth ke bentuk PHP.
+     * Translate @endauth.
      *
      * @param string $value
      *
@@ -530,7 +503,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @include ke bentuk PHP.
+     * Translate @include.
      *
      * @param string $value
      *
@@ -543,7 +516,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @render ke bentuk PHP.
+     * Translate @render.
      *
      * @param string $value
      *
@@ -555,7 +528,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @render_each ke bentuk PHP.
+     * Translate @render_each.
      *
      * @param string $value
      *
@@ -567,8 +540,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @yield ke bentuk PHP.
-     * Sintaks ini merupakan shortcut untuk method Section::yield_content().
+     * Translate @yield (shortcut for Section::yield_content()).
      *
      * @param string $value
      *
@@ -580,7 +552,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @show ke bentuk PHP.
+     * Translate @show.
      *
      * @return string
      */
@@ -590,8 +562,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @section ke bentuk PHP
-     * Sintaks ini merupakan shortcut dari method Section::start().
+     * Translate @section (shortcut for Section::start()).
      *
      * @param string $value
      *
@@ -603,8 +574,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endsection ke bentuk PHP.
-     * Sintaks ini merupakan shortcut untuk method Section::stop().
+     * Translate @endsection (shortcut for Section::stop()).
      *
      * @param string $value
      *
@@ -616,8 +586,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @inject ke bentuk PHP.
-     * Sintaks ini merupakan shortcut untuk method Section::inject().
+     * Translate @inject (shortcut for Section::inject()).
      *
      * @param string $value
      *
@@ -629,7 +598,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @verbatim (placeholder, di-handle oleh method translate).
+     * Translate @verbatim (placeholder only, handled by static::translate()).
      *
      * @param string $value
      *
@@ -641,7 +610,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @once ke eksekusi sekali.
+     * Translate @once.
      *
      * @param string $value
      *
@@ -650,11 +619,10 @@ class Blade
     protected static function compile_once($value)
     {
         return preg_replace_callback('/@once(.*?)@endonce/s', function ($matches) {
-            static $onces = [];
             $key = md5($matches[1]);
 
-            if (!isset($onces[$key])) {
-                $onces[$key] = true;
+            if (!isset(static::$onces[$key])) {
+                static::$onces[$key] = true;
                 return $matches[1];
             }
 
@@ -663,7 +631,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endonce (placeholder).
+     * Translate @endonce (placeholder only, handled by static::compile_once()).
      *
      * @param string $value
      *
@@ -675,7 +643,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @method ke input hidden.
+     * Translate @method to hidden input.
      *
      * @param string $value
      *
@@ -689,7 +657,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @push ke Section::push.
+     * Translate @push.
      *
      * @param string $value
      *
@@ -701,7 +669,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @endpush ke Section::endpush.
+     * Translate @endpush.
      *
      * @param string $value
      *
@@ -713,7 +681,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @stack ke Section::stack.
+     * Translate @stack.
      *
      * @param string $value
      *
@@ -725,7 +693,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @hassection ke kondisi has.
+     * Translate @hassection.
      *
      * @param string $value
      *
@@ -737,7 +705,7 @@ class Blade
     }
 
     /**
-     * Ubah sintaks @sectionmissing ke kondisi !has.
+     * Translate @sectionmissing.
      *
      * @param string $value
      *
@@ -749,7 +717,7 @@ class Blade
     }
 
     /**
-     * Jalankan kustom compiler buatan user.
+     * Compile user extensions.
      *
      * @param string $value
      *
@@ -767,7 +735,7 @@ class Blade
     }
 
     /**
-     * Ambil regex untuk sintaks-sintaks umum blade.
+     * Return regex for common blade syntaxes.
      *
      * @param string $function
      *
@@ -779,7 +747,7 @@ class Blade
     }
 
     /**
-     * Ambil full path ke file hasil kompilasi.
+     * Get full path to compiled file.
      *
      * @param string $view
      *

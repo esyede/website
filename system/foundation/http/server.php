@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class Server extends Parameter
 {
     /**
-     * Ambil seluruh data header.
+     * Get all headers.
      *
      * @return array
      */
@@ -27,13 +27,11 @@ class Server extends Parameter
 
         if (isset($this->parameters['PHP_AUTH_USER'])) {
             $headers['PHP_AUTH_USER'] = $this->parameters['PHP_AUTH_USER'];
-            $headers['PHP_AUTH_PW'] = isset($this->parameters['PHP_AUTH_PW'])
-                ? $this->parameters['PHP_AUTH_PW']
-                : '';
+            $headers['PHP_AUTH_PW'] = isset($this->parameters['PHP_AUTH_PW']) ? $this->parameters['PHP_AUTH_PW'] : '';
         } else {
             /**
-             * Secara default, php-cgi dibawah apache tidak mengoper user/password http basic auth
-             * Untuk menangani masalah ini, tambahkan rule berikut ke file .htaccess anda:.
+             * By default, php-cgi under apache eill not pass Basic Auth's user and password
+             * To resolve this, add this rules to your .htaccess file:
              *
              * RewriteCond %{HTTP:Authorization} ^(.+)$
              *
@@ -42,7 +40,7 @@ class Server extends Parameter
              *      RewriteEngine On
              *      RewriteCond %{HTTP:Authorization} ^(.+)$
              *
-             *      RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] # baris ini
+             *      RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] # Add this line
              *
              *      RewriteCond %{REQUEST_FILENAME} !-f
              *      RewriteRule ^(.*)$ index.php [QSA,L]

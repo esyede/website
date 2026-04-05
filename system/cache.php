@@ -7,14 +7,14 @@ defined('DS') or exit('No direct access.');
 class Cache
 {
     /**
-     * Berisi seluruh cache driver yang aktif.
+     * Contains all active cache drivers.
      *
      * @var array
      */
     public static $drivers = [];
 
     /**
-     * Berisi registrar cache driver pihak ketiga.
+     * Contains all third-party cache driver registrars.
      *
      * @var array
      */
@@ -28,7 +28,7 @@ class Cache
     private static $processed_key = null;
 
     /**
-     * Ambil processed cache key prefix.
+     * Get processed cache key prefix.
      *
      * @return string
      */
@@ -38,19 +38,20 @@ class Cache
             $key = (string) Config::get('cache.key');
             static::$processed_key = ((strlen($key) > 0 && Str::ends_with($key, '.')) ? rtrim($key, '.') : $key) . '.';
         }
+
         return static::$processed_key;
     }
 
     /**
-     * Ambil instance cache driver.
-     * Atau return driver default jika tidak ada driver yang dipilih.
+     * Get the cache driver instance.
+     * Or return default driver if no driver is selected.
      *
      * <code>
      *
-     *      // Ambil instance driver default
+     *      // Get the default cache driver instance
      *      $driver = Cache::driver();
      *
-     *      // Ambil instance driver tertentu
+     *      // Get the memcached cache driver instance
      *      $driver = Cache::driver('memcached');
      *
      * </code>
@@ -75,7 +76,7 @@ class Cache
     }
 
     /**
-     * Buat instance cache driver baru.
+     * Make a new cache driver instance.
      *
      * @param string $driver
      *
@@ -95,31 +96,18 @@ class Cache
         $key = static::processed_key();
 
         switch ($driver) {
-            case 'apc':
-                return new Cache\Drivers\APC($key);
-
-            case 'file':
-                return new Cache\Drivers\File(path('storage') . 'cache' . DS);
-
-            case 'memcached':
-                return new Cache\Drivers\Memcached(Memcached::connection(), $key);
-
-            case 'memory':
-                return new Cache\Drivers\Memory();
-
-            case 'redis':
-                return new Cache\Drivers\Redis(Redis::db());
-
-            case 'database':
-                return new Cache\Drivers\Database($key);
-
-            default:
-                throw new \Exception(sprintf('Unsupported cache driver: %s', $driver));
+            case 'apc':       return new Cache\Drivers\APC($key);
+            case 'file':      return new Cache\Drivers\File(path('storage') . 'cache' . DS);
+            case 'memcached': return new Cache\Drivers\Memcached(Memcached::connection(), $key);
+            case 'memory':    return new Cache\Drivers\Memory();
+            case 'redis':     return new Cache\Drivers\Redis(Redis::db());
+            case 'database':  return new Cache\Drivers\Database($key);
+            default:          throw new \Exception(sprintf('Unsupported cache driver: %s', $driver));
         }
     }
 
     /**
-     * Daftarkan cache driver pihak ketiga.
+     * Register a third-party cache driver.
      *
      * @param string   $driver
      * @param \Closure $resolver
@@ -130,14 +118,14 @@ class Cache
     }
 
     /**
-     * Magic Method untuk memanggil method milik cache driver default.
+     * Call methods on the default cache driver.
      *
      * <code>
      *
-     *      // Panggil method get() milik cache driver default.
+     *      // Call the get method on the default cache driver.
      *      $name = Cache::get('name');
      *
-     *      // Panggil method put() milik cache driver default.
+     *      // Call the put() method on the default cache driver.
      *      Cache::put('name', 'Budi', 15);
      *
      * </code>

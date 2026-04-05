@@ -11,64 +11,42 @@ use System\Database\Exceptions\ModelNotFoundException;
 class Query
 {
     /**
-     * Berisi intsance model yang sedang dioperasikan.
+     * Contains the model instance.
      *
      * @var Model
      */
     public $model;
 
     /**
-     * Berisi query builder untuk instnce query.
+     * Contains the query builder instance.
      *
      * @var Query
      */
     public $table;
 
     /**
-     * Berisi list relasi yng harus di eagerload.
+     * Contains a list of relationships that needs to be eager loaded.
      *
      * @var array
      */
     public $with = [];
 
     /**
-     * List method yang harus direturn dari query builder.
+     * List of query builder methods that should be passed thru directly.
+     * It means the result of these methods will be returned directly instead of
+     * being wrapped in the model's query builder.
      *
      * @var array
      */
     public $passthru = [
-        'lists',
-        'only',
-        'get',
-        'first',
-        'find',
-        'find_or_fail',
-        'first_or_fail',
-        'paginate',
-        'count',
-        'insert',
-        'insert_get_id',
-        'update',
-        'increment',
-        'delete',
-        'decrement',
-        'min',
-        'max',
-        'avg',
-        'sum',
-        'order_by',
-        'where_in',
-        'where_not_in',
-        'or_where_in',
-        'or_where_not_in',
-        'to_sql',
-        'debug',
-        'exists',
-        'doesnt_exist',
+        'lists', 'only', 'get', 'first', 'find', 'find_or_fail', 'first_or_fail', 'paginate',
+        'count', 'insert', 'insert_get_id', 'update', 'increment', 'delete', 'decrement',
+        'min', 'max', 'avg', 'sum', 'order_by', 'where_in', 'where_not_in', 'or_where_in',
+        'or_where_not_in', 'to_sql', 'debug', 'exists', 'doesnt_exist',
     ];
 
     /**
-     * Buat instance quer baru untuk model.
+     * Constructor.
      *
      * @param Model $model
      */
@@ -79,7 +57,7 @@ class Query
     }
 
     /**
-     * Cari model berdasarkan primary key-nya.
+     * Find a model by its primary key.
      *
      * @param mixed $id
      * @param array $columns
@@ -95,7 +73,7 @@ class Query
     }
 
     /**
-     * Ambil model pertama yang cocok dengan query.
+     * Get the first model that matches the query.
      *
      * @param array $columns
      *
@@ -110,7 +88,7 @@ class Query
     }
 
     /**
-     * Cari model berdasarkan primary key-nya atau throw exception jika tidak ditemukan.
+     * Find a model by its primary key or throw exception if not found.
      *
      * @param mixed $id
      * @param array $columns
@@ -129,7 +107,7 @@ class Query
     }
 
     /**
-     * Ambil model pertama yang cocok dengan query atau throw exception jika tidak ditemukan.
+     * Get the first model that matches the query or throw exception if not found.
      *
      * @param array $columns
      *
@@ -147,7 +125,7 @@ class Query
     }
 
     /**
-     * Ambil seluruh model yang cocok dengan query.
+     * Get all models that match the query.
      *
      * @param array $columns
      *
@@ -160,9 +138,7 @@ class Query
     }
 
     /**
-     * Ambil generator untuk iterate model satu per satu (memory efficient).
-     * Menggunakan generator (PHP 5.5+) untuk efisiensi memori.
-     * Untuk PHP 5.4, akan fallback ke get() biasa.
+     * Get a generator for the results of the query.
      *
      * @param array $columns
      * @param int   $chunk_size
@@ -172,11 +148,12 @@ class Query
     public function cursor($columns = ['*'], $chunk_size = 1000)
     {
         $columns = is_array($columns) ? $columns : [$columns];
-        // PHP < 5.5.0 tidak mendukung generator yield, langsung return hasil get()
+        // PHP < 5.5.0 does not support yield, directly return the results of get()
         return (PHP_VERSION_ID < 50500) ? $this->get($columns) : include __DIR__ . DS . 'cursor.php';
     }
+
     /**
-     * Ambil array model berpaginasi hasil query.
+     * Get the paginated results of the query.
      *
      * @param int   $perpage
      * @param array $columns
@@ -193,7 +170,7 @@ class Query
     }
 
     /**
-     * Lakukan mass-assignment pada model.
+     * Do a mass-assignment of the given results to model instances.
      *
      * @param Model $model
      * @param array $results
@@ -229,7 +206,7 @@ class Query
     }
 
     /**
-     * Lakukan mass-assignment ke relasi yang di eagerload pada model.
+     * Do a mass-assignment to the relationships that are eager loaded on the model.
      *
      * @param array      $results
      * @param string     $relationship
@@ -251,7 +228,7 @@ class Query
     }
 
     /**
-     * Kumpulkan nested eagerload miik relasi yang diberikan.
+     * Get the list of nested relationships for a given relationship.
      *
      * @param string $relationship
      *
@@ -273,7 +250,7 @@ class Query
     }
 
     /**
-     * Ambil list relasi yang di eagerload pada model.
+     * Get the list of relationships that needs to be eager loaded on the model.
      *
      * @return array
      */
@@ -293,7 +270,7 @@ class Query
     }
 
     /**
-     * Ambil query builder milik model.
+     * Get the query builder for the model's table.
      *
      * @return Query
      */
@@ -303,9 +280,9 @@ class Query
     }
 
     /**
-     * Ambil koneksi database milik model.
+     * Get the database connection used by the model.
      *
-     * @return Connection
+     * @return \System\Database\Connection
      */
     public function connection()
     {
@@ -313,7 +290,7 @@ class Query
     }
 
     /**
-     * Tangani pemanggilan method query secara dinamis.
+     * Handle dynamic method calls into the query builder.
      *
      * @param string $method
      * @param array  $parameters

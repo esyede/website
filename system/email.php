@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class Email
 {
     /**
-     * Prioritas email.
+     * Email priorities.
      */
     const LOWEST = '5 (Lowest)';
     const LOW = '4 (Low)';
@@ -16,25 +16,25 @@ class Email
     const HIGHEST = '1 (Highest)';
 
     /**
-     * Berisi driver email yang saat ini sedang digunakan.
+     * Contains the current email driver instance.
      *
      * @var array
      */
     public static $drivers = [];
 
     /**
-     * Berisi registrar driver pihak ketiga.
+     * Contains the email driver registrar.
      *
      * @var array
      */
     public static $registrar = [];
 
     /**
-     * Ambil instance auth driver.
+     * Get the current email driver instance.
      *
      * @param string $driver
      *
-     * @return Driver
+     * @return \System\Email\Drivers\Driver
      */
     public static function driver($driver = null)
     {
@@ -48,11 +48,11 @@ class Email
     }
 
     /**
-     * Buat instance driver email.
+     * Create an email driver instance.
      *
      * @param string $driver
      *
-     * @return Driver
+     * @return \System\Email\Drivers\Driver
      */
     protected static function factory($driver)
     {
@@ -64,26 +64,16 @@ class Email
         $email = Config::get('email');
 
         switch ($driver) {
-            case 'mail':
-                return new Email\Drivers\Mail($email);
-
-            case 'smtp':
-                return new Email\Drivers\Smtp($email);
-
-            case 'sendmail':
-                return new Email\Drivers\Sendmail($email);
-
-            case 'dummy':
-                return new Email\Drivers\Log($email);
-
-            default:
-                throw new \Exception(sprintf('Unsupported email driver: %s', $driver));
+            case 'mail':     return new Email\Drivers\Mail($email);
+            case 'smtp':     return new Email\Drivers\Smtp($email);
+            case 'sendmail': return new Email\Drivers\Sendmail($email);
+            case 'dummy':    return new Email\Drivers\Log($email);
+            default:         throw new \Exception(sprintf('Unsupported email driver: %s', $driver));
         }
     }
 
     /**
-     * Daftarkan email driver pihak ketiga
-     * (Betul! email driver di framework ini extedable!).
+     * Register a custom email driver.
      *
      * @param string   $driver
      * @param \Closure $resolver
@@ -94,7 +84,7 @@ class Email
     }
 
     /**
-     * Reset cache$driver untuk cegah memori-leak di aplikasi yang berjalan lama.
+     * Reset the email driver cache to prevent memory leaks in long-running applications.
      */
     public static function reset()
     {
@@ -102,7 +92,7 @@ class Email
     }
 
     /**
-     * Magic Method untuk pemanggilan method pada driver email default.
+     * Magic method for calling methods on the default email driver.
      *
      * @param string $method
      * @param array  $parameters

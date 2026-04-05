@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class Clear extends Command
 {
     /**
-     * Bersihkan seluruh cache data.
+     * Clear all cache data.
      *
      * @param array $arguments
      *
@@ -20,7 +20,7 @@ class Clear extends Command
     }
 
     /**
-     * Bersihkan seluruh file cache views.
+     * Clear all view cache files.
      *
      * @param array $arguments
      *
@@ -40,7 +40,7 @@ class Clear extends Command
     }
 
     /**
-     * Bersihkan seluruh file log.
+     * Clear all log files.
      *
      * @return void
      */
@@ -49,15 +49,8 @@ class Clear extends Command
         $files = glob(path('storage') . 'logs' . DS . '*');
 
         if (is_array($files) && count($files) > 0) {
-            $preserves = [
-                '.gitignore',
-                '.htaccess',
-                'index.html',
-                'index.php',
-            ];
-
             foreach ($files as $file) {
-                if (!in_array(basename((string) $file), $preserves)) {
+                if (!in_array(basename((string) $file), ['.gitignore', '.htaccess', 'index.html', 'index.php'])) {
                     @unlink($file);
                 }
             }
@@ -65,6 +58,4 @@ class Clear extends Command
 
         echo $this->info('Log files cleared successfully.');
     }
-
-
 }

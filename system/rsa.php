@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class RSA
 {
     /**
-     * Detail data.
+     * Encryption details.
      *
      * @var array
      */
@@ -19,7 +19,7 @@ class RSA
     ];
 
     /**
-     * Enkripsi string menggunakan RSA key.
+     * Encrypt string using RSA key.
      *
      * @param string $data
      * @param int    $padding
@@ -29,6 +29,7 @@ class RSA
     public static function encrypt($data, $padding = OPENSSL_PKCS1_PADDING)
     {
         static::generate();
+
         $pubkey = openssl_pkey_get_public(static::$details['public_key']);
         $key_details = openssl_pkey_get_details($pubkey);
         $length = (int) ceil($key_details['bits'] / 8) - ($padding === OPENSSL_PKCS1_OAEP_PADDING ? 42 : 11);
@@ -41,8 +42,7 @@ class RSA
             $temp = '';
 
             if (!openssl_public_encrypt($chunk, $temp, $pubkey, $padding)) {
-                $errors = static::get_openssl_errors();
-                throw new \Exception('Failed to encrypt the data: ' . $errors);
+                throw new \Exception('Failed to encrypt the data: ' . static::get_openssl_errors());
             }
 
             $result .= $temp;
@@ -57,7 +57,7 @@ class RSA
     }
 
     /**
-     * Dekripsi data menggunakan RSA key.
+     * Decrypt data using RSA key.
      *
      * @param string $encrypted
      * @param int    $padding
@@ -69,8 +69,7 @@ class RSA
         static::generate();
 
         if (!($privkey = openssl_pkey_get_private(static::$details['private_key']))) {
-            $errors = static::get_openssl_errors();
-            throw new \Exception('Failed to obtain private key: ' . $errors);
+            throw new \Exception('Failed to obtain private key: ' . static::get_openssl_errors());
         }
 
         $key = openssl_pkey_get_details($privkey);
@@ -84,8 +83,7 @@ class RSA
             $temp = '';
 
             if (!openssl_private_decrypt($chunk, $temp, $privkey, $padding)) {
-                $errors = static::get_openssl_errors();
-                throw new \Exception('Failed to decrypt the data: ' . $errors);
+                throw new \Exception('Failed to decrypt the data: ' . static::get_openssl_errors());
             }
 
             $result .= $temp;
@@ -100,7 +98,7 @@ class RSA
     }
 
     /**
-     * Generate private dan public key.
+     * Generate private and public key.
      *
      * @return void
      */
@@ -108,25 +106,10 @@ class RSA
     {
         if (!static::$details['private_key'] || !static::$details['public_key']) {
             $config = path('storage') . 'openssl.conf';
-            $randfile = path('storage') . '.rnd';
-
-            static::$details['config'] = sprintf(
-                "HOME=%s\nRANDFILE=%s\n[req]\ndefault_bits=%s\n[v3_ca]\n",
-                path('storage'),
-                $randfile,
-                2048
-            );
-
-            static::$details['options'] = [
-                'private_key_bits' => 2048,
-                'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                'config' => $config,
-            ];
-
-            if (is_file($config)) {
-                unlink($config);
-            }
-
+            $rnd = path('storage') . '.rnd';
+            static::$details['options'] = ['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'config' => $config];
+            static::$details['config'] = 'HOME=' . path('storage') . LF . 'RANDFILE=' . $rnd . LF . '[req]' . LF . 'default_bits=2048' . LF . '[v3_ca]' . LF;
+            is_file($config) && unlink($config);
             file_put_contents($config, static::$details['config'], LOCK_EX);
 
             if (!static::$details['private_key']) {
@@ -158,18 +141,13 @@ class RSA
                 openssl_free_key($privkey);
             }
 
-            if (is_file($config)) {
-                unlink($config);
-            }
-
-            if (is_file($randfile)) {
-                unlink($randfile);
-            }
+            is_file($config) && unlink($config);
+            is_file($rnd) && unlink($rnd);
         }
     }
 
     /**
-     * Load existing private dan public keys.
+     * Load existing private and public keys.
      *
      * @param string $private_key
      * @param string $public_key
@@ -186,8 +164,7 @@ class RSA
             $privkey = openssl_pkey_get_private($private_key);
 
             if (!$privkey) {
-                $errors = static::get_openssl_errors();
-                throw new \Exception('Invalid private key: ' . $errors);
+                throw new \Exception('Invalid private key: ' . static::get_openssl_errors());
             }
 
             $details = openssl_pkey_get_details($privkey);
@@ -223,7 +200,7 @@ class RSA
     }
 
     /**
-     * Ambil OpenSSL errors.
+     * Get OpenSSL errors.
      *
      * @return string
      */
@@ -239,7 +216,7 @@ class RSA
     }
 
     /**
-     * Ambil detail data.
+     * Get encryption details.
      *
      * @return array
      */

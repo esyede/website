@@ -7,56 +7,56 @@ defined('DS') or exit('No direct access.');
 class Str
 {
     /**
-     * Berisi method tambahan dari user.
+     * Contains additional methods from user.
      *
      * @var array
      */
     public static $macros = [];
 
     /**
-     * Cache snake-case.
+     * Contains cache of snake-cased strings.
      *
      * @var array
      */
     public static $snake = [];
 
     /**
-     * Cache camel-case.
+     * Contains cache of camel-cased strings.
      *
      * @var array
      */
     public static $camel = [];
 
     /**
-     * Cache studly-case.
+     * Contains cache of studly-cased strings.
      *
      * @var array
      */
     public static $studly = [];
 
     /**
-     * Cache confing regex string.
+     * Contains cache of regex strings.
      *
      * @var array
      */
     private static $strings = [];
 
     /**
-     * Bucket untuk ULID.
+     * Bucket for ULID.
      *
      * @var array
      */
     private static $ulids = ['time' => 0, 'chars' => []];
 
     /**
-     * Bucket untuk CUID.
+     * Bucket for CUID.
      *
      * @var array
      */
     private static $cuids = ['counter' => 0, 'fingerprint' => null];
 
     /**
-     * Hitung panjang string.
+     * Count the length of a string.
      *
      * @param string $value
      *
@@ -68,7 +68,7 @@ class Str
     }
 
     /**
-     * Mereturn potongan string.
+     * Return a substring of a string.
      *
      * @param string   $string
      * @param int      $start
@@ -82,7 +82,7 @@ class Str
     }
 
     /**
-     * Buat karakter pertama string menjadi huruf besar.
+     * Make the first character of a string uppercase.
      *
      * @param string $string
      *
@@ -94,7 +94,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi huruf kecil.
+     * Make the string lowercased.
      *
      * @param string $value
      *
@@ -106,7 +106,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi huruf besar.
+     * Make the string uppercased.
      *
      * @param string $value
      *
@@ -118,7 +118,7 @@ class Str
     }
 
     /**
-     * Ubah huruf pertama kata menjadi huruf besar.
+     * Make the first character of each word uppercase.
      *
      * @param string $value
      *
@@ -130,7 +130,7 @@ class Str
     }
 
     /**
-     * Potong string sebanyak jumlah karakter yang ditentukan.
+     * Cut a string to a given length.
      *
      * @param string $value
      * @param int    $limit
@@ -148,7 +148,7 @@ class Str
     }
 
     /**
-     * Trim whitespace ASCII dan multi-byte whitespaces (cth. Whitespace milik Ms. Word).
+     * Trim whitespaces, ASCII and multi-byte whitespaces (e.g. Whitespace from Microsoft Word).
      *
      * @param string $value
      *
@@ -160,7 +160,7 @@ class Str
     }
 
     /**
-     * Potong string sebanyak jumlah kata yang ditentukan.
+     * Cut a string to a given length by words.
      *
      * @param string $value
      * @param int    $words
@@ -180,7 +180,7 @@ class Str
     }
 
     /**
-     * Ubah kata menjadi bentuk tanggal (hanya inggris).
+     * Transform a string to singular form (english only).
      *
      * @param string $string
      *
@@ -216,7 +216,7 @@ class Str
     }
 
     /**
-     * Ubah kata menjadi bentuk jamak (hanya inggris).
+     * Transform a string to plural form (english only).
      *
      * @param string $string
      *
@@ -252,7 +252,7 @@ class Str
     }
 
     /**
-     * Pluralisasikan kata terakhir dari string studle-case (hanya inggris).
+     * Pluralize the last word of the studly-case string (english only)
      *
      * @param string $value
      * @param int    $count
@@ -266,7 +266,7 @@ class Str
     }
 
     /**
-     * Ubah string ke bentuk URL.
+     * Make an URL friendly slug.
      *
      * @param string $value
      * @param string $separator
@@ -285,7 +285,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi bentuk kelas 'garis bawah'.
+     * Transform a string into a PSR-0 class name.
      *
      * @param string $value
      *
@@ -297,7 +297,39 @@ class Str
     }
 
     /**
-     * Potong - potong string segmen URL.
+     * Remove accents from a string.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    public static function accentless($value)
+    {
+        $accents = [
+            '/ä|æ|ǽ/' => 'ae', '/ö|œ/' => 'oe', '/ü/' => 'ue', '/Ä/' => 'Ae', '/Ü/' => 'Ue', '/Ö/' => 'Oe',
+            '/À|Á|Â|Ã|Ä|Å|Ǻ|Ā|Ă|Ą|Ǎ|Α|Ά|Ả|Ạ|Ầ|Ẫ|Ẩ|Ậ|Ằ|Ắ|Ẵ|Ẳ|Ặ|А/' => 'A', '/à|á|â|ã|å|ǻ|ā|ă|ą|ǎ|ª|α|ά|ả|ạ|ầ|ấ|ẫ|ẩ|ậ|ằ|ắ|ẵ|ẳ|ặ|а/' => 'a',
+            '/Б/' => 'B', '/б/' => 'b', '/Ç|Ć|Ĉ|Ċ|Č/' => 'C', '/ç|ć|ĉ|ċ|č/' => 'c', '/Д/' => 'D', '/д/' => 'd', '/Ð|Ď|Đ|Δ/' => 'Dj', '/ð|ď|đ|δ/' => 'dj',
+            '/È|É|Ê|Ë|Ē|Ĕ|Ė|Ę|Ě|Ε|Έ|Ẽ|Ẻ|Ẹ|Ề|Ế|Ễ|Ể|Ệ|Е|Э/' => 'E', '/è|é|ê|ë|ē|ĕ|ė|ę|ě|έ|ε|ẽ|ẻ|ẹ|ề|ế|ễ|ể|ệ|е|э/' => 'e', '/Ф/' => 'F', '/ф/' => 'f',
+            '/Ĝ|Ğ|Ġ|Ģ|Γ|Г|Ґ/' => 'G', '/ĝ|ğ|ġ|ģ|γ|г|ґ/' => 'g', '/Ĥ|Ħ/' => 'H', '/ĥ|ħ/' => 'h',
+            '/Ì|Í|Î|Ï|Ĩ|Ī|Ĭ|Ǐ|Į|İ|Η|Ή|Ί|Ι|Ϊ|Ỉ|Ị|И|Ы/' => 'I', '/ì|í|î|ï|ĩ|ī|ĭ|ǐ|į|ı|η|ή|ί|ι|ϊ|ỉ|ị|и|ы|ї/' => 'i', '/Ĵ/' => 'J',
+            '/ĵ/' => 'j', '/Ķ|Κ|К/'  => 'K', '/ķ|κ|к/' => 'k', '/Ĺ|Ļ|Ľ|Ŀ|Ł|Λ|Л/' => 'L', '/ĺ|ļ|ľ|ŀ|ł|λ|л/' => 'l', '/М/' => 'M', '/м/' => 'm',
+            '/Ñ|Ń|Ņ|Ň|Ν|Н/' => 'N', '/ñ|ń|ņ|ň|ŉ|ν|н/' => 'n', '/Ò|Ó|Ô|Õ|Ō|Ŏ|Ǒ|Ő|Ơ|Ø|Ǿ|Ο|Ό|Ω|Ώ|Ỏ|Ọ|Ồ|Ố|Ỗ|Ổ|Ộ|Ờ|Ớ|Ỡ|Ở|Ợ|О/' => 'O',
+            '/ò|ó|ô|õ|ō|ŏ|ǒ|ő|ơ|ø|ǿ|º|ο|ό|ω|ώ|ỏ|ọ|ồ|ố|ỗ|ổ|ộ|ờ|ớ|ỡ|ở|ợ|о/' => 'o',
+            '/П/' => 'P', '/п/' => 'p', '/Ŕ|Ŗ|Ř|Ρ|Р/' => 'R', '/ŕ|ŗ|ř|ρ|р/' => 'r', '/Ś|Ŝ|Ş|Ș|Š|Σ|С/' => 'S', '/ś|ŝ|ş|ș|š|ſ|σ|ς|с/' => 's',
+            '/Ț|Ţ|Ť|Ŧ|τ|Т/' => 'T', '/ț|ţ|ť|ŧ|т/' => 't', '/Ù|Ú|Û|Ũ|Ū|Ŭ|Ů|Ű|Ų|Ư|Ǔ|Ǖ|Ǘ|Ǚ|Ǜ|Ũ|Ủ|Ụ|Ừ|Ứ|Ữ|Ử|Ự|У/' => 'U',
+            '/ù|ú|û|ũ|ū|ŭ|ů|ű|ų|ư|ǔ|ǖ|ǘ|ǚ|ǜ|υ|ύ|ϋ|ủ|ụ|ừ|ứ|ữ|ử|ự|у/' => 'u', '/Ƴ|Ɏ|Ỵ|Ẏ|Ӳ|Ӯ|Ў|Ý|Ÿ|Ŷ|Υ|Ύ|Ϋ|Ỳ|Ỹ|Ỷ|Ỵ|Й/' => 'Y',
+            '/ẙ|ʏ|ƴ|ɏ|ỵ|ẏ|ӳ|ӯ|ў|ý|ÿ|ŷ|ỳ|ỹ|ỷ|ỵ|й/' => 'y', '/В/' => 'V', '/в/' => 'v', '/Ŵ/' => 'W', '/ŵ/' => 'w',
+            '/Ź|Ż|Ž|Ζ|З/' => 'Z', '/ź|ż|ž|ζ|з/' => 'z', '/Æ|Ǽ/' => 'AE', '/ß/' => 'ss', '/Ĳ/' => 'IJ', '/ĳ/' => 'ij','/Œ/' => 'OE',
+            '/ƒ/' => 'f', '/ξ/' => 'ks', '/π/' => 'p', '/β/' => 'v', '/μ/' => 'm', '/ψ/' => 'ps', '/Ё/' => 'Yo', '/ё/' => 'yo',
+            '/Є/' => 'Ye', '/є/' => 'ye', '/Ї/' => 'Yi', '/Ж/' => 'Zh', '/ж/' => 'zh', '/Х/' => 'Kh', '/х/' => 'kh', '/Ц/' => 'Ts',
+            '/ц/' => 'ts', '/Ч/' => 'Ch', '/ч/' => 'ch', '/Ш/' => 'Sh', '/ш/' => 'sh', '/Щ/' => 'Shch', '/щ/' => 'shch',
+            '/Ъ|ъ|Ь|ь/' => '', '/Ю/' => 'Yu', '/ю/' => 'yu', '/Я/' => 'Ya', '/я/' => 'ya',
+        ];
+        return preg_replace(array_keys($accents), array_values($accents), (string) $value);
+    }
+
+    /**
+     * Split a string into segments.
      *
      * @param string $value
      *
@@ -309,7 +341,7 @@ class Str
     }
 
     /**
-     * Hasilkan string acak sesuai panjang yang ditentukan.
+     * Generate a random string.
      *
      * @param int $length
      *
@@ -328,7 +360,7 @@ class Str
     }
 
     /**
-     * Hasilkan string password acak.
+     * Generate a random password.
      *
      * @param int  $length
      * @param bool $letters
@@ -377,8 +409,8 @@ class Str
     }
 
     /**
-     * Hasilkan byte acak yang aman secara kriptografi.
-     * Method ini diadaptasi dari https://github.com/paragonie/random-compat.
+     * Generate a cryptographically secure random bytes.
+     * Adopted from https://github.com/paragonie/random-compat.
      *
      * @param int $length
      *
@@ -402,7 +434,7 @@ class Str
         $windows = ('\\' === DS);
         $bytes = false;
 
-        // Gunakan openssl.
+        // Use openssl.
         $bytes = openssl_random_pseudo_bytes($length, $strong);
 
         if (false !== $strong && false !== $bytes) {
@@ -411,7 +443,7 @@ class Str
             }
         }
 
-        // Openssl gagal, coba /dev/urandom (unix)
+        // Openssl failed, try /dev/urandom (unix)
         if ($unix) {
             $urandom = true;
             $basedir = ini_get('open_basedir');
@@ -441,7 +473,7 @@ class Str
             }
         }
 
-        // /dev/urandom juga masih saja gagal, coba CAPICOM (windows)
+        // /dev/urandom still failed, try CAPICOM (windows)
         if ($windows && class_exists('\COM', false)) {
             try {
                 $com = new \COM('CAPICOM.Utilities.1');
@@ -467,13 +499,13 @@ class Str
             }
         }
 
-        // Tidak ada lagi yang bisa digunakan. Menyerah.
+        // Nothing left, give up.
         throw new \Exception('There is no suitable CSPRNG installed on your system');
     }
 
     /**
-     * Hasilkan integer acak yang aman secara kriptografi.
-     * Method ini diadaptasi dari https://github.com/paragonie/random-compat.
+     * Generate a cryptographically secure random integer.
+     * Adopted from https://github.com/paragonie/random-compat.
      *
      * @param int $min
      * @param int $max
@@ -541,8 +573,7 @@ class Str
     }
 
     /**
-     * Buat string UUID (versi 4).
-     * (Universally Unique Identifier versi 4).
+     * Generate a UUID (version 4) string.
      *
      * @return string
      */
@@ -552,8 +583,7 @@ class Str
     }
 
     /**
-     * Buat string ULID.
-     * (Universally Unique Lexicographically Sortable Identifier).
+     * Generate a ULID string.
      *
      * @param bool $lowercase
      *
@@ -615,8 +645,7 @@ class Str
     }
 
     /**
-     * Buat string nano id.
-     * Diadaptasi dari: https://github.com/hidehalo/nanoid-php.
+     * Generate a Nano ID string.
      *
      * @param int         $size
      * @param string|null $characters
@@ -656,7 +685,7 @@ class Str
 
 
     /**
-     * Buat string dummy lorem ipsum.
+     * Generate dummy lorem-ipsum text.
      *
      * @param int  $count
      * @param int  $max
@@ -666,33 +695,17 @@ class Str
      */
     public static function lorem($count = 1, $max = 20, $standard = true)
     {
-        $result = '';
-
-        if ($standard) {
-            $result = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, ' .
-                'sed do eiusmod tempor incididunt ut labore et dolore magna ' .
-                'aliqua.';
-        }
-
+        $result = $standard ? 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' : '';
         $pool = explode(
             ' ',
-            'a ab ad accusamus adipisci alias aliquam amet animi aperiam ' .
-            'architecto asperiores aspernatur assumenda at atque aut beatae ' .
-            'blanditiis cillum commodi consequatur corporis corrupti culpa ' .
-            'cum cupiditate debitis delectus deleniti deserunt dicta ' .
-            'dignissimos distinctio dolor ducimus duis ea eaque earum eius ' .
-            'eligendi enim eos error esse est eum eveniet ex excepteur ' .
-            'exercitationem expedita explicabo facere facilis fugiat harum ' .
-            'hic id illum impedit in incidunt ipsa iste itaque iure iusto ' .
-            'laborum laudantium libero magnam maiores maxime minim minus ' .
-            'modi molestiae mollitia nam natus necessitatibus nemo neque ' .
-            'nesciunt nihil nisi nobis non nostrum nulla numquam occaecati ' .
-            'odio officia omnis optio pariatur perferendis perspiciatis ' .
-            'placeat porro possimus praesentium proident quae quia quibus ' .
-            'quo ratione recusandae reiciendis rem repellat reprehenderit ' .
-            'repudiandae rerum saepe sapiente sequi similique sint soluta ' .
-            'suscipit tempora tenetur totam ut ullam unde vel veniam vero ' .
-            'vitae voluptas'
+            'a ab ad accusamus adipisci alias aliquam amet animi aperiam architecto asperiores aspernatur assumenda at atque aut beatae '
+                . 'blanditiis cillum commodi consequatur corporis corrupti culpa cum cupiditate debitis delectus deleniti deserunt dicta '
+                . 'dignissimos distinctio dolor ducimus duis ea eaque earum eius eligendi enim eos error esse est eum eveniet ex excepteur '
+                . 'exercitationem expedita explicabo facere facilis fugiat harum hic id illum impedit in incidunt ipsa iste itaque iure iusto '
+                . 'laborum laudantium libero magnam maiores maxime minim minus modi molestiae mollitia nam natus necessitatibus nemo neque '
+                . 'nesciunt nihil nisi nobis non nostrum nulla numquam occaecati odio officia omnis optio pariatur perferendis perspiciatis '
+                . 'placeat porro possimus praesentium proident quae quia quibus quo ratione recusandae reiciendis rem repellat reprehenderit '
+                . 'repudiandae rerum saepe sapiente sequi similique sint soluta suscipit tempora tenetur totam ut ullam unde vel veniam vero vitae voluptas'
         );
 
         $max = ($max <= 3) ? 4 : $max;
@@ -708,7 +721,7 @@ class Str
     }
 
     /**
-     * Cek apakah string cocok dengan pola yang diberikan.
+     * Check if string matches given pattern.
      *
      * @param string|array $pattern
      * @param string       $value
@@ -739,7 +752,7 @@ class Str
     }
 
     /**
-     * Ganti kemunculan pertama dari value yang diberikan dalam string.
+     * Replace the first occurrence of the given value in the string.
      *
      * @param string $search
      * @param string $replace
@@ -763,7 +776,7 @@ class Str
     }
 
     /**
-     * Ganti kemunculan terakhir dari value yang diberikan dalam string.
+     * Replace the last occurrence of the given value in the string.
      *
      * @param string $search
      * @param string $replace
@@ -787,7 +800,7 @@ class Str
     }
 
     /**
-     * Ganti value yang diberikan dalam string secara berurutan dengan array.
+     * Replace the given value in the string with array.
      *
      * @param string $search
      * @param array  $replace
@@ -809,7 +822,7 @@ class Str
     }
 
     /**
-     * Sensor bebrapa huruf dalam kata / kalimat.
+     * Censor some letters in word / sentence.
      *
      * @param string $string
      * @param string $replacement
@@ -824,7 +837,7 @@ class Str
     }
 
     /**
-     * Dapatkan bagian dari string sebelum kemunculan pertama dari value yang diberikan.
+     * Get the portion of the string before the first occurrence of the given value.
      *
      * @param string $subject
      * @param string $search
@@ -842,7 +855,7 @@ class Str
     }
 
     /**
-     * Mereturn sisa string setelah kemunculan pertama dari value yang diberikan.
+     * Get the portion of the string after the first occurrence of the given value.
      *
      * @param string $subject
      * @param string $search
@@ -855,7 +868,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi camel-case.
+     * Transform string into camel-case.
      *
      * @param string $value
      *
@@ -871,7 +884,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi studly-case.
+     * Transform string into studly-case.
      *
      * @param string $value
      *
@@ -889,7 +902,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi kebab-case.
+     * Transform string into kebab-case.
      *
      * @param string $value
      *
@@ -901,7 +914,7 @@ class Str
     }
 
     /**
-     * Ubah string menjadi snake-case.
+     * Transform string into snake-case.
      *
      * @param string $value
      *
@@ -927,7 +940,7 @@ class Str
     }
 
     /**
-     * Tentukan apakah string yang diberikan berisi substring yang diberikan.
+     * Check if the given string contains the given substring.
      *
      * @param string       $haystack
      * @param string|array $needles
@@ -949,7 +962,7 @@ class Str
     }
 
     /**
-     * Tentukan apakah string yang diberikan berisi semua nilai array.
+     * Check if the given string contains all values in the array.
      *
      * @param string $haystack
      * @param array  $needles
@@ -968,7 +981,7 @@ class Str
     }
 
     /**
-     * Awali string dengan sebuah instance dari nilai yang diberikan.
+     * Starts the given string with the given value.
      *
      * @param string $value
      * @param string $prefix
@@ -981,7 +994,7 @@ class Str
     }
 
     /**
-     * Tentukan apakah string yang diberikan dimulai dengan substring yang diberikan.
+     * Check if the given string starts with the given value.
      *
      * @param string $haystack
      * @param string $needle
@@ -995,7 +1008,7 @@ class Str
     }
 
     /**
-     * Tentukan apakah string yang diberikan diakhiri dengan substring yang diberikan.
+     * Check if the given string ends with the given value.
      *
      * @param string $haystack
      * @param string $needle
@@ -1010,7 +1023,7 @@ class Str
     }
 
     /**
-     * Akhiri string dengan sebuah instance dari nilai yang diberikan.
+     * Ends the given string with the given value.
      *
      * @param string $value
      * @param string $cap
@@ -1023,7 +1036,7 @@ class Str
     }
 
     /**
-     * Uraikan string berpola callback menjadi array.
+     * Parses a callback string into an array.
      *
      * @param string     $callback
      * @param mixed|null $default
@@ -1036,7 +1049,7 @@ class Str
     }
 
     /**
-     * Konversikan integer ke char mengikuti aturan ctype.
+     * Converts integer to char according to ctype rules.
      *
      * @param string|int $value
      *
@@ -1060,16 +1073,16 @@ class Str
     }
 
     /**
-     * Daftarkan method baru.
+     * Registers a new method.
      *
      * <code>
      *
-     *      // Daftarkan method baru.
+     *      // Register a new method.
      *      Str::macro('reverse', function ($value) {
      *          return strrev($value);
      *      });
      *
-     *      // Panggil method baru.
+     *      // Call the new method.
      *      Str::reverse('Hello world!'); // '!dlrow olleH'
      *
      * </code>
@@ -1089,7 +1102,7 @@ class Str
     }
 
     /**
-     * Tangani pemanggilan static method secara dinamis.
+     * Handles statically called methods.
      *
      * @param string $method
      * @param array  $parameters

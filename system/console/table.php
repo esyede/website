@@ -19,7 +19,7 @@ class Table
     private $column_widths = [];
 
     /**
-     * Tambahkan header tabel.
+     * Add a table header.
      *
      * @param string $content
      */
@@ -30,7 +30,7 @@ class Table
     }
 
     /**
-     * Alias untuk add_header.
+     * Alias for add_header.
      *
      * @param array $content
      */
@@ -41,7 +41,7 @@ class Table
     }
 
     /**
-     * Ambil header tabel.
+     * Get table header.
      *
      * @return array
      */
@@ -51,15 +51,15 @@ class Table
     }
 
     /**
-     * Tambahkan baris.
+     * Add a table row.
      *
      * @param array|null $data
      */
-    public function add_row(array $data = null)
+    public function add_row(array $data = [])
     {
         $this->row_index++;
 
-        if (is_array($data)) {
+        if (is_array($data) && !empty($data)) {
             foreach ($data as $col => $content) {
                 $this->data[$this->row_index][$col] = $content;
             }
@@ -69,7 +69,7 @@ class Table
     }
 
     /**
-     * Tambahkan kolom.
+     * Add a table column.
      *
      * @param array $content
      * @param int   $column
@@ -84,12 +84,11 @@ class Table
         }
 
         $this->data[$row][$column] = $content;
-
         return $this;
     }
 
     /**
-     * Tampilkan border tabel?
+     * Show table border?
      */
     public function show_border()
     {
@@ -98,7 +97,7 @@ class Table
     }
 
     /**
-     * Sembunyukan border tabel?
+     * Hide table border?
      */
     public function hide_border()
     {
@@ -107,13 +106,12 @@ class Table
     }
 
     /**
-     * Tampilkan semua border tabel?
+     * Show all table borders?
      */
     public function show_borders()
     {
         $this->show_border();
         $this->all_borders = true;
-
         return $this;
     }
 
@@ -129,7 +127,7 @@ class Table
     }
 
     /**
-     * Set indentasi tabel.
+     * Set table indentation.
      *
      * @param int $value
      */
@@ -140,18 +138,17 @@ class Table
     }
 
     /**
-     * Tambah garis border.
+     * Add border line.
      */
     public function add_border_line()
     {
         $this->row_index++;
         $this->data[$this->row_index] = self::HORIZONTAL_ROW;
-
         return $this;
     }
 
     /**
-     * Cetak/tampilkan hasil tabel.
+     * Print/display the table.
      */
     public function display()
     {
@@ -159,7 +156,7 @@ class Table
     }
 
     /**
-     * Render tabel.
+     * Render the table.
      *
      * @return string
      */
@@ -201,7 +198,7 @@ class Table
     }
 
     /**
-     * Ambil garis border.
+     * Get the border line.
      *
      * @return string
      */
@@ -210,26 +207,22 @@ class Table
         $output = '';
 
         if (isset($this->data[0])) {
-            $columnCount = count($this->data[0]);
+            $count = count($this->data[0]);
         } elseif (isset($this->data[self::HEADER_INDEX])) {
-            $columnCount = count($this->data[self::HEADER_INDEX]);
+            $count = count($this->data[self::HEADER_INDEX]);
         } else {
             return $output;
         }
 
-        for ($column = 0; $column < $columnCount; $column++) {
+        for ($column = 0; $column < $count; $column++) {
             $output .= $this->get_cell_output($column);
         }
 
-        if ($this->border) {
-            $output .= '+';
-        }
-
-        return $output . PHP_EOL;
+        return $output . ($this->border ? '+' : '') . PHP_EOL;
     }
 
     /**
-     * Ambil output sel.
+     * Get the cell output.
      *
      * @param int   $index
      * @param array $row
@@ -258,7 +251,7 @@ class Table
     }
 
     /**
-     * Hitung lebar kolom.
+     * Calculate column width.
      *
      * @return int
      */
@@ -284,7 +277,7 @@ class Table
     }
 
     /**
-     * Strpad dengan dukungan unicode.
+     * Pad a string.
      *
      * @param string $str
      * @param int    $amount
@@ -316,8 +309,7 @@ class Table
         } elseif (STR_PAD_BOTH === $direction) {
             $length = ($amount - $len) / 2;
             $repeat = str_repeat((string) $content, ceil($length / $padlen));
-            $result = mb_substr($repeat, 0, floor($length), 'UTF-8') .
-                $str . mb_substr($repeat, 0, ceil($length), 'UTF-8');
+            $result = mb_substr($repeat, 0, floor($length), 'UTF-8') . $str . mb_substr($repeat, 0, ceil($length), 'UTF-8');
         }
 
         return $result;

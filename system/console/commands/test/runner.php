@@ -11,15 +11,15 @@ use System\Console\Commands\Command;
 class Runner extends Command
 {
     /**
-     * Base directory tempat test akan dieksekusi.
-     * File phpunit.xml juga harus disimpan di direktori ini.
+     * Contains the base directory where tests will be executed.
+     * The phpunit.xml file must also be saved in this directory.
      *
      * @var string
      */
     protected $base;
 
     /**
-     * Jalankan seluruh unit test milik folder application.
+     * Run all unit tests of the application folder.
      *
      * @param array $packages
      *
@@ -33,7 +33,7 @@ class Runner extends Command
     }
 
     /**
-     * Jalankan seluruh unit test milik folder system.
+     * Run all unit tests of the system folder.
      *
      * @return void
      */
@@ -45,7 +45,7 @@ class Runner extends Command
     }
 
     /**
-     * Jalankan seluruh unit test milik sebuah paket.
+     * Run all unit tests of a package.
      *
      * @param array $packages
      *
@@ -66,7 +66,7 @@ class Runner extends Command
     }
 
     /**
-     * Jalankan phpunit konfigurasi xml sementara.
+     * Run phpunit using the temporary configuration file.
      *
      * @return void
      */
@@ -76,33 +76,22 @@ class Runner extends Command
         $config = path('base') . 'phpunit.xml';
 
         if (!is_file(path('base') . $phpunit)) {
-            throw new \Exception(
-                "Error: test dependencies is not present. Please run 'composer install' first."
-            );
+            throw new \Exception("Error: test dependencies is not present. Please run 'composer install' first.");
         }
 
-        $verbose = has_cli_flag('v')
-            || has_cli_flag('vv')
-            || has_cli_flag('vvv')
-            || has_cli_flag('verbose');
-
+        $verbose = has_cli_flag('v') || has_cli_flag('vv') || has_cli_flag('vvv') || has_cli_flag('verbose');
         $phpunit .= $verbose ? ' --debug' : '';
 
-        // Forward semua parameter PHPUnit dari CLI
+        // Forward all phpunit arguments
         $args = $this->arguments();
         $phpunit .= $args ? ' ' . $args : '';
-
         passthru('.' . DS . $phpunit . ' --configuration ' . escapeshellarg($config), $status);
-
-        if (is_file($config)) {
-            Storage::delete($config);
-        }
-
+        is_file($config) && Storage::delete($config);
         exit($status);
     }
 
     /**
-     * Salin stub phpunit.xml ke folder root.
+     * Copy the phpunit.xml stub to root folder.
      *
      * @param string $directory
      *
@@ -112,12 +101,11 @@ class Runner extends Command
     {
         $stub = Storage::get(__DIR__ . DS . 'stub.xml');
         $stub = $this->tokens($stub, ['[boot]' => $this->base . 'phpunit.php', '[dir]' => $directory]);
-
         file_put_contents(path('base') . 'phpunit.xml', $stub, LOCK_EX);
     }
 
     /**
-     * Replace string token didalam file stub.
+     * Replace tokens in stub file.
      *
      * @param string $stub
      * @param array  $tokens
@@ -130,7 +118,7 @@ class Runner extends Command
     }
 
     /**
-     * Ambil semua parameter PHPUnit dari argument CLI.
+     * Get all phpunit arguments.
      *
      * @return string
      */
@@ -138,10 +126,8 @@ class Runner extends Command
     {
         $argv = (array) \System\Request::foundation()->server->get('argv');
         $argv = empty($argv) ? [] : $argv;
-        $args = [];
-
-        // Deteksi posisi command test (test:core dan test:package package_name)
         $cmdpos = 0;
+        $args = [];
 
         foreach ($argv as $index => $arg) {
             if (strpos($arg, 'test:') !== false) {
@@ -150,16 +136,16 @@ class Runner extends Command
             }
         }
 
-        // Skip argument setelah command dan nama package (jika test:package)
+        // Skip the argument after command and package name (if test:package)
         $istart = $cmdpos + 1;
 
-        // Jika test:package, skip juga nama package
+        // If it's a test:package command, skip the package name also
         if (isset($argv[$cmdpos]) && strpos($argv[$cmdpos], 'test:package') !== false) {
             $istart++;
         }
 
         foreach (array_slice($argv, $istart) as $argument) {
-            // Skip parameter verbose dan configuration karena sudah dihandle
+            // Skip the verbos and configuration arguments because they are already handled
             if (in_array($argument, ['-v', '-vv', '-vvv', '--verbose', '-c', '--configuration'])) {
                 continue;
             }

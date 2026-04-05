@@ -12,17 +12,17 @@ use System\Package;
 class Make extends Command
 {
     /**
-     * Buat file controller baru.
+     * Make a new controller.
      *
      * <code>
      *
-     *      // Buat file controller baru.
+     *      // Make a new controller.
      *      php rakit make:controller dashboard
      *
-     *      // Buat file controller baru didalam subdirektori.
+     *      // Make a new controller in a subdirectory.
      *      php rakit make:controller admin.home
      *
-     *      // Buat file controller baru di paket 'admin'.
+     *      // Make a new controller in a package.
      *      php rakit make:controller admin::dashboard
      *
      * </code>
@@ -64,10 +64,7 @@ class Make extends Command
             $directory = Str::replace_last(basename($file), '', $file);
             $this->makedir($directory);
 
-            $replace = [
-                'stub_class' => Package::class_prefix($package) . Str::classify($class),
-            ];
-
+            $replace = ['stub_class' => Package::class_prefix($package) . Str::classify($class)];
             Storage::put($file, $this->stub_general($class, 'controller', $replace));
 
             echo $this->info('Created controller: ' . $display);
@@ -77,17 +74,17 @@ class Make extends Command
     }
 
     /**
-     * Buat file resource controller baru.
+     * Make a new resource controller.
      *
      * <code>
      *
-     *      // Buat file resource controller baru.
+     *      // Make a new resource controller.
      *      php rakit make:resource dashboard
      *
-     *      // Buat file resource controller baru didalam subdirektori.
+     *      // Make a new resource controller in a subdirectory.
      *      php rakit make:resource admin.home
      *
-     *      // Buat file resource controller baru di paket 'admin'.
+     *      // Make a new resource controller in a package.
      *      php rakit make:resource admin::dashboard
      *
      * </code>
@@ -143,14 +140,14 @@ class Make extends Command
     }
 
     /**
-     * Buat file model baru.
+     * Make a new model.
      *
      * <code>
      *
-     *      // Buat file model baru.
+     *      // Make a new model.
      *      php rakit make:model user
      *
-     *      // Buat file model baru di paket 'admin'.
+     *      // Make a new model in a package.
      *      php rakit make:model admin::user
      *
      * </code>
@@ -205,7 +202,7 @@ class Make extends Command
     }
 
     /**
-     * Buat sebuah file migrasi.
+     * Make a new migration.
      *
      * @param array $arguments
      *
@@ -242,14 +239,14 @@ class Make extends Command
     }
 
     /**
-     * Buat file command baru.
+     * Make a new command.
      *
      * <code>
      *
-     *      // Buat file command baru.
+     *      // Make a new command.
      *      php rakit make:command dashboard
      *
-     *      // Buat file command baru di paket 'admin'.
+     *      // Make a new command in a package.
      *      php rakit make:command admin::dashboard
      *
      * </code>
@@ -294,10 +291,7 @@ class Make extends Command
         } else {
             $this->makedir($directory);
 
-            $replace = [
-                'stub_class' => Package::class_prefix($package) . Str::classify($class) . '_Command',
-            ];
-
+            $replace = ['stub_class' => Package::class_prefix($package) . Str::classify($class) . '_Command'];
             Storage::put($file, $this->stub_general($class, 'command', $replace));
 
             echo $this->info('Created command: ' . $display);
@@ -307,14 +301,14 @@ class Make extends Command
     }
 
     /**
-     * Buat file job baru.
+     * Make a new job.
      *
      * <code>
      *
-     *      // Buat file job baru.
+     *      // Make a new job.
      *      php rakit make:job dashboard
      *
-     *      // Buat file job baru di paket 'admin'.
+     *      // Make a new job in a package.
      *      php rakit make:job admin::dashboard
      *
      * </code>
@@ -359,10 +353,7 @@ class Make extends Command
         } else {
             $this->makedir($directory);
 
-            $replace = [
-                'stub_class' => Package::class_prefix($package) . Str::classify($class) . '_Job',
-            ];
-
+            $replace = ['stub_class' => Package::class_prefix($package) . Str::classify($class) . '_Job'];
             Storage::put($file, $this->stub_general($class, 'job', $replace));
 
             echo $this->info('Created job: ' . $display);
@@ -372,15 +363,15 @@ class Make extends Command
     }
 
     /**
-     * Buat auth scaffolding (login, register, forgot password).
-     * (NOTE: harus dijalankan pada keadaan fresh project).
+     * Generate auth scaffolding (login, register, forgot password).
+     * (NOTE: this must be run on a fresh project).
      *
      * <code>
      *
-     *      // Buat auth scaffolding.
+     *      // Generate auth scaffolding.
      *      php rakit make:auth
      *
-     *      // Selanjutkan jalankan migrasi database.
+     *      // Next, run the database migration.
      *      php rakit migrate
      *
      * </code>
@@ -415,10 +406,7 @@ class Make extends Command
         ];
 
         foreach ($views as $key => $value) {
-            copy(
-                __DIR__ . DS . 'stubs' . DS . 'auth' . DS . 'views' . DS . $key,
-                path('app') . 'views' . DS . $value
-            );
+            copy(__DIR__ . DS . 'stubs' . DS . 'auth' . DS . 'views' . DS . $key, path('app') . 'views' . DS . $value);
         }
 
         $controllers = [
@@ -446,14 +434,14 @@ class Make extends Command
     }
 
     /**
-     * Buat file unit test.
+     * Make a new test.
      *
      * <code>
      *
-     *      // Buat file unit test baru.
+     *      // Make a new test.
      *      php rakit make:test foobar
      *
-     *      // Buat file unit test baru di paket 'admin'.
+     *      // Make a new test in the 'admin' package.
      *      php rakit make:test admin::foobar
      *
      * </code>
@@ -506,7 +494,7 @@ class Make extends Command
     }
 
     /**
-     * Ambil konten file stub dan replace placeholdernya (untuk file - file umum).
+     * Get stub content and replace placeholders (for general files).
      *
      * @param string $class
      * @param string $stub
@@ -527,7 +515,7 @@ class Make extends Command
     }
 
     /**
-     * Ambil konten file stub dan replace placeholdernya (khusus file migrasi).
+     * Get stub content and replace placeholders (for migration files).
      *
      * @param string $package
      * @param string $migration
@@ -544,7 +532,7 @@ class Make extends Command
     }
 
     /**
-     * Buat drektori jika belum ada.
+     * Make a directory if it doesn't exist.
      *
      * @param string $directory
      *
@@ -560,7 +548,7 @@ class Make extends Command
     }
 
     /**
-     * Normalisasi directory separator.
+     * Normalize directory separator.
      *
      * @param string $path
      *

@@ -7,21 +7,21 @@ defined('DS') or exit('No direct access.');
 class Cookie
 {
     /**
-     * Berisi list cookie terdaftar.
+     * Contains list of registered cookies.
      *
      * @var array
      */
     public static $jar = [];
 
     /**
-     * Cache untuk decrypted cookie values.
+     * Cache for decrypted cookie values.
      *
      * @var array
      */
     private static $cache = [];
 
     /**
-     * Cek cookie ada atau tidak.
+     * Check if a cookie exists.
      *
      * @param string $name
      *
@@ -33,15 +33,15 @@ class Cookie
     }
 
     /**
-     * Ambil value cookie.
+     * Get the value of a cookie.
      *
      * <code>
      *
-     *      // Ambil value cookie 'makanan'
-     *      $makanan = Cookie::get('makanan');
+     *      // Get value of a cookie
+     *      $food = Cookie::get('food');
      *
-     *      // Return default value jika cookie tidak ketemu
-     *      $makanan = Cookie::get('makanan', 'Mie Ayam');
+     *      // Return default value if cookie not found
+     *      $food = Cookie::get('food', 'Pizza');
      *
      * </code>
      *
@@ -62,9 +62,8 @@ class Cookie
 
         if (isset(static::$jar[$name]) && isset(static::$jar[$name]['value'])) {
             try {
-                $value = Crypter::decrypt(static::$jar[$name]['value']);
-                static::$cache[$name] = $value;
-                return $value;
+                static::$cache[$name] = Crypter::decrypt(static::$jar[$name]['value']);
+                return static::$cache[$name];
             } catch (\Exception $e) {
                 throw new \Exception('Failed to decrypt cookie value: ' . $e->getMessage());
             }
@@ -77,24 +76,23 @@ class Cookie
         }
 
         try {
-            $decrypted = Crypter::decrypt($value);
-            static::$cache[$name] = $decrypted;
-            return $decrypted;
+            static::$cache[$name] = Crypter::decrypt($value);
+            return static::$cache[$name];
         } catch (\Exception $e) {
             throw new \Exception('Failed to decrypt cookie value: ' . $e->getMessage());
         }
     }
 
     /**
-     * Set value cookie.
+     * Set a cookie.
      *
      * <code>
      *
-     *      // Set value cookie 'makanan'
-     *      Cookie::put('makanan', 'Mie Ayam');
+     *      // Set a cookie
+     *      Cookie::put('food', 'Pizza');
      *
-     *      // Set waktu kadaluwarsa cookie 20 menit
-     *      Cookie::put('makanan', 'Mie Ayam', 20);
+     *      // Set a cookie with expiration time of 20 minutes
+     *      Cookie::put('food', 'Pizza', 20);
      *
      * </code>
      *
@@ -106,15 +104,8 @@ class Cookie
      * @param bool   $secure
      * @param string $samesite
      */
-    public static function put(
-        $name,
-        $value,
-        $expiration = 0,
-        $path = '/',
-        $domain = null,
-        $secure = false,
-        $samesite = 'lax'
-    ) {
+    public static function put($name, $value, $expiration = 0, $path = '/', $domain = null, $secure = false, $samesite = 'lax')
+    {
         if (!is_string($name) || empty($name) || !preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
             throw new \Exception('Cookie name must be a non-empty string containing only alphanumeric characters, underscores, and hyphens.');
         }
@@ -128,13 +119,13 @@ class Cookie
         if (!is_null($domain)) {
             if (PHP_VERSION_ID >= 70000) {
                 $check = (strpos($domain, '.') === 0) ? substr($domain, 1) : $domain;
+
                 if (!filter_var($check, FILTER_VALIDATE_DOMAIN)) {
                     throw new \Exception('Cookie domain must be a valid domain.');
                 }
             } else {
                 $trimmed = trim($domain);
-                $predot = (strpos($trimmed, '.') === 0);
-                $target = $predot ? substr($trimmed, 1) : $trimmed;
+                $target = (strpos($trimmed, '.') === 0) ? substr($trimmed, 1) : $trimmed;
 
                 if (strlen($target) > 253 || strlen($target) === 0) {
                     throw new \Exception('Cookie domain must be a valid domain.');
@@ -184,12 +175,12 @@ class Cookie
     }
 
     /**
-     * Set cookie permanen (Aktif selama 5 tahun).
+     * Set a permanent cookie (Active for 5 years).
      *
      * <code>
      *
-     *      // Set cookie 'makanan' secara permanen
-     *      Cookie::forever('makanan', 'Bakso');
+     *      // Set cookie 'food' permanently
+     *      Cookie::forever('food', 'Pizza');
      *
      * </code>
      *
@@ -202,19 +193,13 @@ class Cookie
      *
      * @return bool
      */
-    public static function forever(
-        $name,
-        $value,
-        $path = '/',
-        $domain = null,
-        $secure = false,
-        $samesite = 'lax'
-    ) {
+    public static function forever($name, $value, $path = '/', $domain = null, $secure = false, $samesite = 'lax')
+    {
         return static::put($name, $value, 2628000, $path, $domain, $secure, $samesite);
     }
 
     /**
-     * Hapus cookie.
+     * Delete a cookie.
      *
      * @param string $name
      * @param string $path
@@ -224,13 +209,8 @@ class Cookie
      *
      * @return bool
      */
-    public static function forget(
-        $name,
-        $path = '/',
-        $domain = null,
-        $secure = false,
-        $samesite = 'lax'
-    ) {
+    public static function forget($name, $path = '/', $domain = null, $secure = false, $samesite = 'lax')
+    {
         return static::put($name, '', -2628000, $path, $domain, $secure, $samesite);
     }
 }

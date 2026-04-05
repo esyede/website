@@ -800,7 +800,7 @@ class Upload extends \SplFileInfo
     ];
 
     /**
-     * Kumpulkan informasi file diupload user, via variabel global $_FILES.
+     * Gather informations of uploaded file via the $_FILES global variable.
      *
      * @param string $path
      * @param string $origName
@@ -809,14 +809,8 @@ class Upload extends \SplFileInfo
      * @param int    $error
      * @param bool   $test
      */
-    public function __construct(
-        $path,
-        $origName,
-        $mimeType = null,
-        $size = null,
-        $error = null,
-        $test = false
-    ) {
+    public function __construct($path, $origName, $mimeType = null, $size = null, $error = null, $test = false)
+    {
         if (!ini_get('file_uploads')) {
             throw new \Exception(sprintf(
                 "Unable to create Upload because 'file_uploads' directive is disabled in your php.ini file (%s)",
@@ -838,7 +832,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Tebak ekstensi file yang diupload user.
+     * Guess the file extension.
      *
      * @return string|null
      */
@@ -852,7 +846,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Ambil mime-type file yang diupload user.
+     * Get the mimi-type.
      *
      * @return string|null
      */
@@ -872,7 +866,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Ambil ekstensi file yang diupload user.
+     * Get the file extension.
      *
      * @return string|null
      */
@@ -883,7 +877,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Ambil isi file.
+     * Get the file content.
      *
      * @return string
      */
@@ -892,17 +886,14 @@ class Upload extends \SplFileInfo
         $content = file_get_contents($this->getPathname());
 
         if (false === $content) {
-            throw new \Exception(sprintf(
-                'Could not get the content of the file: %s',
-                $this->getPathname()
-            ));
+            throw new \Exception(sprintf('Could not get the content of the file: %s', $this->getPathname()));
         }
 
         return $content;
     }
 
     /**
-     * Ambil target path tempat memindahkan file yang diupload user.
+     * Get the target upload path.
      *
      * @param string $directory
      * @param string $name
@@ -927,7 +918,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Mereturn base name dari path yang diberikan.
+     * Get the file base name.
      *
      * @param string $name
      *
@@ -935,15 +926,13 @@ class Upload extends \SplFileInfo
      */
     protected function getName($name)
     {
-        $original = str_replace('\\', '/', (string) $name);
-        $position = strrpos($original, '/');
-        $original = (false === $position) ? $original : substr($original, $position + 1);
-
-        return $original;
+        $name = str_replace('\\', '/', (string) $name);
+        $position = strrpos($name, '/');
+        return (false === $position) ? $name : substr($name, $position + 1);
     }
 
     /**
-     * Mereturn nama file asli yang diupload user.
+     * Get the file's original name.
      *
      * @return string|null
      */
@@ -953,8 +942,8 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Mereturn mime-type file yang diupload user.
-     * (Jangan gunakan ini untuk mengambil mime-type file, tidak aman).
+     * Get the uploaded file mime-type
+     * (Do not use this to get the file mime-type, it's insecure).
      *
      * @return string|null
      */
@@ -974,8 +963,8 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Mereturn konstanta error upload PHP.
-     * Jika tidak ada error yang terjadi, ia akan mereturn UPLOAD_ERR_OK.
+     * Get the PHP upload error constant.
+     * If there's no error, UPLOAD_ERR_OK will be returned.
      *
      * @return int
      */
@@ -985,7 +974,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Periksa apakah file berhasil diupload.
+     * Check if file is successfully uploaded.
      *
      * @return bool
      */
@@ -995,7 +984,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Pindahkan file upload ke lokasi baru.
+     * Move uploaded file to a new location.
      *
      * @param string $directory
      * @param string $name
@@ -1010,30 +999,18 @@ class Upload extends \SplFileInfo
             if ($this->test) {
                 if (!@rename($this->getPathname(), $target)) {
                     $error = error_get_last();
-                    throw new \Exception(sprintf(
-                        "Could not move the file '%s' to '%s' (%s).",
-                        $this->getPathname(),
-                        $target,
-                        $error['message']
-                    ));
+                    throw new \Exception(sprintf("Could not move the file '%s' to '%s' (%s).", $this->getPathname(), $target, $error['message']));
                 }
 
                 @chmod($target, 0666 & ~umask());
-
                 return $target;
             } elseif (is_uploaded_file($this->getPathname())) {
                 if (false === @move_uploaded_file($this->getPathname(), $target)) {
                     $error = error_get_last();
-                    throw new \Exception(sprintf(
-                        "Could not move the file '%s' to '%s' (%s).",
-                        $this->getPathname(),
-                        $target,
-                        $error['message']
-                    ));
+                    throw new \Exception(sprintf("Could not move the file '%s' to '%s' (%s).", $this->getPathname(), $target, $error['message']));
                 }
 
                 @chmod($target, 0666 & ~umask());
-
                 return $target;
             }
         }
@@ -1042,7 +1019,7 @@ class Upload extends \SplFileInfo
     }
 
     /**
-     * Mereturn max upload size dari php.ini.
+     * Get the max upload size from php.ini.
      *
      * @return int
      */
@@ -1057,17 +1034,10 @@ class Upload extends \SplFileInfo
         $metric = strtolower(substr($max, -1));
 
         switch ($metric) {
-            case 't':
-                $max *= 1024; // No break, memang disengaja.
-
-            case 'g':
-                $max *= 1024; // No break, memang disengaja.
-
-            case 'm':
-                $max *= 1024; // No break, memang disengaja.
-
-            case 'k':
-                $max *= 1024; // No break, memang disengaja.
+            case 't': $max *= 1024; // No break (intentional)
+            case 'g': $max *= 1024; // No break (intentional)
+            case 'm': $max *= 1024; // No break (intentional)
+            case 'k': $max *= 1024; // No break (intentional)
         }
 
         return (int) $max;

@@ -18,7 +18,7 @@ class Websocket extends Command
     private $config;
 
     /**
-     * Serve websocket server.
+     * Run the websocket server.
      *
      * @param array $arguments
      *
@@ -40,6 +40,14 @@ class Websocket extends Command
             ->run();
     }
 
+    /**
+     * Broadcast a message to all subscribed clients.
+     *
+     * @param Server $server
+     * @param string $message
+     *
+     * @return void
+     */
     private function broadcast(Server $server, $message)
     {
         $clients = $server->clients();
@@ -49,20 +57,32 @@ class Websocket extends Command
         }
     }
 
+    /**
+     * Broadcast a presence to all subscribed clients.
+     *
+     * @param Server $server
+     *
+     * @return void
+     */
     private function presence(Server $server)
     {
         $clients = $server->clients();
         $users = array_map(function ($client) {
-            return [
-                'id' => $client->id(),
-                'name' => optional($client->user)->name ?: 'Guest',
-                'connected_at' => Carbon::now()->timestamp,
-            ];
+            return ['id' => $client->id(), 'name' => optional($client->user)->name ?: 'Guest', 'connected_at' => Carbon::now()->timestamp];
         }, $clients);
         $message = json_encode(['type' => 'presence', 'users' => $users]);
         $this->broadcast($server, $message);
     }
 
+    /**
+     * Broadcast a message to all clients in a channel.
+     *
+     * @param Server $server
+     * @param string $channel
+     * @param string $message
+     *
+     * @return void
+     */
     private function broadcast_to_channel(Server $server, $channel, $message)
     {
         $clients = $server->clients();
@@ -74,6 +94,15 @@ class Websocket extends Command
         }
     }
 
+    /**
+     * Broadcast a message to a specific client.
+     *
+     * @param Server $server
+     * @param string $targetId
+     * @param string $message
+     *
+     * @return void
+     */
     private function private_message(Server $server, $targetId, $message)
     {
         $clients = $server->clients();
@@ -86,12 +115,26 @@ class Websocket extends Command
         }
     }
 
+    /**
+     * Handle the start event
+     *
+     * @param Server $server
+     *
+     * @return void
+     */
     public function start(Server $server)
     {
         $this->log('WebSocket server started at: ' . $this->dsn);
         $this->log('Press Ctrl-C to quit.');
     }
 
+    /**
+     * Handle the crash event
+     *
+     * @param Server $server
+     *
+     * @return void
+     */
     public function crash(Server $server)
     {
         $this->log('WebSocket server crashed!', true);
@@ -106,6 +149,13 @@ class Websocket extends Command
         }
     }
 
+    /**
+     * Handle the stop event
+     *
+     * @param Server $server
+     *
+     * @return void
+     */
     public function stop(Server $server)
     {
         $this->log('WebSocket server stopped');
@@ -123,6 +173,13 @@ class Websocket extends Command
         $this->presence($client->server());
     }
 
+    /**
+     * Handle the disconnect event
+     *
+     * @param Client $client
+     *
+     * @return void
+     */
     public function disconnect(Client $client)
     {
         if ($error = socket_last_error()) {
@@ -134,11 +191,27 @@ class Websocket extends Command
         $this->presence($client->server());
     }
 
+    /**
+     * Handle the idle event
+     *
+     * @param Client $client
+     *
+     * @return void
+     */
     public function idle(Client $client)
     {
         // $this->log(sprintf('Client #%s is idle', $client->id()));
     }
 
+    /**
+     * Handle the receive event
+     *
+     * @param Client $client
+     * @param int    $opcode
+     * @param string $data
+     *
+     * @return void
+     */
     public function receive(Client $client, $opcode, $data)
     {
         if (intval($opcode) !== Server::TEXT) {
@@ -238,19 +311,34 @@ class Websocket extends Command
         }
     }
 
+    /**
+     * Handle the send event
+     *
+     * @param Client $client
+     * @param int    $opcode
+     * @param string $data
+     *
+     * @return void
+     */
     public function send(Client $client, $opcode, $data)
     {
         $this->log(sprintf('Sent to client #%s: %s', $client->id(), $data));
     }
 
+    /**
+     * Log the operation to stdout or file.
+     *
+     * @param string $message
+     * @param bool   $is_error
+     *
+     * @return void
+     */
     private function log($message, $is_error = false)
     {
         if ($this->config['logging_enabled']) {
-            echo $is_error
-                ? $this->error('[' . Carbon::now() . '] ' . $message)
-                : $this->info('[' . Carbon::now() . '] ' . $message);
+            echo $is_error ? $this->error('[' . Carbon::now() . '] ' . $message) : $this->info('[' . Carbon::now() . '] ' . $message);
             flush();
-            ob_flush();
+            ob_get_contents() && ob_flush();
         }
     }
 }

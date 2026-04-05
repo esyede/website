@@ -8,18 +8,18 @@ use System\Carbon;
 
 class Client
 {
-    public $socket;
     public $id;
-    public $headers = [];
-    public $handshake = false;
+    public $user;
+    public $socket;
     public $uri = '';
+    public $buffer = '';
+    public $message = '';
     public $busy = false;
-    public $buffer = "";
+    public $handshake = false;
     public $continuous = false;
-    public $message = "";
     public $disconnecting = false;
     public $channels = [];
-    public $user;
+    public $headers = [];
 
     protected $server;
     protected $last_activity;
@@ -77,31 +77,17 @@ class Client
         $type = 'text';
 
         switch ($opcode) {
-            case Server::TEXT:
-                $type = 'text';
-                break;
-
-            case Server::BINARY:
-                $type = 'binary';
-                break;
-
-            case Server::CLOSE:
-                $type = 'close';
-                break;
-
-            case Server::PING:
-                $type = 'ping';
-                break;
-
-            case Server::PONG:
-                $type = 'pong';
-                break;
+            case Server::TEXT:   $type = 'text';   break;
+            case Server::BINARY: $type = 'binary'; break;
+            case Server::CLOSE:  $type = 'close';  break;
+            case Server::PING:   $type = 'ping';   break;
+            case Server::PONG:   $type = 'pong';   break;
         }
 
         $message = $this->server()->frame($data, $this, $type);
 
         if (is_resource($this->socket) && get_resource_type($this->socket) === 'stream') {
-            $result = strlen($message); // Simulasikan sukses untuk unit-testing
+            $result = strlen($message); // Simulate success for unit-testing
         } else {
             $result = @socket_write($this->socket, $message, strlen($message));
         }

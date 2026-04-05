@@ -7,25 +7,25 @@ defined('DS') or exit('No direct access.');
 class Auth
 {
     /**
-     * Berisi driver auth yang saat ini sedang digunakan.
+     * Contains the current auth driver.
      *
      * @var array
      */
     public static $drivers = [];
 
     /**
-     * Berisi registrar driver pihak ketiga.
+     * Contains the third-party auth driver registrar.
      *
      * @var array
      */
     public static $registrar = [];
 
     /**
-     * Ambil instance auth driver.
+     * Get the current auth driver instance.
      *
      * @param string $driver
      *
-     * @return Driver
+     * @return \System\Auth\Drivers\Driver
      */
     public static function driver($driver = null)
     {
@@ -39,11 +39,11 @@ class Auth
     }
 
     /**
-     * Buat instance driver auth.
+     * Make a new auth driver instance.
      *
      * @param string $driver
      *
-     * @return Driver
+     * @return \System\Auth\Drivers\Driver
      */
     protected static function factory($driver)
     {
@@ -53,20 +53,14 @@ class Auth
         }
 
         switch ($driver) {
-            case 'magic':
-                return new Auth\Drivers\Magic(Config::get('auth.table'));
-
-            case 'facile':
-                return new Auth\Drivers\Facile(Config::get('auth.model'));
-
-            default:
-                throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
+            case 'magic':  return new Auth\Drivers\Magic(Config::get('auth.table'));
+            case 'facile': return new Auth\Drivers\Facile(Config::get('auth.model'));
+            default:       throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
         }
     }
 
     /**
-     * Daftarkan auth driver pihak ketiga
-     * (Betul! auth driver di framework ini extedable!).
+     * Register a third-party auth driver registrar.
      *
      * @param string   $driver
      * @param \Closure $resolver
@@ -77,14 +71,14 @@ class Auth
     }
 
     /**
-     * Magic Method untuk pemanggilan method pada driver auth default.
+     * Magic method for calling methods on the default auth driver.
      *
      * <code>
      *
-     *      // Panggil method user() milik driver default.
+     *      // Call user() method on the default auth driver.
      *      $user = Auth::user();
      *
-     *      // Panggil method check() milik driver default.
+     *      // Call check() method on the default auth driver.
      *      Auth::check();
      *
      * </code>

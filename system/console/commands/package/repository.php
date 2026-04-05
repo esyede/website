@@ -7,14 +7,14 @@ defined('DS') or exit('No direct access.');
 class Repository
 {
     /**
-     * Target repository.
+     * Repository URL.
      *
      * @var string
      */
     public static $repository = 'https://rakit.esyede.my.id/repositories.json';
 
     /**
-     * Konstruktor.
+     * Constructor.
      */
     public function __construct()
     {
@@ -22,7 +22,7 @@ class Repository
     }
 
     /**
-     * Cari data paket di repositori.
+     * Search package data in repository.
      *
      * @param string $name
      *
@@ -39,16 +39,11 @@ class Repository
             }
         }
 
-        throw new \Exception(PHP_EOL . sprintf(
-            'Error: Package canot be found on the repository: %s',
-            $name
-        ) . PHP_EOL);
+        throw new \Exception(PHP_EOL . sprintf('Error: Package cannot be found on the repository: %s', $name) . PHP_EOL);
     }
 
     /**
-     * Ambil data seluruh paket yang ada di repositori.
-     *
-     * @param string $name
+     * Get all package data from repository.
      *
      * @return array
      */
@@ -64,11 +59,7 @@ class Repository
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_VERBOSE => get_cli_option('verbose') ? 1 : 0,
-            CURLOPT_USERAGENT => sprintf(
-                'Mozilla/5.0 (Linux x86_64; rv:%s.0) Gecko/20100101 Firefox/%s.0',
-                mt_rand(90, 110),
-                mt_rand(90, 110)
-            ),
+            CURLOPT_USERAGENT => sprintf('Mozilla/5.0 (Linux x86_64; rv:%s.0) Gecko/20100101 Firefox/%s.0', mt_rand(90, 110), mt_rand(90, 110)),
         ]);
 
         $packages = curl_exec($ch);

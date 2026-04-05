@@ -7,29 +7,29 @@ defined('DS') or exit('No direct access.');
 class Database
 {
     /**
-     * Berisi koneksi database yang masih terhubung.
+     * Contains the active database connections.
      *
      * @var array
      */
     public static $connections = [];
 
     /**
-     * Berisi registrar driver pihak ketiga.
+     * Contains the third-party driver registrar.
      *
      * @var array
      */
     public static $registrar = [];
 
     /**
-     * Ambil koneksi database.
-     * Jika tidak ada nama yang disebutkan, akan mereturn koneksi default.
+     * Gets the database connection.
+     * If no name is specified, will return the default connection.
      *
      * <code>
      *
-     *      // Ambil koneksi default
+     *      // Get the default connection
      *      $connection = DB::connection();
      *
-     *      // Ambil koneksi berdasarkan nama
+     *      // Get the connection based on name
      *      $connection = DB::connection('mysql');
      *
      * </code>
@@ -58,7 +58,7 @@ class Database
     }
 
     /**
-     * Ambil koneksi PDO dari konfigurasi database yang diberikan.
+     * Get the database connection.
      *
      * @param array $config
      *
@@ -70,7 +70,7 @@ class Database
     }
 
     /**
-     * Buat instance database connector baru.
+     * Create a new database connector instance.
      *
      * @param string $driver
      *
@@ -84,25 +84,16 @@ class Database
         }
 
         switch ($driver) {
-            case 'sqlite':
-                return new Database\Connectors\SQLite();
-
-            case 'mysql':
-                return new Database\Connectors\MySQL();
-
-            case 'pgsql':
-                return new Database\Connectors\Postgres();
-
-            case 'sqlsrv':
-                return new Database\Connectors\SQLServer();
-
-            default:
-                throw new \Exception(sprintf('Unsupported database driver: %s', $driver));
+            case 'sqlite': return new Database\Connectors\SQLite();
+            case 'mysql':  return new Database\Connectors\MySQL();
+            case 'pgsql':  return new Database\Connectors\Postgres();
+            case 'sqlsrv': return new Database\Connectors\SQLServer();
+            default:       throw new \Exception(sprintf('Unsupported database driver: %s', $driver));
         }
     }
 
     /**
-     * Mulai magic query terhadap tabel.
+     * Start a magic query against a table.
      *
      * @param string $table
      * @param string $connection
@@ -115,8 +106,8 @@ class Database
     }
 
     /**
-     * Buat instance database expression baru.
-     * Database expression digunakan untuk inject SQL mentah ke magic query.
+     * Create a new database expression instance.
+     * Database expression is used to inject raw SQL into magic query.
      *
      * @param string $value
      *
@@ -128,7 +119,7 @@ class Database
     }
 
     /**
-     * Escape (quote) string query sebelum digunakan.
+     * Escape the given sql query.
      *
      * @param string $value
      *
@@ -140,7 +131,7 @@ class Database
     }
 
     /**
-     * Ambil profiling data untuk semua query.
+     * Get profiling data for all queries.
      *
      * @return array
      */
@@ -150,8 +141,8 @@ class Database
     }
 
     /**
-     * Ambil query terakhir yang dijalankan.
-     * Mereturn FALSE jika belum ada query yang dijalankan.
+     * Get the last query that was executed.
+     * Returns FALSE if no query has been executed.
      *
      * @return string
      */
@@ -161,7 +152,7 @@ class Database
     }
 
     /**
-     * Daftarkan database connector dan grammar.
+     * Register database connector and grammar.
      *
      * @param string   $name
      * @param \Closure $connector
@@ -175,14 +166,14 @@ class Database
     }
 
     /**
-     * Magic method untuk memanggil method milik koneksi databse default.
+     * Magic method for calling methods of the default database connection.
      *
      * <code>
      *
-     *      // Ambil nama driver milik koneksi default
+     *      // Get the driver name of the default database connection
      *      $driver = DB::driver();
      *
-     *      // Eksekusi magic query via koneksi databse default
+     *      // Execute magic query via the default database connection
      *      $users = DB::table('users')->get();
      *
      * </code>
