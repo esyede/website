@@ -70,8 +70,6 @@
         <button type="button" id="show-modal-howto" class="btn btn--ghost">How to install?</button>
         <button type="button" id="show-modal-add-package" class="btn btn--primary">Share a package</button>
     </div>
-    @yield('howto')
-    @yield('add-package')
 @endsection
 
 @section('listings')
@@ -154,4 +152,11 @@
 
 @section('main')
     @yield('listings')
+
+    {{-- Modal sengaja diletakkan di tingkat atas, bukan di dalam hero.
+         Hero memakai isolation:isolate untuk mengurung pseudo-element
+         berlapis negatif, dan itu juga mengurung z-index modal sehingga
+         seksi setelahnya tergambar menimpa modal. --}}
+    @yield('howto')
+    @yield('add-package')
 @endsection

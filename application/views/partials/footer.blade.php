@@ -51,8 +51,8 @@
             opacity: .8,
             position: 'bottom-center',
             animate: {
-                in: 'heartBeat',
-                out: 'backOutDown'
+                in: 'fadeInUp',
+                out: 'fadeOutDown'
             }
         });
     }

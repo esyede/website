@@ -79,6 +79,9 @@
 
 html {
     -webkit-text-size-adjust: 100%;
+    /* Ruang scrollbar dicadangkan agar tata letak tidak melompat saat
+       guliran dikunci ketika modal terbuka. */
+    scrollbar-gutter: stable;
     scrollbar-color: #26252f var(--black);
     scrollbar-width: thin;
 }
@@ -887,6 +890,20 @@ button:focus:not(:focus-visible) {
     display: flex;
 }
 
+/*
+| Kunci guliran halaman selama modal terbuka. Dibuat lewat CSS karena kelas
+| is-active dikendalikan main.min.js yang sudah ter-minify. Peramban lama yang
+| belum mendukung :has() hanya kehilangan penguncian ini, tidak rusak.
+|
+| Penguncian harus dipasang di html juga: body memakai display:flex dan yang
+| benar-benar menggulir dokumen adalah elemen akar, sehingga overflow:hidden
+| pada body saja tidak berpengaruh.
+*/
+html:has(.modal.is-active),
+body:has(.modal.is-active) {
+    overflow: hidden;
+}
+
 .modal-background {
     position: absolute;
     inset: 0;
@@ -1153,6 +1170,57 @@ button:focus:not(:focus-visible) {
 
 .notification .delete:hover {
     background: rgba(255, 255, 255, .2);
+}
+
+/* ==========================================================================
+   Animasi toast
+
+   bulma-toast memasang kelas `animate__animated`, `animate__<in>` dan
+   `animate__<speed>` saat tampil, lalu `animate__<out>` saat ditutup dan
+   MENUNGGU event `animationend` sebelum menghapus elemennya. Tanpa keyframes
+   yang cocok, event itu tidak pernah terpicu dan toast tidak akan pernah
+   hilang. Jadi definisi di bawah ini wajib ada, bukan sekadar hiasan.
+   ========================================================================== */
+
+.animate__animated {
+    animation-duration: .4s;
+    animation-fill-mode: both;
+}
+
+.animate__faster {
+    animation-duration: .25s;
+}
+
+@keyframes rakit-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate__fadeInUp {
+    animation-name: rakit-fade-in-up;
+}
+
+@keyframes rakit-fade-out-down {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+.animate__fadeOutDown {
+    animation-name: rakit-fade-out-down;
 }
 
 /* ==========================================================================
