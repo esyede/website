@@ -10,16 +10,16 @@
         </div>
         <div id="navMenuMore" class="navbar-menu">
             <div class="navbar-end">
-                <a class="navbar-item" href="{{ URL::home() }}">{{ trans('home.navbar.one') }}</a>
+                <a class="navbar-item" href="{{ URL::home() }}">Home</a>
                 <a class="navbar-item"
-                    href="{{ url('docs') }}">{{ trans('home.navbar.two') }}</a>
+                    href="{{ url('docs') }}">Documentation</a>
                 <a class="navbar-item" href="{{ url('api/main/index.html') }}"
-                    target="_blank">{{ trans('home.navbar.three') }}</a>
-                <a class="navbar-item" href="{{ url('repositories') }}">{{ trans('home.navbar.four') }}</a>
+                    target="_blank">API</a>
+                <a class="navbar-item" href="{{ url('repositories') }}">Repositories</a>
                 <a class="navbar-item" href="https://github.com/esyede/rakit/discussions"
-                    target="_blank">{{ trans('home.navbar.five') }}</a>
+                    target="_blank">Forum</a>
                 <a class="navbar-item" href="https://github.com/esyede/rakit"
-                    target="_blank">{{ trans('home.navbar.six') }}</a>
+                    target="_blank">Github</a>
             </div>
         </div>
     </div>

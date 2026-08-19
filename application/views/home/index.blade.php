@@ -19,9 +19,9 @@
                                         <circle cx="16" cy="16" r="4" />
                                     </svg>
                                 </span>
-                                <span>{{ trans('home.card_1.head') }}</span>
+                                <span>Strong Foundation</span>
                             </p>
-                            <p>{{ trans('home.card_1.text') }}</p>
+                            <p>Take advantage of the rakit's built-in features. Develop truly great applications. Rakit gives you a solid foundation, a mature code base, and a sensible approach to writing web applications.</p>
                         </article>
                         <article class="tile is-child notification">
                             <p class="subtitle">
@@ -32,9 +32,9 @@
                                         <path d="M18 13 L26 2 8 13 14 19 6 30 24 19 Z" />
                                     </svg>
                                 </span>
-                                <span>{{ trans('home.card_2.head') }}</span>
+                                <span>Get Started Quickly</span>
                             </p>
-                            <p>{{ trans('home.card_2.text') }}</p>
+                            <p>Whether you are a beginner or a professional PHP programmer, rakit will get you up and running in less time. There is no convoluted installation procedure. Just download and extract.</p>
                         </article>
                     </div>
                     <div class="tile is-parent is-vertical">
@@ -47,9 +47,9 @@
                                         <path d="M10 9 L3 17 10 25 M22 9 L29 17 22 25 M18 7 L14 27" />
                                     </svg>
                                 </span>
-                                <span>{{ trans('home.card_3.head') }}</span>
+                                <span>Less Writing</span>
                             </p>
-                            <p>{{ trans('home.card_3.text') }}</p>
+                            <p>Speed up your development process. rakit is very light, easy to use, modular and fast. Most importantly, rakit doesn't get in your way. Rakit are so easy to learn that you can save money on training expenses.</p>
                         </article>
                         <article class="tile is-child notification">
                             <p class="subtitle">
@@ -61,9 +61,9 @@
                                             d="M4 14 L4 30 28 30 28 14 M2 9 L2 14 30 14 30 9 2 9 Z M16 9 C 16 9 14 0 8 3 2 6 16 9 16 9 16 9 18 0 24 3 30 6 16 9 16 9" />
                                     </svg>
                                 </span>
-                                <span>{{ trans('home.card_4.head') }}</span>
+                                <span>Complete Features</span>
                             </p>
-                            <p>{{ trans('home.card_4.text') }}</p>
+                            <p>Rakit is an easy-to-use web development tool, it comes with fast URL routing, multi-protocol cache driver, powerful database abstraction layer, and support for multilingual applications.</p>
                         </article>
                     </div>
                 </div>
@@ -79,12 +79,12 @@
                                     <path d="M6 2 L6 30 M6 6 L26 6 20 12 26 18 6 18" />
                                 </svg>
                             </span>
-                            <span>{{ trans('home.card_5.start.head') }}</span>
+                            <span>Let's Start!</span>
                         </p>
-                        <p>{{ trans('home.card_5.start.text') }}</p>
+                        <p>It's time to start developing web applications the easy way!</p>
                         <p>
                             <a href="{{ url('download') }}" class="button is-success">
-                                {{ trans('home.card_5.start.btn1', ['version' => RAKIT_VERSION]) }}
+                                Download {{ RAKIT_VERSION }}
                             </a>
                             <br>
                             <br>
@@ -97,11 +97,9 @@
                                         d="M32 0 C14 0 0 14 0 32 0 53 19 62 22 62 24 62 24 61 24 60 L24 55 C17 57 14 53 13 50 13 50 13 49 11 47 10 46 6 44 10 44 13 44 15 48 15 48 18 52 22 51 24 50 24 48 26 46 26 46 18 45 12 42 12 31 12 27 13 24 15 22 15 22 13 18 15 13 15 13 20 13 24 17 27 15 37 15 40 17 44 13 49 13 49 13 51 20 49 22 49 22 51 24 52 27 52 31 52 42 45 45 38 46 39 47 40 49 40 52 L40 60 C40 61 40 62 42 62 45 62 64 53 64 32 64 14 50 0 32 0 Z" />
                                 </svg>
                             </span>
-                            <span>{{ trans('home.card_5.repos.head') }}</span>
+                            <span>Repositories</span>
                         </p>
-                        <p>{!! trans('home.card_5.repos.text', [
-                            'vcs' => '<a href="https://github.com/esyede/rakit">' . trans('home.card_5.repos.vcs') . '</a>',
-                        ]) !!}</p>
+                        <p>Join us on <a href="https://github.com/esyede/rakit">Github</a> to make rakit even better.</p>
                         <p class="subtitle">
                             <span class="icon is-small">
                                 <svg id="i-msg" xmlns="http://www.w3.org/2000/svg" viewBox="0 -13 32 32" width="32"
@@ -110,14 +108,12 @@
                                     <path d="M2 4 L30 4 30 22 16 22 8 29 8 22 2 22 Z" />
                                 </svg>
                             </span>
-                            <span>{{ trans('home.card_5.forum.head') }}</span>
+                            <span>Forum</span>
                         </p>
-                        <p>{!! trans('home.card_5.forum.text', [
-                            'forum' =>
-                                '<a href="https://github.com/esyede/rakit/discussions" target="_blank">' .
-                                trans('home.card_5.forum.forum') .
-                                '</a>',
-                        ]) !!}</p>
+                        <p>Having trouble getting started? Or want to share your thoughts? Let's talk with
+                            other developers at
+                            <a href="https://github.com/esyede/rakit/discussions" target="_blank">Discussion Forum</a>
+                        </p>
                     </div>
                 </article>
             </div>
@@ -132,8 +128,8 @@
     <div class="container section has-text-centered has-background-light">
         <div class="columns">
             <div class="column is-half is-offset-one-quarter">
-                <h1 class="title is-2">{{ trans('home.card_6.head') }}</h1>
-                <p>{{ trans('home.card_6.text') }}</p>
+                <h1 class="title is-2">Package Repository</h1>
+                <p>Download and share your package with other developers</p>
                 <br>
                 <div class="buttons is-block">
                     <a href="{{ url('repositories') }}" class="button is-success">
@@ -145,7 +141,7 @@
                                 <path d="M19 19 L28 28" />
                             </svg>
                         </span>
-                        <span>{{ trans('home.card_6.btn1') }}</span>
+                        <span>Find a Package..</span>
                     </a>
                 </div>
             </div>

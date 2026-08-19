@@ -5,11 +5,11 @@ defined('DS') or exit('No direct script access.');
 class Home_Controller extends Controller
 {
     /**
-     * Bahasa default.
+     * Slogan situs, dipakai untuk judul halaman.
      *
      * @var string
      */
-    private $lang = 'id';
+    const SLOGAN = 'A simple, lightweight and modular PHP framework.';
 
     /**
      * Halaman saat ini.
@@ -25,8 +25,7 @@ class Home_Controller extends Controller
     {
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
-        $this->page = Str::title($page) . ' | ' . trans('home.hero.slogan');
-        $this->lang = (false !== stripos((string) Request::getPreferredLanguage(), 'id')) ? 'id' : 'en';
+        $this->page = Str::title($page) . ' | ' . self::SLOGAN;
     }
 
     /**
@@ -38,11 +37,9 @@ class Home_Controller extends Controller
     {
         return View::make('home.index')
             ->with('page', $this->page)
-            ->with('news', trans('home.news.text', [
-                'more' => vsprintf('<a href="%s" target="_blank">%s</a>', [
-                    'https://github.com/esyede/rakit/discussions/categories/paket-library',
-                    trans('home.news.more')
-                ]),
+            ->with('news', vsprintf('Connect with other developers through our discussion board <a href="%s" target="_blank">%s</a>', [
+                'https://github.com/esyede/rakit/discussions/categories/paket-library',
+                'Learn more..',
             ]));
     }
 
@@ -72,7 +69,6 @@ class Home_Controller extends Controller
         $view = View::make('home.repositories');
 
         $view->brand = 'Rakit';
-        $view->tagline = trans('home.hero.slogan');
         $view->page = $this->page;
         $view->count = count($packages);
 
@@ -87,7 +83,6 @@ class Home_Controller extends Controller
         }
 
         if (is_null($name)) {
-            $view->all = Str::slug(trans('repo.content.all'));
             $view->categories = $categories;
             $view->current = Repo::current();
             $view->last = (int) ceil(count($packages) / $perpage);
