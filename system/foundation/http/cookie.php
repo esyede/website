@@ -40,7 +40,7 @@ class Cookie
         if ($expire instanceof \DateTime) {
             $expire = $expire->format('U');
         } elseif (!is_numeric($expire)) {
-            $expire = strtotime($expire);
+            $expire = strtotime((string) $expire);
 
             if (false === $expire || -1 === $expire) {
                 throw new \InvalidArgumentException('The cookie expiration time is not valid.');
@@ -72,7 +72,7 @@ class Cookie
         $str = urlencode($this->getName()) . '=';
         $str .= ('' === (string) $this->getValue())
             ? 'deleted; expires=' . gmdate('D, d-M-Y H:i:s T', time() - 31536001)
-            : urlencode($this->getValue()) . ((0 !== $this->getExpiresTime()) ? '; expires=' . gmdate('D, d-M-Y H:i:s T', $this->getExpiresTime()) : '');
+            : urlencode($this->getValue()) . ((0 !== $this->getExpiresTime()) ? '; expires=' . gmdate('D, d-M-Y H:i:s T', (int) $this->getExpiresTime()) : '');
         $str .= ('/' !== $this->path) ? '; path=' . $this->path : '';
         $str .= (null !== $this->getSameSite()) ? '; samesite=' . $this->getSameSite() : '';
         $str .= (null !== $this->getDomain()) ? '; domain=' . $this->getDomain() : '';

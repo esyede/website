@@ -146,7 +146,7 @@ class Image
     public function width($value)
     {
         $value = (int) $value;
-        $height = ($value / $this->width) * $this->height;
+        $height = (int) (($value / $this->width) * $this->height);
         $canvas = imagecreatetruecolor($value, $height);
 
         imagecopyresampled($canvas, $this->image, 0, 0, 0, 0, $value, $height, $this->width, $this->height);
@@ -167,7 +167,7 @@ class Image
     public function height($value)
     {
         $value = (int) $value;
-        $width = ($value / $this->height) * $this->width;
+        $width = (int) (($value / $this->height) * $this->width);
         $canvas = imagecreatetruecolor($width, $value);
 
         imagecopyresampled($canvas, $this->image, 0, 0, 0, 0, $width, $value, $this->width, $this->height);
@@ -252,17 +252,17 @@ class Image
         }
 
         if ($new < $original) {
-            $new_width = ($this->height / $height) * $width;
-            $new_height = $this->height;
-            $x = ($this->width / 2) - $new_width / 2;
+            $new_width = (int) (($this->height / $height) * $width);
+            $new_height = (int) $this->height;
+            $x = (int) (($this->width / 2) - $new_width / 2);
             $y = 0;
-        }
-
-        if ($new > $original) {
-            $new_height = ($this->width / $width) * $height;
-            $new_width = $this->width;
+        } elseif ($new > $original) {
+            $new_height = (int) (($this->width / $width) * $height);
+            $new_width = (int) $this->width;
             $x = 0;
-            $y = ($this->height / 2) - $new_height / 2;
+            $y = (int) (($this->height / 2) - $new_height / 2);
+        } else {
+            return $this;
         }
 
         // Crop from center
@@ -600,7 +600,7 @@ class Image
         imagefill($image, 0, 0, IMG_COLOR_TRANSPARENT);
 
         $ctr = count($sprites);
-        $dim = 4 * floor($size / 4) * 0.5;
+        $dim = (int) (4 * floor($size / 4) * 0.5);
 
         for ($j = 0, $y = 2; $j < $y; $j++) {
             for ($i = $j, $x = 3 - $j; $i < $x; $i++) {
@@ -609,19 +609,24 @@ class Image
                 $block = $sprites[hexdec($hash[($j * 4 + $i) * 2]) % $ctr];
 
                 for ($k = 0, $points = count($block); $k < $points; $k++) {
-                    $block[$k] *= $dim;
+                    $block[$k] = (int) round($block[$k] * $dim);
                 }
 
-                imagefilledpolygon($sprite, $block, $points / 2, $color);
+                if (PHP_VERSION_ID >= 80100) {
+                    imagefilledpolygon($sprite, $block, $color);
+                } else {
+                    /** @disregard */
+                    imagefilledpolygon($sprite, $block, $points / 2, $color);
+                }
 
-                $sh = $dim / 2;
+                $sh = (int) ($dim / 2);
 
                 for ($k = 0; $k < 4; $k++) {
                     imagecopyresampled($image, $sprite, $i * $sh, $j * $sh, 0, 0, $sh, $sh, $dim, $dim);
                     $image = imagerotate($image, 90, imagecolorallocatealpha($image, 0, 0, 0, 127));
                 }
 
-                if (PHP_VERSION_ID >= 80000) {
+                if (PHP_VERSION_ID < 80000) {
                     /** @disregard */
                     imagedestroy($sprite);
                 } else {
@@ -633,7 +638,7 @@ class Image
         imagesavealpha($image, true);
         $result = imagepng($image);
 
-        if (PHP_VERSION_ID >= 80000) {
+        if (PHP_VERSION_ID < 80000) {
             /** @disregard */
             imagedestroy($image);
         } else {
@@ -660,10 +665,10 @@ class Image
             throw new \Exception(sprintf('Invalid color specified: 0x%s', $hex));
         }
 
-        $color = str_split($hex, $length / 3);
+        $color = str_split($hex, (int) ($length / 3));
 
         foreach ($color as &$hue) {
-            $hue = hexdec(str_repeat($hue, 6 / $length));
+            $hue = hexdec(str_repeat($hue, (int) (6 / $length)));
             unset($hue);
         }
 

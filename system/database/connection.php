@@ -5,7 +5,7 @@ namespace System\Database;
 defined('DS') or exit('No direct access.');
 
 use PDO;
-use System\Event;
+use System\Hook;
 use System\Config;
 use System\Database;
 use System\Database\Exceptions\QueryException;
@@ -267,10 +267,50 @@ class Connection
     protected function log($sql, array $bindings, $start)
     {
         $time = number_format((microtime(true) - $start) * 1000, 2);
+        $source = $this->source();
 
-        Event::fire('rakit.query', [$sql, $bindings, $time]);
+        Hook::fire('rakit.query', [$sql, $bindings, $time]);
 
-        static::$queries[] = compact('sql', 'bindings', 'time');
+        $record = compact('sql', 'bindings', 'time', 'source');
+        $record['start'] = defined('RAKIT_START') ? ($start - RAKIT_START) * 1000 : 0;
+
+        static::$queries[] = $record;
+    }
+
+    /**
+     * Determine the application file:line that issued the current query.
+     * Internal framework frames (folder 'system/') are skipped so the source
+     * points to the developer's controller/model/route, not the query builder.
+     *
+     * @return string|null
+     */
+    protected function source()
+    {
+        $system = dirname(__DIR__) . DIRECTORY_SEPARATOR;
+        $base = dirname($system);
+        $frames = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+        foreach ($frames as $frame) {
+            if (!isset($frame['file'])) {
+                continue;
+            }
+
+            $file = $frame['file'];
+
+            if (0 === strpos($file, $system)) {
+                continue;
+            }
+
+            $line = isset($frame['line']) ? $frame['line'] : 0;
+
+            if (0 === strpos($file, $base . DIRECTORY_SEPARATOR)) {
+                $file = substr($file, strlen($base) + 1);
+            }
+
+            return $file . ':' . $line;
+        }
+
+        return null;
     }
 
     /**

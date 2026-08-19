@@ -4,7 +4,7 @@ namespace System;
 
 defined('DS') or exit('No direct access.');
 
-class Event
+class Hook
 {
     /**
      * Contains all registered events.
@@ -45,7 +45,7 @@ class Event
      * <code>
      *
      *      // Register callback for event 'boot'
-     *      Event::listen('boot', function() { return 'Oke, Booted!'; } );
+     *      Hook::listen('boot', function() { return 'Oke, Booted!'; } );
      *
      * </code>
      *
@@ -67,6 +67,18 @@ class Event
     {
         static::clear($event);
         static::listen($event, $handler);
+    }
+
+    /**
+     * Adds an item to the event queue for later processing.
+     *
+     * @param string $queue
+     * @param string $key
+     * @param array  $data
+     */
+    public static function queue($queue, $key, array $data = [])
+    {
+        static::$queued[$queue][$key] = $data;
     }
 
     /**
@@ -96,10 +108,10 @@ class Event
      * <code>
      *
      *      // Run the 'boot' event
-     *      $response = Event::first('boot');
+     *      $response = Hook::first('boot');
      *
      *      // Run the 'boot' event with custom parameters
-     *      $response = Event::first('boot', ['rakit', 'framework']);
+     *      $response = Hook::first('boot', ['rakit', 'framework']);
      *
      * </code>
      *
@@ -133,14 +145,14 @@ class Event
      */
     public static function flush($queue)
     {
-        $flushers = static::$flushers[$queue] ?: [];
+        $flushers = isset(static::$flushers[$queue]) ? static::$flushers[$queue] : [];
 
         if (empty($flushers)) {
             return;
         }
 
         foreach ($flushers as $flusher) {
-            $queues = static::$queued[$queue];
+            $queues = isset(static::$queued[$queue]) ? static::$queued[$queue] : null;
 
             if (!isset($queues)) {
                 continue;
@@ -159,13 +171,13 @@ class Event
      * <code>
      *
      *      // Run the 'boot' event
-     *      $responses = Event::fire('boot');
+     *      $responses = Hook::fire('boot');
      *
      *      // Run the 'boot' event with additional parameters
-     *      $responses = Event::fire('boot', ['rakit', 'framework']);
+     *      $responses = Hook::fire('boot', ['rakit', 'framework']);
      *
      *      // Run multiple events with the same parameters
-     *      $responses = Event::fire(['boot', 'loading'], $parameters);
+     *      $responses = Hook::fire(['boot', 'loading'], $parameters);
      *
      * </code>
      *

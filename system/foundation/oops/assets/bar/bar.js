@@ -3,6 +3,24 @@
     let baseUrl = location.href.split('#')[0];
     baseUrl += (baseUrl.indexOf('?') < 0 ? '?' : '&');
 
+    // Pembungkus localStorage yang aman (mode privasi bisa melempar error).
+    let store = {
+        get: function (key) {
+            try { return localStorage.getItem(key); } catch (e) { return null; }
+        },
+        set: function (key, value) {
+            try { localStorage.setItem(key, value); } catch (e) { }
+        },
+        remove: function (key) {
+            try { localStorage.removeItem(key); } catch (e) { }
+        }
+    };
+
+    /*
+     * Panel: satu tampilan yang "dok" naik di atas bar saat tab-nya diklik
+     * (gaya Laravel Debugbar). Isi panel disuntik sekali (lazy) dari
+     * atribut data-oops-content pada elemen kontainer.
+     */
     class Panel {
         constructor(id) {
             this.id = id;
@@ -21,43 +39,20 @@
             delete this.dumps;
             evalScripts(elem);
 
-            draggable(elem, {
-                handles: elem.querySelectorAll('h1'),
-                start: () => {
-                    if (!this.is(Panel.FLOAT)) {
-                        this.toFloat();
-                    }
-                    this.focus();
-                    this.peekPosition = false;
-                }
-            });
+            // Satukan ikon (window/close) ke dalam <h1> agar tiap panel punya
+            // header konsisten yang tetap terlihat (sticky) saat konten panjang
+            // di-scroll — lihat aturan .oops-mode-dock > h1 di bar.css.
+            let head = elem.querySelector('h1');
+            let icons = elem.querySelector('.oops-icons');
+            if (head && icons && icons.parentNode !== head) {
+                head.appendChild(icons);
+            }
 
-            elem.addEventListener('mousedown', () => {
-                this.focus();
-            });
-
-            elem.addEventListener('mouseenter', () => {
-                clearTimeout(elem.Oops.displayTimeout);
-            });
-
-            elem.addEventListener('mouseleave', () => {
-                this.blur();
-            });
-
-            elem.addEventListener('mousemove', (e) => {
-                if (e.buttons && !this.is(Panel.RESIZED) && (elem.style.width || elem.style.height)) {
-                    elem.classList.add(Panel.RESIZED);
-                }
-            });
-
-            elem.addEventListener('oops-toggle', () => {
-                this.reposition();
-            });
-
+            // Ikon di pojok kanan-atas panel: tutup & buka di window.
             forEach(elem.querySelectorAll('.oops-icons a'), (link) => {
                 link.addEventListener('click', (e) => {
                     if (link.rel == 'close') {
-                        this.toPeek();
+                        Debug.bar.closePanels();
                     } else if (link.rel == 'window') {
                         this.toWindow();
                     }
@@ -76,49 +71,14 @@
         }
 
 
-        focus() {
-            let elem = this.elem;
-            if (this.is(Panel.WINDOW)) {
-                elem.Oops.window.focus();
-
-            } else if (!this.is(Panel.FOCUSED)) {
-                for (let id in Debug.panels) {
-                    Debug.panels[id].elem.classList.remove(Panel.FOCUSED);
-                }
-                elem.classList.add(Panel.FOCUSED);
-                elem.style.zIndex = Oops.panelZIndex + Panel.zIndexCounter++;
-            }
+        show() {
+            this.init();
+            this.elem.classList.add(Panel.DOCK);
         }
 
 
-        blur() {
-            let elem = this.elem;
-            if (this.is(Panel.PEEK)) {
-                clearTimeout(elem.Oops.displayTimeout);
-                elem.Oops.displayTimeout = setTimeout(() => {
-                    elem.classList.remove(Panel.FOCUSED);
-                }, 50);
-            }
-        }
-
-
-        toFloat() {
-            this.elem.classList.remove(Panel.WINDOW);
-            this.elem.classList.remove(Panel.PEEK);
-            this.elem.classList.add(Panel.FLOAT);
-            this.elem.classList.remove(Panel.RESIZED);
-            this.reposition();
-        }
-
-
-        toPeek() {
-            this.elem.classList.remove(Panel.WINDOW);
-            this.elem.classList.remove(Panel.FLOAT);
-            this.elem.classList.remove(Panel.FOCUSED);
-            this.elem.classList.add(Panel.PEEK);
-            this.elem.style.width = '';
-            this.elem.style.height = '';
-            this.elem.classList.remove(Panel.RESIZED);
+        hide() {
+            this.elem.classList.remove(Panel.DOCK);
         }
 
 
@@ -128,15 +88,20 @@
             offset.top += typeof window.screenTop == 'number' ? window.screenTop : (window.screenY + 50);
 
             let win = window.open('', this.id.replace(/-/g, '_'), 'left=' + offset.left + ',top=' + offset.top
-                + ',width=' + this.elem.offsetWidth + ',height=' + this.elem.offsetHeight + ',resizable=yes,scrollbars=yes');
+                + ',width=' + Math.max(600, this.elem.offsetWidth) + ',height=' + Math.max(400, this.elem.offsetHeight) + ',resizable=yes,scrollbars=yes');
             if (!win) {
                 return false;
             }
 
+            // Wariskan tema aktif (light/dark) ke jendela popup agar tampilannya
+            // konsisten dengan bar. bar.css disuntik saat _oops_bar=js dimuat,
+            // jadi kelas tema pada <body> cukup untuk mengaktifkan aturan gelap.
+            let theme = (Debug.bar && Debug.bar.theme === 'dark') ? 'dark' : 'light';
+
             let doc = win.document;
             doc.write('<!DOCTYPE html><meta charset="utf-8">'
                 + '<script src="' + (baseUrl.replace('&', '&amp;').replace('"', '&quot;')) + '_oops_bar=js&amp;XDEBUG_SESSION_STOP=1" onload="Oops.Dumper.init()" async></script>'
-                + '<body id="oops-debug">'
+                + '<body id="oops-debug" class="oops-theme-' + theme + '">'
             );
             doc.body.innerHTML = '<div class="oops-panel oops-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '</div>';
             evalScripts(doc.body);
@@ -144,228 +109,810 @@
                 doc.title = this.elem.querySelector('h1').textContent;
             }
 
-            win.addEventListener('beforeunload', () => {
-                this.toPeek();
-                win.close(); // tutup paksa dengan F5
-            });
-
             doc.addEventListener('keyup', (e) => {
                 if (e.keyCode == 27 && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
                     win.close();
                 }
             });
 
-            this.elem.classList.remove(Panel.FLOAT);
-            this.elem.classList.remove(Panel.PEEK);
-            this.elem.classList.remove(Panel.FOCUSED);
-            this.elem.classList.remove(Panel.RESIZED);
-            this.elem.classList.add(Panel.WINDOW);
-            this.elem.Oops.window = win;
             return true;
-        }
-
-
-        reposition(deltaX, deltaY) {
-            let pos = getPosition(this.elem);
-            if (pos.width) {
-                setPosition(this.elem, { left: pos.left + (deltaX || 0), top: pos.top + (deltaY || 0) });
-                if (this.is(Panel.RESIZED)) {
-                    let size = getWindowSize();
-                    this.elem.style.width = Math.min(size.width, pos.width) + 'px';
-                    this.elem.style.height = Math.min(size.height, pos.height) + 'px';
-                }
-            }
-        }
-
-
-        savePosition() {
-            let pos = getPosition(this.elem);
-            if (this.is(Panel.WINDOW)) {
-                localStorage.setItem(this.id, JSON.stringify({ window: true }));
-            } else if (pos.width) {
-                localStorage.setItem(this.id, JSON.stringify({ right: pos.right, bottom: pos.bottom, width: pos.width, height: pos.height, zIndex: this.elem.style.zIndex - Oops.panelZIndex, resized: this.is(Panel.RESIZED) }));
-            } else {
-                localStorage.removeItem(this.id);
-            }
-        }
-
-
-        restorePosition() {
-            let pos = JSON.parse(localStorage.getItem(this.id));
-            if (!pos) {
-                this.elem.classList.add(Panel.PEEK);
-            } else if (pos.window) {
-                this.init();
-                this.toWindow() || this.toFloat();
-            } else if (this.elem.dataset.oopsContent) {
-                this.init();
-                this.toFloat();
-                if (pos.resized) {
-                    this.elem.classList.add(Panel.RESIZED);
-                    this.elem.style.width = pos.width + 'px';
-                    this.elem.style.height = pos.height + 'px';
-                }
-                setPosition(this.elem, pos);
-                this.elem.style.zIndex = Oops.panelZIndex + (pos.zIndex || 1);
-                Panel.zIndexCounter = Math.max(Panel.zIndexCounter, (pos.zIndex || 1)) + 1;
-            }
         }
     }
 
-    Panel.PEEK = 'oops-mode-peek';
-    Panel.FLOAT = 'oops-mode-float';
+    Panel.DOCK = 'oops-mode-dock';
     Panel.WINDOW = 'oops-mode-window';
-    Panel.FOCUSED = 'oops-focused';
-    Panel.RESIZED = 'oops-panel-resized';
-    Panel.zIndexCounter = 1;
 
 
+    /*
+     * Bar: strip bawah dengan deretan tab. Klik tab -> toggle panel dok.
+     * Hanya satu panel aktif dalam satu waktu.
+     */
     class Bar {
         init() {
             this.id = 'oops-debug-bar';
             this.elem = document.getElementById(this.id);
+            this.activeRel = null;
+            this.activeDataset = 0;
+            this.panelHeight = parseInt(store.get('oops-debugbar-height'), 10) || 0;
+            this.datasetsEl = this.elem.querySelector('.oops-datasets');
+            this.switcherEl = this.elem.querySelector('.oops-switcher');
 
-            draggable(this.elem, {
-                handles: this.elem.querySelectorAll('li:first-child'),
-                draggedClass: 'oops-dragged',
-                stop: () => {
-                    this.savePosition();
+            this.initTabs(this.elem);
+            this.initResizer();
+            this.buildSwitcher();
+            this.initHistory();
+            this.refreshDatasets(0);
+            this.markEmptyTabs();
+            this.setTabTooltips();
+            this.adjustDensity();
+
+            window.addEventListener('resize', () => {
+                this.adjustDensity();
+            });
+        }
+
+
+        /*
+         * Responsif ala laravel-debugbar: tampilkan teks label bila deretan tab
+         * muat; bila tidak, ciut ke ikon-saja (kelas .oops-icononly). Diukur
+         * dengan mencoba tampil penuh dulu lalu cek apakah tab meluber dari
+         * kontainer scroll-nya.
+         */
+        adjustDensity() {
+            if (!this.datasetsEl) {
+                return;
+            }
+
+            // Ukur dalam mode penuh (label tampil) dulu.
+            this.elem.classList.remove('oops-icononly');
+
+            let tabs = this.datasetsEl.querySelector('.oops-dataset-active')
+                || this.datasetsEl.querySelector('.oops-dataset');
+
+            if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) {
+                this.elem.classList.add('oops-icononly');
+            }
+        }
+
+
+        /*
+         * Tab kini ikon-saja (teks disembunyikan via CSS). Agar nama tab tetap
+         * terbaca, salin teks label / atribut title ke elemen <a> sebagai
+         * tooltip hover — persis laravel-debugbar.
+         */
+        setTabTooltips() {
+            forEach(this.elem.querySelectorAll('.oops-tabs li > a'), (a) => {
+                if (a.getAttribute('title')) {
+                    return;
+                }
+                let name = '';
+                let label = a.querySelector('.oops-label');
+                if (label) {
+                    name = label.textContent.trim().replace(/\s+/g, ' ');
+                }
+                if (!name) {
+                    let titled = a.querySelector('[title]');
+                    if (titled) {
+                        name = titled.getAttribute('title');
+                    }
+                }
+                if (name) {
+                    a.setAttribute('title', name);
+                }
+            });
+        }
+
+
+        /*
+         * Dropdown "History" (openhandler): daftar request lampau yang di-
+         * render server-side sebagai tautan; tiap item membuka snapshot request
+         * itu di tab baru. JS di sini hanya membuka/menutup menunya.
+         */
+        initHistory() {
+            this.historyEl = this.elem.querySelector('.oops-history');
+            if (!this.historyEl) {
+                return;
+            }
+
+            document.addEventListener('click', (e) => {
+                if (this.historyEl && !this.historyEl.contains(e.target)) {
+                    this.historyEl.classList.remove('oops-open');
+                }
+            });
+        }
+
+
+        toggleHistory() {
+            if (this.historyEl) {
+                this.historyEl.classList.toggle('oops-open');
+            }
+        }
+
+
+        /*
+         * Redupkan tab yang tidak punya data (hitungan diawali "0", mis.
+         * "0 messages", "0 queries") agar tab berisi data lebih menonjol.
+         */
+        markEmptyTabs() {
+            forEach(this.elem.querySelectorAll('.oops-tabs li > a'), (a) => {
+                a.classList.remove('oops-tab-empty');
+
+                // Utamakan badge hitungan (gaya baru: nama + pil angka). Kalau
+                // tak ada badge, jatuh ke pola lama (label diawali angka).
+                let n = null;
+                let badge = a.querySelector('.oops-badge');
+                if (badge) {
+                    let bm = badge.textContent.trim().match(/\d+/);
+                    if (bm) {
+                        n = parseInt(bm[0], 10);
+                    }
+                } else {
+                    let label = a.querySelector('.oops-label');
+                    if (label) {
+                        let m = label.textContent.trim().match(/^(\d+)\b/);
+                        if (m) {
+                            n = parseInt(m[1], 10);
+                        }
+                    }
+                }
+
+                if (n === 0) {
+                    a.classList.add('oops-tab-empty');
+                }
+            });
+        }
+
+
+        /*
+         * Selector request (ala Laravel): hanya satu dataset tampil sekaligus.
+         */
+        buildSwitcher() {
+            if (!this.switcherEl) {
+                return;
+            }
+
+            this.switcherEl.innerHTML =
+                '<a href="#" class="oops-switcher-btn" title="Pilih request">'
+                + '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
+                + '<span class="oops-switcher-label">Main</span></a>'
+                + '<div class="oops-switcher-menu"></div>';
+
+            let btn = this.switcherEl.querySelector('.oops-switcher-btn');
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.switcherEl.classList.toggle('oops-open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!this.switcherEl.contains(e.target)) {
+                    this.switcherEl.classList.remove('oops-open');
+                }
+            });
+        }
+
+
+        getDatasets() {
+            return this.datasetsEl
+                ? Array.prototype.slice.call(this.datasetsEl.querySelectorAll('.oops-dataset'))
+                : [];
+        }
+
+
+        refreshDatasets(activeIndex) {
+            let datasets = this.getDatasets();
+
+            if (typeof activeIndex === 'number') {
+                this.activateDataset(activeIndex);
+            } else {
+                let current = -1;
+                datasets.forEach((d, i) => {
+                    if (d.classList.contains('oops-dataset-active')) {
+                        current = i;
+                    }
+                });
+                this.activateDataset(current >= 0 ? current : 0);
+            }
+
+            if (this.switcherEl) {
+                this.switcherEl.classList.toggle('oops-has-multi', datasets.length > 1);
+            }
+
+            this.renderSwitcherMenu();
+        }
+
+
+        activateDataset(index) {
+            let datasets = this.getDatasets();
+            if (!datasets.length) {
+                return;
+            }
+            if (index < 0 || index >= datasets.length) {
+                index = 0;
+            }
+
+            this.hidePanels();
+
+            datasets.forEach((d, i) => {
+                if (i === index) {
+                    d.classList.add('oops-dataset-active');
+                } else {
+                    d.classList.remove('oops-dataset-active');
                 }
             });
 
-            this.elem.addEventListener('mousedown', (e) => {
-                e.preventDefault();
+            this.activeDataset = index;
+
+            let label = datasets[index].getAttribute('data-label') || 'Request';
+            let labelEl = this.switcherEl ? this.switcherEl.querySelector('.oops-switcher-label') : null;
+            if (labelEl) {
+                labelEl.textContent = label;
+            }
+
+            if (this.switcherEl) {
+                this.switcherEl.classList.remove('oops-open');
+            }
+
+            this.renderSwitcherMenu();
+
+            if (this.datasetsEl) {
+                this.adjustDensity();
+            }
+        }
+
+
+        renderSwitcherMenu() {
+            if (!this.switcherEl) {
+                return;
+            }
+
+            let menu = this.switcherEl.querySelector('.oops-switcher-menu');
+            if (!menu) {
+                return;
+            }
+
+            let datasets = this.getDatasets();
+            menu.innerHTML = '';
+
+            datasets.forEach((dataset, i) => {
+                let a = document.createElement('a');
+                a.href = '#';
+                a.textContent = dataset.getAttribute('data-label') || ('Request ' + (i + 1));
+                if (i === this.activeDataset) {
+                    a.className = 'oops-active';
+                }
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.activateDataset(i);
+                });
+                menu.appendChild(a);
+            });
+        }
+
+
+        /*
+         * Pulihkan state terakhir (minimize / tab aktif) dari localStorage.
+         * Dipanggil setelah semua panel dibuat.
+         */
+        restoreState() {
+            this.initTheme();
+
+            if (store.get('oops-debugbar-minimized') === '1') {
+                this.elem.classList.add('oops-minimized');
+                return;
+            }
+
+            let rel = store.get('oops-debugbar-active');
+            if (rel && Debug.panels[rel]) {
+                let link = this.elem.querySelector('a[rel="' + rel + '"]');
+                if (link) {
+                    this.activateTab(link);
+                }
+            }
+        }
+
+
+        /*
+         * Tema light/dark. Default "auto" mengikuti tema OS
+         * (prefers-color-scheme). Klik tombol toggle menyematkan pilihan
+         * light/dark ke localStorage (berhenti mengikuti OS).
+         */
+        osTheme() {
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+
+        initTheme() {
+            let stored = store.get('oops-debugbar-theme');
+            this.themePinned = (stored === 'light' || stored === 'dark');
+            // Default "auto": ikuti tema OS (persis laravel-debugbar yang memakai
+            // prefers-color-scheme). Tombol toggle menyematkan pilihan manual.
+            this.theme = this.themePinned ? stored : this.osTheme();
+            this.applyTheme();
+
+            // Selama belum disematkan, ikuti perubahan tema OS secara live.
+            if (window.matchMedia) {
+                let mq = window.matchMedia('(prefers-color-scheme: dark)');
+                let handler = () => {
+                    if (!this.themePinned) {
+                        this.theme = this.osTheme();
+                        this.applyTheme();
+                    }
+                };
+                if (mq.addEventListener) {
+                    mq.addEventListener('change', handler);
+                } else if (mq.addListener) {
+                    mq.addListener(handler);
+                }
+            }
+        }
+
+        toggleTheme() {
+            this.theme = (this.theme === 'dark') ? 'light' : 'dark';
+            this.themePinned = true;
+            store.set('oops-debugbar-theme', this.theme);
+            this.applyTheme();
+        }
+
+        applyTheme() {
+            let layer = document.getElementById('oops-debug');
+            let els = [layer, this.elem];
+            for (let i = 0; i < els.length; i++) {
+                let el = els[i];
+                if (!el) {
+                    continue;
+                }
+                el.classList.remove('oops-theme-dark', 'oops-theme-light');
+                el.classList.add('oops-theme-' + this.theme);
+            }
+
+            let btn = this.elem.querySelector('.oops-theme-toggle');
+            if (btn) {
+                btn.title = (this.theme === 'dark')
+                    ? 'Theme: dark (click to change)'
+                    : 'Theme: light (click to change)';
+            }
+        }
+
+
+        /*
+         * AJAX ditampilkan sebagai SATU tab "AJAX" di bar utama (bukan dataset
+         * dengan selector/toggle). Setiap request AJAX diringkas menjadi satu
+         * baris (method, url, status, waktu, queries, messages).
+         */
+        parseAjaxSummary(ajaxBar) {
+            let label = ajaxBar.getAttribute('data-label') || 'AJAX';
+            let links = Array.prototype.slice.call(ajaxBar.querySelectorAll('a'));
+            let tabText = function (frag) {
+                for (let i = 0; i < links.length; i++) {
+                    let rel = links[i].getAttribute('rel') || '';
+                    if (rel.indexOf(frag) !== -1) {
+                        return links[i].textContent.trim().replace(/\s+/g, ' ');
+                    }
+                }
+                return '';
+            };
+
+            let sp = label.indexOf(' ');
+            let req = tabText('request');
+            let status = req.match(/(\d{3})/);
+            let queries = tabText('db').match(/\d+/);
+            let messages = tabText('messages').match(/\d+/);
+
+            return {
+                method: sp > 0 ? label.slice(0, sp) : 'GET',
+                url: sp > 0 ? label.slice(sp + 1) : label,
+                status: status ? status[1] : '',
+                time: tabText('timeline') || tabText('info'),
+                queries: queries ? queries[0] : '0',
+                messages: messages ? messages[0] : '0'
+            };
+        }
+
+        addAjaxRequest(record) {
+            if (!this.ajaxLog) {
+                this.ajaxLog = [];
+            }
+            this.ajaxLog.push(record);
+            this.renderAjaxTab();
+        }
+
+        ajaxEsc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        }
+
+        ajaxPanelSkeleton() {
+            return '<style class="oops-debug">'
+                + '#oops-debug .oops-AjaxPanel .oops-badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;font-weight:bold;color:#fff}'
+                + '#oops-debug .oops-AjaxPanel .oops-badge-info{background:#2563eb}'
+                + '#oops-debug .oops-AjaxPanel .oops-badge-success{background:#4CAF50}'
+                + '#oops-debug .oops-AjaxPanel .oops-badge-error{background:#F44336}'
+                + '#oops-debug .oops-AjaxPanel .oops-badge-warning{background:#FF9800}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-url{font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;word-break:break-all}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-summary tr.oops-clickable{cursor:pointer}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-summary td.oops-caret{width:1%;color:#2563eb;font-weight:bold;text-align:center}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-detail{margin-top:14px}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-minitabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-minitab{padding:3px 10px;border-radius:3px;cursor:pointer;font-size:12px;color:#2563eb;background:#eef2fe;border:1px solid #d5e0fb}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-minitab.oops-active{background:#2563eb;color:#fff;border-color:#2563eb}'
+                + '#oops-debug .oops-AjaxPanel .oops-ajax-content h1{display:none}'
+                + '#oops-debug.oops-theme-dark .oops-AjaxPanel .oops-ajax-minitab{background:#1b1e26;border-color:#262a33;color:#7aa2f7}'
+                + '#oops-debug.oops-theme-dark .oops-AjaxPanel .oops-ajax-minitab.oops-active{background:#4a6fd4;border-color:#4a6fd4;color:#fff}'
+                + '#oops-debug.oops-theme-dark .oops-AjaxPanel .oops-ajax-summary td.oops-caret{color:#7aa2f7}'
+                + '</style>'
+                + '<h1>AJAX Requests</h1>'
+                + '<div class="oops-inner oops-AjaxPanel"><div class="oops-inner-container">'
+                + '<div class="oops-ajax-summary"></div>'
+                + '<div class="oops-ajax-detail"></div>'
+                + '</div></div>'
+                + '<div class="oops-icons"><a href="#" rel="window" title="open in window">&curren;</a><a href="#" rel="close" title="close window">&times;</a></div>';
+        }
+
+        renderAjaxTab() {
+            let rel = 'oops-ajax-panel';
+            let mainTabs = this.datasetsEl ? this.datasetsEl.querySelector('.oops-dataset') : null;
+            if (!mainTabs) {
+                return;
+            }
+
+            let li = mainTabs.querySelector('li.oops-ajax-tab');
+            if (!li) {
+                li = document.createElement('li');
+                li.className = 'oops-ajax-tab';
+                li.innerHTML = '<a href="#" rel="' + rel + '" title="AJAX Request">'
+                    + '<svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="currentColor"/></svg>'
+                    + '<span class="oops-label oops-ajax-count"></span></a>';
+                mainTabs.appendChild(li);
+                this.initTabs(li);
+
+                let panelEl = document.createElement('div');
+                panelEl.className = 'oops-panel';
+                panelEl.id = rel;
+                panelEl.innerHTML = this.ajaxPanelSkeleton();
+                Debug.layer.appendChild(panelEl);
+
+                // Satukan ikon (window/close) ke dalam <h1> agar title bar-nya
+                // konsisten dengan panel lain (header sticky) — panel AJAX ini
+                // objek biasa, bukan instance Panel, jadi ditiru manual.
+                let head = panelEl.querySelector('h1');
+                let icons = panelEl.querySelector('.oops-icons');
+                if (head && icons && icons.parentNode !== head) {
+                    head.appendChild(icons);
+                }
+
+                let closeA = panelEl.querySelector('.oops-icons a[rel="close"]');
+                if (closeA) {
+                    closeA.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.closePanels();
+                    });
+                }
+
+                let windowA = panelEl.querySelector('.oops-icons a[rel="window"]');
+                if (windowA) {
+                    windowA.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        Panel.prototype.toWindow.call({ elem: panelEl, id: rel });
+                    });
+                }
+
+                Debug.panels[rel] = {
+                    elem: panelEl,
+                    show: function () { this.elem.classList.add('oops-mode-dock'); },
+                    hide: function () { this.elem.classList.remove('oops-mode-dock'); }
+                };
+            }
+
+            li.querySelector('.oops-ajax-count').textContent = this.ajaxLog.length + ' AJAX';
+            this.renderAjaxBody();
+
+            if (this.activeRel === rel) {
+                let a = li.querySelector('a');
+                if (a) {
+                    a.classList.add('oops-active');
+                }
+            }
+        }
+
+        renderAjaxBody() {
+            let panel = document.getElementById('oops-ajax-panel');
+            if (!panel) {
+                return;
+            }
+            let self = this;
+
+            let rows = this.ajaxLog.map(function (r, i) {
+                let sm = r.summary;
+                let s = parseInt(sm.status, 10);
+                let cls = 'oops-badge-info';
+                if (s >= 200 && s < 300) { cls = 'oops-badge-success'; }
+                else if (s >= 400) { cls = 'oops-badge-error'; }
+                else if (s >= 300) { cls = 'oops-badge-warning'; }
+                let open = (self.ajaxOpenIdx === i);
+                return '<tr class="oops-clickable' + (open ? ' oops-open' : '') + '" data-idx="' + i + '">'
+                    + '<td class="oops-caret">' + (open ? '▾' : '▸') + '</td>'
+                    + '<td><span class="oops-badge oops-badge-info">' + self.ajaxEsc(sm.method) + '</span></td>'
+                    + '<td class="oops-ajax-url">' + self.ajaxEsc(sm.url) + '</td>'
+                    + '<td><span class="oops-badge ' + cls + '">' + self.ajaxEsc(sm.status || '—') + '</span></td>'
+                    + '<td>' + self.ajaxEsc(sm.time || '—') + '</td>'
+                    + '<td>' + self.ajaxEsc(sm.queries) + '</td>'
+                    + '<td>' + self.ajaxEsc(sm.messages) + '</td></tr>';
+            }).join('');
+
+            panel.querySelector('.oops-ajax-summary').innerHTML =
+                '<table><thead><tr>'
+                + '<th></th><th>Method</th><th>URL</th><th>Status</th><th>Time</th><th>Queries</th><th>Messages</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+            forEach(panel.querySelectorAll('.oops-ajax-summary tr.oops-clickable'), function (tr) {
+                tr.addEventListener('click', function () {
+                    self.openAjaxRow(parseInt(tr.getAttribute('data-idx'), 10));
+                });
             });
 
-            this.initTabs(this.elem);
-            this.restorePosition();
+            if (this.ajaxOpenIdx != null && this.ajaxLog[this.ajaxOpenIdx]) {
+                this.renderAjaxDetail(this.ajaxOpenIdx);
+            } else {
+                panel.querySelector('.oops-ajax-detail').innerHTML = '';
+            }
+        }
 
-            (new MutationObserver(() => {
-                this.restorePosition();
-            })).observe(this.elem, { childList: true, characterData: true, subtree: true });
+        openAjaxRow(idx) {
+            this.ajaxOpenIdx = (this.ajaxOpenIdx === idx) ? null : idx;
+            this.ajaxAspectIdx = 0;
+            this.renderAjaxBody();
+        }
+
+        renderAjaxDetail(idx) {
+            let panel = document.getElementById('oops-ajax-panel');
+            let rec = this.ajaxLog[idx];
+            if (!panel || !rec) {
+                return;
+            }
+            let self = this;
+            let ai = this.ajaxAspectIdx || 0;
+
+            let tabs = rec.aspects.map(function (a, i) {
+                return '<a class="oops-ajax-minitab' + (i === ai ? ' oops-active' : '') + '" data-aspect="' + i + '">'
+                    + self.ajaxEsc(a.name) + '</a>';
+            }).join('');
+
+            let detail = panel.querySelector('.oops-ajax-detail');
+            detail.innerHTML = '<div class="oops-ajax-minitabs">' + tabs + '</div>'
+                + '<div class="oops-ajax-content"></div>';
+
+            forEach(detail.querySelectorAll('.oops-ajax-minitab'), function (t) {
+                t.addEventListener('click', function () {
+                    self.ajaxAspectIdx = parseInt(t.getAttribute('data-aspect'), 10);
+                    self.renderAjaxDetail(idx);
+                });
+            });
+
+            this.showAjaxAspect(idx, ai);
+        }
+
+        showAjaxAspect(idx, ai) {
+            let panel = document.getElementById('oops-ajax-panel');
+            let rec = this.ajaxLog[idx];
+            if (!panel || !rec || !rec.aspects[ai]) {
+                return;
+            }
+            let host = panel.querySelector('.oops-ajax-content');
+            host.innerHTML = addNonces(rec.aspects[ai].content);
+            if (Oops.Dumper && Oops.Dumper.init) {
+                Oops.Dumper.init(rec.dumps, host);
+            }
+            evalScripts(host);
+            if (Oops.Toggle && Oops.Toggle.persist) {
+                Oops.Toggle.persist(host);
+            }
         }
 
 
         initTabs(elem) {
             forEach(elem.getElementsByTagName('a'), (link) => {
+                if (link.oopsBound) {
+                    return;
+                }
+                link.oopsBound = true;
+
                 link.addEventListener('click', (e) => {
-                    if (link.rel == 'close') {
-                        this.close();
-
-                    } else if (link.rel) {
-                        let panel = Debug.panels[link.rel];
-                        panel.init();
-
-                        if (e.shiftKey) {
-                            panel.toFloat();
-                            panel.toWindow();
-
-                        } else if (panel.is(Panel.FLOAT)) {
-                            panel.toPeek();
-
-                        } else {
-                            panel.toFloat();
-                            if (panel.peekPosition) {
-                                panel.reposition(-Math.round(Math.random() * 100) - 20, (Math.round(Math.random() * 100) + 20) * (this.isAtTop() ? 1 : -1));
-                                panel.peekPosition = false;
-                            }
-                        }
-                    }
                     e.preventDefault();
-                });
 
-                link.addEventListener('mouseenter', (e) => {
-                    if (e.buttons || !link.rel || link.rel == 'close' || elem.classList.contains('oops-dragged')) {
-                        return;
-                    }
-
-                    clearTimeout(this.displayTimeout);
-                    this.displayTimeout = setTimeout(() => {
-                        let panel = Debug.panels[link.rel];
-                        panel.focus();
-
-                        if (panel.is(Panel.PEEK)) {
-                            panel.init();
-
-                            let pos = getPosition(panel.elem);
-                            setPosition(panel.elem, {
-                                left: getOffset(link).left + getPosition(link).width + 4 - pos.width,
-                                top: this.isAtTop()
-                                    ? getOffset(this.elem).top + getPosition(this.elem).height + 4
-                                    : getOffset(this.elem).top - pos.height - 4
-                            });
-                            panel.peekPosition = true;
-                        }
-                    }, 50);
-                });
-
-                link.addEventListener('mouseleave', () => {
-                    clearTimeout(this.displayTimeout);
-
-                    if (link.rel && link.rel !== 'close' && !elem.classList.contains('oops-dragged')) {
-                        Debug.panels[link.rel].blur();
+                    if (link.rel == 'minimize') {
+                        this.toggleMinimize();
+                    } else if (link.rel == 'theme') {
+                        this.toggleTheme();
+                    } else if (link.rel == 'history') {
+                        this.toggleHistory();
+                    } else if (link.rel) {
+                        this.toggleTab(link);
                     }
                 });
             });
-            this.autoHideLabels();
         }
 
 
-        autoHideLabels() {
-            let width = getWindowSize().width;
-            forEach(this.elem.children, (ul) => {
-                let i, labels = ul.querySelectorAll('.oops-label');
-                for (i = 0; i < labels.length && ul.clientWidth < width; i++) {
-                    labels.item(i).hidden = false;
-                }
-                for (i = labels.length - 1; i >= 0 && ul.clientWidth >= width; i--) {
-                    labels.item(i).hidden = true;
-                }
-            });
-        }
+        toggleTab(link) {
+            let wasActive = (this.activeRel === link.rel);
+            this.hidePanels();
 
-
-        close() {
-            document.getElementById('oops-debug').style.display = 'none';
-        }
-
-
-        reposition(deltaX, deltaY) {
-            let pos = getPosition(this.elem);
-            if (pos.width) {
-                setPosition(this.elem, { left: pos.left + (deltaX || 0), top: pos.top + (deltaY || 0) });
-                this.savePosition();
+            if (!wasActive) {
+                this.activateTab(link);
+            } else {
+                // Pengguna menutup panel yang aktif -> lupakan dari localStorage.
+                store.remove('oops-debugbar-active');
             }
         }
 
 
-        savePosition() {
-            let pos = getPosition(this.elem);
-            if (pos.width) { // is visible?
-                localStorage.setItem(this.id, JSON.stringify(this.isAtTop() ? { right: pos.right, top: pos.top } : { right: pos.right, bottom: pos.bottom }));
+        // Ditutup oleh pengguna (ikon close di panel): sembunyikan + lupakan.
+        closePanels() {
+            this.hidePanels();
+            store.remove('oops-debugbar-active');
+        }
+
+
+        activateTab(link) {
+            let panel = Debug.panels[link.rel];
+            if (!panel) {
+                return;
+            }
+
+            panel.show();
+
+            if (this.panelHeight) {
+                // Tinggi pilihan pengguna (hasil drag) menimpa tinggi otomatis
+                // dan batas max-height default (45vh).
+                panel.elem.style.maxHeight = 'none';
+                panel.elem.style.height = this.panelHeight + 'px';
+            }
+
+            link.classList.add('oops-active');
+            this.activeRel = link.rel;
+            this.showResizer();
+            store.set('oops-debugbar-active', link.rel);
+        }
+
+
+        hidePanels() {
+            for (let id in Debug.panels) {
+                Debug.panels[id].hide();
+            }
+            forEach(this.elem.getElementsByTagName('a'), (a) => {
+                a.classList.remove('oops-active');
+            });
+            this.activeRel = null;
+            this.hideResizer();
+        }
+
+
+        toggleMinimize() {
+            this.elem.classList.toggle('oops-minimized');
+
+            let minimized = this.elem.classList.contains('oops-minimized');
+            if (minimized) {
+                this.hidePanels();
+            }
+            store.set('oops-debugbar-minimized', minimized ? '1' : '0');
+        }
+
+
+        /*
+         * Pegangan resize di tepi atas panel dok (drag vertikal).
+         */
+        initResizer() {
+            this.resizer = document.createElement('div');
+            this.resizer.id = 'oops-debug-resizer';
+            (Debug.layer || document.body).appendChild(this.resizer);
+
+            let startY, startHeight, active;
+
+            let onMove = (e) => {
+                let delta = startY - e.clientY;
+                let max = window.innerHeight - 36 - 40;
+                let height = Math.max(120, Math.min(max, startHeight + delta));
+                active.style.maxHeight = 'none';
+                active.style.height = height + 'px';
+                this.panelHeight = height;
+                this.positionResizer();
+            };
+
+            let onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                this.resizer.classList.remove('oops-dragging');
+                document.body.style.userSelect = '';
+                store.set('oops-debugbar-height', this.panelHeight);
+            };
+
+            this.resizer.addEventListener('mousedown', (e) => {
+                active = this.getActivePanel();
+                if (!active) {
+                    return;
+                }
+                startY = e.clientY;
+                startHeight = active.offsetHeight;
+                this.resizer.classList.add('oops-dragging');
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                e.preventDefault();
+            });
+
+            window.addEventListener('resize', () => {
+                if (this.activeRel) {
+                    this.positionResizer();
+                }
+            });
+        }
+
+
+        getActivePanel() {
+            return (this.activeRel && Debug.panels[this.activeRel]) ? Debug.panels[this.activeRel].elem : null;
+        }
+
+
+        showResizer() {
+            if (this.resizer) {
+                this.resizer.classList.add('oops-visible');
+                this.positionResizer();
             }
         }
 
 
-        restorePosition() {
-            let pos = JSON.parse(localStorage.getItem(this.id));
-            setPosition(this.elem, pos || { right: 0, bottom: 0 });
-            this.savePosition();
+        hideResizer() {
+            if (this.resizer) {
+                this.resizer.classList.remove('oops-visible');
+            }
         }
 
 
-        isAtTop() {
-            let pos = getPosition(this.elem);
-            return pos.top < 100 && pos.bottom > pos.top;
+        positionResizer() {
+            let el = this.getActivePanel();
+            if (el && this.resizer) {
+                this.resizer.style.bottom = (36 + el.offsetHeight) + 'px';
+            }
         }
     }
 
 
     class Debug {
+        /*
+         * Tema awal (light/dark) SEBELUM initTheme() penuh berjalan. Logikanya
+         * sama: pilihan tersemat di localStorage menang, jika tidak ikut tema OS
+         * (prefers-color-scheme). Dipakai untuk memasang kelas tema pada layer
+         * sebelum masuk DOM → tidak ada kedip light→dark saat reload.
+         */
+        static earlyTheme() {
+            let stored;
+            try {
+                stored = store.get('oops-debugbar-theme');
+            } catch (e) {
+                stored = null;
+            }
+            if (stored === 'light' || stored === 'dark') {
+                return stored;
+            }
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+
         static init(content, dumps) {
             Debug.layer = document.createElement('div');
             Debug.layer.setAttribute('id', 'oops-debug');
             Debug.layer.innerHTML = addNonces(content);
+
+            // Pasang kelas tema SEBELUM layer disisipkan ke DOM agar bar tidak
+            // sempat tampil dalam tema default (terang) lalu berganti gelap saat
+            // reload. initTheme() di restoreState() nanti idempoten + memasang
+            // listener perubahan tema OS.
+            let early = Debug.earlyTheme();
+            Debug.layer.classList.add('oops-theme-' + early);
+            let earlyBar = Debug.layer.querySelector('#oops-debug-bar');
+            if (earlyBar) {
+                earlyBar.classList.add('oops-theme-' + early);
+            }
+
             (document.body || document.documentElement).appendChild(Debug.layer);
             evalScripts(Debug.layer);
             Oops.Dumper.init();
@@ -375,63 +922,146 @@
             forEach(document.querySelectorAll('.oops-panel'), (panel) => {
                 Debug.panels[panel.id] = new Panel(panel.id);
                 Debug.panels[panel.id].dumps = dumps;
-                Debug.panels[panel.id].restorePosition();
             });
 
-            Debug.captureWindow();
+            Debug.bar.restoreState();
+            Debug.bindWidgets();
             Debug.captureAjax();
         }
 
 
-        static loadAjax(content, dumps) {
-            forEach(Debug.layer.querySelectorAll('.oops-panel.oops-ajax'), (panel) => {
-                Debug.panels[panel.id].savePosition();
-                delete Debug.panels[panel.id];
-                panel.parentNode.removeChild(panel);
-            });
-
-            let ajaxBar = document.getElementById('oops-ajax-bar');
-            if (ajaxBar) {
-                ajaxBar.parentNode.removeChild(ajaxBar);
+        /*
+         * Ikat sekali listener terdelegasi untuk widget filter generik. Karena
+         * ditempel di layer, panel yang disuntik lazy (termasuk AJAX) ikut
+         * terlayani tanpa perlu skrip per-panel.
+         */
+        static bindWidgets() {
+            if (Debug.widgetsBound || !Debug.layer) {
+                return;
             }
+            Debug.widgetsBound = true;
 
-            Debug.layer.insertAdjacentHTML('beforeend', content);
-            evalScripts(Debug.layer);
-            ajaxBar = document.getElementById('oops-ajax-bar');
-            Debug.bar.elem.appendChild(ajaxBar);
-
-            forEach(document.querySelectorAll('.oops-panel'), (panel) => {
-                if (!Debug.panels[panel.id]) {
-                    Debug.panels[panel.id] = new Panel(panel.id);
-                    Debug.panels[panel.id].dumps = dumps;
-                    Debug.panels[panel.id].restorePosition();
+            Debug.layer.addEventListener('input', function (e) {
+                let input = closestClass(e.target, 'oops-filter-input');
+                if (input) {
+                    applyOopsFilter(closestClass(input, 'oops-filterable'));
                 }
             });
 
-            Debug.bar.initTabs(ajaxBar);
+            Debug.layer.addEventListener('click', function (e) {
+                let btn = closestClass(e.target, 'oops-filter-tag');
+                if (btn) {
+                    e.preventDefault();
+                    btn.classList.toggle('oops-active');
+                    applyOopsFilter(closestClass(btn, 'oops-filterable'));
+                    return;
+                }
+
+                // Tombol "copy" query SQL (panel Queries, gaya laravel-debugbar).
+                let copy = closestClass(e.target, 'oops-sql-copy');
+                if (copy) {
+                    e.preventDefault();
+                    let item = closestClass(copy, 'oops-sql-item');
+                    let code = item ? item.querySelector('.oops-sql-code code') : null;
+                    copyText(code ? code.textContent : '', copy);
+                    return;
+                }
+
+                // Tombol copy generik: salin isi atribut data-oops-copy apa adanya
+                // (mis. "Copy as cURL" pada panel HTTP client).
+                let copyAttr = e.target.closest ? e.target.closest('[data-oops-copy]') : null;
+                if (copyAttr) {
+                    e.preventDefault();
+                    copyText(copyAttr.getAttribute('data-oops-copy') || '', copyAttr);
+                    return;
+                }
+
+                // Tautan "Show only duplicated" → matikan/nyalakan filter "unique".
+                let showdup = closestClass(e.target, 'oops-sql-showdup');
+                if (showdup) {
+                    e.preventDefault();
+                    let scope = closestClass(showdup, 'oops-filterable');
+                    let uniqueTag = scope
+                        ? scope.querySelector('.oops-filter-tag[data-oops-tag="unique"]')
+                        : null;
+                    if (uniqueTag) {
+                        uniqueTag.click();
+                        showdup.classList.toggle('oops-on');
+                    }
+                    return;
+                }
+            });
         }
 
 
-        static captureWindow() {
-            let size = getWindowSize();
+        static loadAjax(content, dumps) {
+            // AJAX tidak dibuat sebagai dataset terpisah (yang butuh selector).
+            // Kita baca RINGKASAN + KONTEN PENUH tiap panel dari respons server,
+            // lalu tampilkan di satu tab "AJAX" (halaman utama tetap default).
+            let tmp = document.createElement('div');
+            tmp.innerHTML = content;
 
-            window.addEventListener('resize', () => {
-                let newSize = getWindowSize();
+            let ajaxBar = tmp.querySelector('#oops-ajax-bar');
+            if (!ajaxBar) {
+                return;
+            }
 
-                Debug.bar.reposition(newSize.width - size.width, newSize.height - size.height);
-                Debug.bar.autoHideLabels();
-
-                for (let id in Debug.panels) {
-                    Debug.panels[id].reposition(newSize.width - size.width, newSize.height - size.height);
+            let nameFromRel = function (rel) {
+                let map = {
+                    info: 'Info', messages: 'Messages', exceptions: 'Exceptions',
+                    deprecations: 'Deprecations', timeline: 'Timeline',
+                    view: 'Views', routes: 'Routes', db: 'Queries',
+                    httpclient: 'HTTP', mails: 'Mails', session: 'Session',
+                    auth: 'Auth', request: 'Request', cache: 'Cache',
+                    events: 'Hooks', config: 'Config', errors: 'Errors'
+                };
+                for (let k in map) {
+                    if (rel.indexOf(k) !== -1) {
+                        return map[k];
+                    }
                 }
+                return rel;
+            };
 
-                size = newSize;
+            // Lewati panel yang kosong (badge "0") sama seperti bar utama, agar
+            // daftar mini-tab AJAX tidak penuh oleh panel tanpa data.
+            let tabIsEmpty = function (a) {
+                let n = null;
+                let badge = a.querySelector('.oops-badge');
+                if (badge) {
+                    let bm = badge.textContent.trim().match(/\d+/);
+                    if (bm) {
+                        n = parseInt(bm[0], 10);
+                    }
+                } else {
+                    let label = a.querySelector('.oops-label');
+                    if (label) {
+                        let lm = label.textContent.trim().match(/^(\d+)\b/);
+                        if (lm) {
+                            n = parseInt(lm[1], 10);
+                        }
+                    }
+                }
+                return n === 0;
+            };
+
+            let aspects = [];
+            forEach(ajaxBar.querySelectorAll('li > a'), function (a) {
+                let rel = a.getAttribute('rel');
+                if (!rel || tabIsEmpty(a)) {
+                    return;
+                }
+                let p = tmp.querySelector('#' + rel);
+                let c = p ? (p.getAttribute('data-oops-content') || '') : '';
+                if (c.length > 20) {
+                    aspects.push({ name: nameFromRel(rel), content: c });
+                }
             });
 
-            window.addEventListener('unload', () => {
-                for (let id in Debug.panels) {
-                    Debug.panels[id].savePosition();
-                }
+            Debug.bar.addAjaxRequest({
+                summary: Debug.bar.parseAjaxSummary(ajaxBar),
+                aspects: aspects,
+                dumps: dumps
             });
         }
 
@@ -503,133 +1133,12 @@
     }
 
 
-    let dragging;
-
-    function draggable(elem, options) {
-        let dE = document.documentElement, started, deltaX, deltaY, clientX, clientY;
-        options = options || {};
-
-        let redraw = function () {
-            if (dragging) {
-                setPosition(elem, { left: clientX + deltaX, top: clientY + deltaY });
-                requestAnimationFrame(redraw);
-            }
-        };
-
-        let onMove = function (e) {
-            if (e.buttons == 0) {
-                return onEnd(e);
-            }
-            if (!started) {
-                if (options.draggedClass) {
-                    elem.classList.add(options.draggedClass);
-                }
-                if (options.start) {
-                    options.start(e, elem);
-                }
-                started = true;
-            }
-
-            clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return false;
-        };
-
-        let onEnd = function (e) {
-            if (started) {
-                if (options.draggedClass) {
-                    elem.classList.remove(options.draggedClass);
-                }
-                if (options.stop) {
-                    options.stop(e, elem);
-                }
-            }
-            dragging = null;
-            dE.removeEventListener('mousemove', onMove);
-            dE.removeEventListener('mouseup', onEnd);
-            dE.removeEventListener('touchmove', onMove);
-            dE.removeEventListener('touchend', onEnd);
-            return false;
-        };
-
-        let onStart = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (dragging) {
-                return onEnd(e);
-            }
-
-            let pos = getPosition(elem);
-            clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            deltaX = pos.left - clientX;
-            deltaY = pos.top - clientY;
-            dragging = true;
-            started = false;
-            dE.addEventListener('mousemove', onMove);
-            dE.addEventListener('mouseup', onEnd);
-            dE.addEventListener('touchmove', onMove);
-            dE.addEventListener('touchend', onEnd);
-            requestAnimationFrame(redraw);
-            if (options.start) {
-                options.start(e, elem);
-            }
-        };
-
-        forEach(options.handles, (handle) => {
-            handle.addEventListener('mousedown', onStart);
-            handle.addEventListener('touchstart', onStart);
-
-            handle.addEventListener('click', (e) => {
-                if (started) {
-                    e.stopImmediatePropagation();
-                }
-            });
-        });
-    }
-
-
     function getOffset(elem) {
         let res = { left: elem.offsetLeft, top: elem.offsetTop };
         while (elem = elem.offsetParent) {
             res.left += elem.offsetLeft; res.top += elem.offsetTop;
         }
         return res;
-    }
-
-
-    function getWindowSize() {
-        return {
-            width: document.documentElement.clientWidth,
-            height: document.compatMode == 'BackCompat' ? window.innerHeight : document.documentElement.clientHeight
-        };
-    }
-
-
-    function setPosition(elem, coords) {
-        let win = getWindowSize();
-        if (typeof coords.right !== 'undefined') {
-            coords.left = win.width - elem.offsetWidth - coords.right;
-        }
-        if (typeof coords.bottom !== 'undefined') {
-            coords.top = win.height - elem.offsetHeight - coords.bottom;
-        }
-        elem.style.left = Math.max(0, Math.min(coords.left, win.width - elem.offsetWidth)) + 'px';
-        elem.style.top = Math.max(0, Math.min(coords.top, win.height - elem.offsetHeight)) + 'px';
-    }
-
-
-    function getPosition(elem) {
-        let win = getWindowSize();
-        return {
-            left: elem.offsetLeft,
-            top: elem.offsetTop,
-            right: win.width - elem.offsetWidth - elem.offsetLeft,
-            bottom: win.height - elem.offsetHeight - elem.offsetTop,
-            width: elem.offsetWidth,
-            height: elem.offsetHeight
-        };
     }
 
 
@@ -645,6 +1154,106 @@
 
     function forEach(arr, cb) {
         Array.prototype.forEach.call(arr, cb);
+    }
+
+
+    // Salin teks ke clipboard (dgn fallback execCommand) lalu tampilkan umpan
+    // balik "copied" sesaat pada elemen tombol.
+    function copyText(text, btn) {
+        let feedback = function () {
+            if (!btn) {
+                return;
+            }
+            let orig = btn.innerHTML;
+            btn.classList.add('oops-copied');
+            btn.innerHTML = '✓ copied';
+            setTimeout(function () {
+                btn.classList.remove('oops-copied');
+                btn.innerHTML = orig;
+            }, 1200);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(feedback, function () { });
+            return;
+        }
+
+        let ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        (document.body || document.documentElement).appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            feedback();
+        } catch (e) { }
+        ta.parentNode.removeChild(ta);
+    }
+
+
+    // Naik ke leluhur terdekat yang punya kelas tertentu (pengganti closest()
+    // agar aman tanpa polyfill di lingkungan lama).
+    function closestClass(el, cls) {
+        while (el && el.nodeType === 1) {
+            if (el.classList && el.classList.contains(cls)) {
+                return el;
+            }
+            el = el.parentNode;
+        }
+        return null;
+    }
+
+
+    /*
+     * Filter widget generik (gaya php-debugbar MessagesWidget / SQLQueriesWidget):
+     * sebuah wadah .oops-filterable berisi (opsional) kotak cari .oops-filter-input
+     * dan tombol-tombol label .oops-filter-tag[data-oops-tag]; tiap baris data
+     * memakai kelas .oops-filter-item dengan atribut data-oops-search (teks yang
+     * dicari, huruf kecil) dan data-oops-tag (label). Baris tampil bila cocok
+     * dengan teks cari DAN labelnya sedang aktif. Semua listener didelegasikan
+     * ke layer sehingga panel yang disuntik belakangan tetap berfungsi.
+     */
+    function applyOopsFilter(scope) {
+        if (!scope) {
+            return;
+        }
+
+        let input = scope.querySelector('.oops-filter-input');
+        let term = input ? input.value.toLowerCase().replace(/^\s+|\s+$/g, '') : '';
+        let tagBtns = scope.querySelectorAll('.oops-filter-tag');
+        let hasTags = tagBtns.length > 0;
+        let active = {};
+        forEach(tagBtns, function (b) {
+            if (b.classList.contains('oops-active')) {
+                active[b.getAttribute('data-oops-tag')] = true;
+            }
+        });
+
+        let shown = 0, total = 0;
+        forEach(scope.querySelectorAll('.oops-filter-item'), function (item) {
+            total++;
+            let text = item.getAttribute('data-oops-search');
+            text = (text == null) ? item.textContent.toLowerCase() : text;
+            let tag = item.getAttribute('data-oops-tag');
+            let okText = !term || text.indexOf(term) !== -1;
+            let okTag = !hasTags || !tag || active[tag];
+            if (okText && okTag) {
+                item.style.display = '';
+                shown++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        let counter = scope.querySelector('.oops-filter-count');
+        if (counter) {
+            counter.textContent = (shown === total) ? (total + ' shown') : (shown + ' / ' + total);
+        }
+        let empty = scope.querySelector('.oops-filter-empty');
+        if (empty) {
+            empty.style.display = shown ? 'none' : '';
+        }
     }
 
 

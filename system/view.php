@@ -123,7 +123,7 @@ class View implements \ArrayAccess
         }
 
         list($package, $view) = Package::parse($view);
-        $path = Event::until(static::LOADER, [$package, str_replace(['.', '/'], DS, $view)]);
+        $path = Hook::until(static::LOADER, [$package, str_replace(['.', '/'], DS, $view)]);
         return is_null($path) ? false : ($return_path ? $path : true);
     }
 
@@ -257,7 +257,7 @@ class View implements \ArrayAccess
         $views = (array) $views;
 
         foreach ($views as $view) {
-            Event::listen('rakit.composing: ' . $view, $composer);
+            Hook::listen('rakit.composing: ' . $view, $composer);
         }
     }
 
@@ -295,12 +295,13 @@ class View implements \ArrayAccess
     {
         ++static::$rendered;
 
-        Event::fire('rakit.composing: ' . $this->view, [$this]);
+        Hook::fire('rakit.composing: ' . $this->view, [$this]);
 
+        $rakit_view_start = microtime(true);
         $contents = null;
 
-        if (Event::exists(static::ENGINE)) {
-            $result = Event::until(static::ENGINE, [$this]);
+        if (Hook::exists(static::ENGINE)) {
+            $result = Hook::until(static::ENGINE, [$this]);
             $contents = $result ?: $contents;
         }
 
@@ -315,12 +316,14 @@ class View implements \ArrayAccess
         // Track view rendering for debugger
         if (class_exists('\System\Foundation\Oops\Debugger') && class_exists('\System\Foundation\Oops\Collectors')) {
             if (!\System\Foundation\Oops\Debugger::$productionMode) {
+                $rakit_view_done = microtime(true);
                 \System\Foundation\Oops\Collectors::trackView(
                     $this->view,
                     $this->path,
                     $this->data,
-                    0,
-                    strlen($contents)
+                    ($rakit_view_done - $rakit_view_start) * 1000,
+                    strlen((string) $contents),
+                    defined('RAKIT_START') ? ($rakit_view_start - RAKIT_START) * 1000 : 0
                 );
             }
         }
@@ -339,7 +342,8 @@ class View implements \ArrayAccess
 
         try {
             static::$last = ['name' => $this->view, 'path' => $this->path];
-            extract($this->data());
+            $data = $this->data();
+            extract($data);
 
             if (!isset(static::$cache[$this->path])) {
                 static::$cache[$this->path] = $this->path;
@@ -349,8 +353,8 @@ class View implements \ArrayAccess
 
             $content = ob_get_clean();
 
-            if (Event::exists('view.middleware')) {
-                return Event::first('view.middleware', [$content, $this->path]);
+            if (Hook::exists('view.middleware')) {
+                return Hook::first('view.middleware', [$content, $this->path]);
             }
 
             return $content;

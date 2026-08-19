@@ -5,16 +5,16 @@ defined('DS') or exit('No direct access.');
 return [
     /*
     |--------------------------------------------------------------------------
-    | Alias
+    | Aliases
     |--------------------------------------------------------------------------
     |
-    | Di sini, anda dapat menentukan alias kelas apa pun yang ingin anda
-    | daftarkan saat framework dimuat. Alias dimuat dengan teknik lazy-loading,
-    | jadi silakan menambahkan sebanyak yang anda mau!
+    | Here, you can define any class aliases you want to register when the
+    | framework is loaded. Aliases are loaded using lazy-loading technique,
+    | so feel free to add as many as you want!
     |
-    | Alias membuat kita lebih nyaman saat menggunakan kelas yang ber-namespace.
-    | Daripada merujuk ke kelas menggunakan namespace lengkapnya, anda dapat
-    | menggunakan alias yang ditentukan di sini.
+    | Alias makes it more convenient to use classes with namespaces.
+    | Instead of referring to classes using their full namespaces, you can use
+    | the aliases defined here.
     |
     */
 
@@ -35,10 +35,10 @@ return [
     'Curl' => 'System\Curl',
     'DB' => 'System\Database',
     'Email' => 'System\Email',
-    'Event' => 'System\Event',
     'Facile' => 'System\Database\Facile\Model',
     'Faker' => 'System\Foundation\Faker\Factory',
     'Hash' => 'System\Hash',
+    'Hook' => 'System\Hook',
     'Image' => 'System\Image',
     'Input' => 'System\Input',
     'Job' => 'System\Job',
@@ -48,12 +48,11 @@ return [
     'Log' => 'System\Log',
     'Mailer' => 'System\Email\Drivers\Driver',
     'Markdown' => 'System\Markdown',
-    'Memcached' => 'System\Memcached',
     'Middleware' => 'System\Routing\Middleware',
     'Package' => 'System\Package',
     'Paginator' => 'System\Paginator',
+    'Pending' => 'System\Job\Pending',
     'Redirect' => 'System\Redirect',
-    'Redis' => 'System\Redis',
     'Request' => 'System\Request',
     'Response' => 'System\Response',
     'Route' => 'System\Routing\Route',

@@ -126,8 +126,8 @@ class Log
             throw new \Exception(sprintf('The error message should be a string. %s given.', gettype($message)));
         }
 
-        if (Event::exists('rakit.log')) {
-            Event::fire('rakit.log', [$type, $message, $context]);
+        if (Hook::exists('rakit.log')) {
+            Hook::fire('rakit.log', [$type, $message, $context]);
         }
 
         try {
@@ -174,6 +174,13 @@ class Log
                     isset($trace[1]['file']) ? $trace[1]['file'] : null,
                     isset($trace[1]['line']) ? $trace[1]['line'] : null
                 );
+
+                // Surface any exception passed in the log context on the
+                // dedicated Exceptions panel too.
+                if (isset($context['exception'])
+                    && ($context['exception'] instanceof \Throwable || $context['exception'] instanceof \Exception)) {
+                    \System\Foundation\Oops\Collectors::addException($context['exception']);
+                }
             }
         }
     }
@@ -294,6 +301,6 @@ class Log
         return vsprintf(
             '[object] (%s(code: %s): %s at %s:%s)',
             [get_class($e), $e->getCode(), $e->getMessage(), $e->getFile(), $e->getLine()]
-        ) . $e->getTraceAsString() ? PHP_EOL . $e->getTraceAsString() : '';
+        ) . ($e->getTraceAsString() ? PHP_EOL . $e->getTraceAsString() : '');
     }
 }

@@ -56,39 +56,40 @@ class Autoloader
     protected static $caches = [];
 
     /**
+     * How many path probes may be remembered before the cache is dropped.
+     *
+     * @var int
+     */
+    public static $limit = 10000;
+
+    /**
      * Load a file based on the given class.
-     * This method is the default autoloader.
+     * Failures are deliberately left to propagate.
      *
      * @param string $class
      */
     public static function load($class)
     {
-        try {
-            if (isset(static::$aliases[$class])) {
-                return class_alias(static::$aliases[$class], $class);
-            } elseif (isset(static::$mappings[$class])) {
-                require static::$mappings[$class];
-                return;
-            }
-
-            // If directories are not registered, register defaults
-            if (empty(static::$directories)) {
-                $app = path('app');
-                static::directories([$app . 'controllers', $app . 'models', $app . 'libraries', $app . 'commands', $app . 'jobs']);
-            }
-
-            foreach (static::$namespaces as $namespace => $directory) {
-                if ('' !== $namespace && $namespace === substr((string) $class, 0, strlen((string) $namespace))) {
-                    return static::load_namespaced($class, $namespace, $directory);
-                }
-            }
-
-            static::load_psr($class);
-        } catch (\Throwable $e) {
-            return;
-        } catch (\Exception $e) {
+        if (isset(static::$aliases[$class])) {
+            return class_alias(static::$aliases[$class], $class);
+        } elseif (isset(static::$mappings[$class])) {
+            require static::$mappings[$class];
             return;
         }
+
+        // If directories are not registered, register defaults
+        if (empty(static::$directories)) {
+            $app = path('app');
+            static::directories([$app . 'controllers', $app . 'models', $app . 'libraries', $app . 'commands', $app . 'jobs']);
+        }
+
+        foreach (static::$namespaces as $namespace => $directory) {
+            if ('' !== $namespace && $namespace === substr((string) $class, 0, strlen((string) $namespace))) {
+                return static::load_namespaced($class, $namespace, $directory);
+            }
+        }
+
+        static::load_psr($class);
     }
 
     /**
@@ -131,37 +132,41 @@ class Autoloader
             $origpath = $directory . $file . '.php';
 
             if (!isset(static::$caches[$lowerpath])) {
-                static::$caches[$lowerpath] = is_file($lowerpath);
+                static::remember($lowerpath, is_file($lowerpath));
             }
 
             if (static::$caches[$lowerpath]) {
-                try {
-                    require $lowerpath;
-                    static::$loaded[$lowercased] = $lowerpath;
-                    return;
-                } catch (\Throwable $e) {
-                    return;
-                } catch (\Exception $e) {
-                    return;
-                }
+                require $lowerpath;
+                static::$loaded[$lowercased] = $lowerpath;
+                return;
             }
 
             if (!isset(static::$caches[$origpath])) {
-                static::$caches[$origpath] = is_file($origpath);
+                static::remember($origpath, is_file($origpath));
             }
 
             if (static::$caches[$origpath]) {
-                try {
-                    require $origpath;
-                    static::$loaded[$file] = $origpath;
-                    return;
-                } catch (\Throwable $e) {
-                    return;
-                } catch (\Exception $e) {
-                    return;
-                }
+                require $origpath;
+                static::$loaded[$file] = $origpath;
+                return;
             }
         }
+    }
+
+    /**
+     * Record whether a candidate path exists, dropping the whole cache first
+     * if it has outgrown the limit.
+     *
+     * @param string $path
+     * @param bool   $exists
+     */
+    protected static function remember($path, $exists)
+    {
+        if (static::$limit > 0 && count(static::$caches) >= static::$limit) {
+            static::$caches = [];
+        }
+
+        static::$caches[$path] = $exists;
     }
 
     /**
@@ -183,6 +188,52 @@ class Autoloader
     public static function alias($class, $alias)
     {
         static::$aliases[$alias] = $class;
+    }
+
+    /**
+     * Register a batch of class aliases. Detects conflicts with built-in PHP classes.
+     *
+     * @param array $aliases
+     */
+    public static function aliases(array $aliases)
+    {
+        $conflicts = [];
+
+        foreach (array_keys($aliases) as $alias) {
+            if (class_exists($alias, false) || interface_exists($alias, false) || trait_exists($alias, false)) {
+                $reflection = new \ReflectionClass($alias);
+
+                if ($reflection->isInternal()) {
+                    $conflicts[$alias] = $reflection->getExtensionName() ?: 'core';
+                    unset($aliases[$alias]);
+                }
+            }
+        }
+
+        static::$aliases = array_merge(static::$aliases, $aliases);
+
+        if (!empty($conflicts)) {
+            $lines = [];
+
+            foreach ($conflicts as $alias => $extension) {
+                $lines[] = sprintf('"%s" (conflicts with extension "%s")', $alias, $extension);
+            }
+
+            $message = '[Rakit] Class alias(es) skipped because they collide with built-in PHP classes: '
+                . implode(', ', $lines)
+                . '. PHP loads built-in classes before any userland autoloader runs, so these '
+                . 'names cannot be aliased. Disable the conflicting extension or rename the alias '
+                . 'in application/config/aliases.php. The fully-qualified target class remains '
+                . 'available (e.g. via "use Vendor\\Namespace\\Target;").';
+
+            // Write to STDERR directly to avoid triggering PHPUnit's error handler
+            // (which would convert the warning into spurious test failures).
+            if (defined('STDERR')) {
+                fwrite(STDERR, $message . PHP_EOL);
+            } else {
+                error_log($message);
+            }
+        }
     }
 
     /**

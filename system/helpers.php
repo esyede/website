@@ -69,8 +69,74 @@ if (!function_exists('dump')) {
      */
     function dump($variables)
     {
-        $variables = is_array($variables) ? $variables : func_get_args();
-        array_map('\System\Foundation\Oops\Debugger::dump', $variables);
+        $variables = func_get_args();
+        $toBar = \System\Foundation\Oops\Debugger::$showBar
+            && !\System\Foundation\Oops\Debugger::$productionMode
+            && !is_cli();
+
+        $handler = $toBar
+            ? '\System\Foundation\Oops\Debugger::barDump'
+            : '\System\Foundation\Oops\Debugger::dump';
+
+        array_map($handler, $variables);
+    }
+}
+
+if (!function_exists('measure')) {
+    /**
+     * Measure a code block and record it on the debug bar Timeline panel.
+     *
+     * <code>
+     *      $users = measure('Load users', function () {
+     *          return DB::table('users')->get();
+     *      });
+     * </code>
+     *
+     * @param string   $name
+     * @param callable $callback
+     *
+     * @return mixed
+     */
+    function measure($name, $callback)
+    {
+        return \System\Foundation\Oops\Debugger::measure($name, $callback);
+    }
+}
+
+if (!function_exists('start_measure')) {
+    /**
+     * Start a named measure on the debug bar Timeline. Pair with stop_measure()
+     * to time a region of code that is not a single callback.
+     *
+     * <code>
+     *      start_measure('import');
+     *      // ... work ...
+     *      stop_measure('import');
+     * </code>
+     *
+     * @param string $name
+     *
+     * @return void
+     */
+    function start_measure($name)
+    {
+        \System\Foundation\Oops\Debugger::startMeasure($name);
+    }
+}
+
+if (!function_exists('stop_measure')) {
+    /**
+     * Stop a measure previously started with start_measure() and record it on
+     * the debug bar Timeline.
+     *
+     * @param string      $name
+     * @param string|null $label
+     *
+     * @return void
+     */
+    function stop_measure($name, $label = null)
+    {
+        \System\Foundation\Oops\Debugger::stopMeasure($name, $label);
     }
 }
 
@@ -523,7 +589,7 @@ if (!function_exists('cache')) {
     {
         if (is_array($key)) {
             foreach ($key as $name => $value) {
-                \System\Cache::set($name, $value);
+                \System\Cache::forever($name, $value);
             }
 
             return true;
@@ -703,7 +769,7 @@ if (!function_exists('abort')) {
         }
 
         $response->send();
-        \System\Event::fire('rakit.done', [$response]);
+        \System\Hook::fire('rakit.done', [$response]);
         $response->foundation()->finish();
 
         exit;
@@ -751,7 +817,14 @@ if (!function_exists('csrf_token')) {
      */
     function csrf_token()
     {
-        return \System\Session::get(csrf_name());
+        $token = \System\Session::get(csrf_name());
+
+        if (empty($token)) {
+            $token = \System\Str::random(40);
+            \System\Session::put(csrf_name(), $token);
+        }
+
+        return $token;
     }
 }
 
@@ -994,7 +1067,7 @@ if (!function_exists('dispatch')) {
      */
     function dispatch($events, array $parameters = [], $halt = false)
     {
-        return \System\Event::fire($events, $parameters, $halt);
+        return \System\Hook::fire($events, $parameters, $halt);
     }
 }
 
@@ -1145,7 +1218,7 @@ if (!function_exists('human_filesize')) {
     {
         $precision = (int) $precision;
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        $power = min(floor(($bytes ? log($bytes) : 0) / log(1024)), count($units) - 1);
+        $power = (int) min(floor(($bytes ? log($bytes) : 0) / log(1024)), count($units) - 1);
         $bytes = round($bytes / pow(1024, $power), $precision);
 
         return sprintf('%.' . $precision . 'f %s', $bytes, $units[$power]);

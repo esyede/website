@@ -11,9 +11,13 @@ ob_start();
 define('RAKIT_START', microtime(true));
 
 // --------------------------------------------------------------
-// Definisikan konstanta untuk directory separator.
+// Definisikan beberapa konstanta yang berguna.
 // --------------------------------------------------------------
 define('DS', DIRECTORY_SEPARATOR);
+define('CRLF', "\r\n");
+define('TAB', "\t");
+define('CR', "\r");
+define('LF', "\n");
 
 // --------------------------------------------------------------
 // Include konstanta path milik framework.

@@ -70,10 +70,6 @@ class Payload
             $this->exists = false;
             $this->session = $this->driver->fresh();
         }
-
-        if (!$this->has(Session::TOKEN)) {
-            $this->put(Session::TOKEN, Str::random(40));
-        }
     }
 
     /**
@@ -86,7 +82,8 @@ class Payload
      */
     protected static function expired(array $session)
     {
-        return (time() - $session['last_activity']) > (Config::get('session.lifetime') * 60);
+        $lastActivity = isset($session['last_activity']) ? $session['last_activity'] : 0;
+        return (time() - $lastActivity) > (Config::get('session.lifetime') * 60);
     }
 
     /**

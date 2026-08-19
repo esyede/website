@@ -101,7 +101,46 @@ Debugger::$email = (string) $debugger['email'];
 Debugger::detectDebugMode();
 Debugger::dispatch();
 
+/*
+|--------------------------------------------------------------------------
+| Drop the Redundant Config Revalidation
+|--------------------------------------------------------------------------
+|
+| Config::get() re-stats the owning file on every single read to notice edits.
+| Its caches are plain statics though, so PHP clears them when the request
+| ends and the next request re-reads the file regardless. The check therefore
+| only ever catches a config file changing *during* one request, and pays two
+| filesystem calls per read for it — which hurts on shared hosting, where the
+| document root often lives on network storage.
+|
+| Development keeps the check anyway, since that is where a surprising cache
+| costs the most time. Note that Blade has a similar switch, but it is left
+| alone here: compiled templates live on disk and do outlive the request, so
+| turning its check off silently would stop edited templates from recompiling.
+|
+*/
+
+Config::$reload = !Debugger::$productionMode;
+
 unset($debugger, $template, $debugger);
+
+/*
+|--------------------------------------------------------------------------
+| Timeline: Log Boot Phase
+|--------------------------------------------------------------------------
+|
+| After the debugger is dispatched (and the collector initialized),
+| record the boot phase duration for the debug bar's Timeline panel.
+| This is placed *after* the dispatch so that it is not overwritten
+| by `Collectors::initialize()`.
+|
+*/
+
+$rakit_boot_done = microtime(true);
+
+if (class_exists('\System\Foundation\Oops\Debugger') && !\System\Foundation\Oops\Debugger::$productionMode) {
+    Foundation\Oops\Collectors::addTimer('Booting', ($rakit_boot_done - RAKIT_START) * 1000, 0);
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -132,7 +171,7 @@ foreach (Package::$packages as $package => $config) {
 */
 
 Routing\Router::register('*', '(:all)', function () {
-    return Event::first('404');
+    return Hook::first('404');
 });
 
 /*
@@ -191,8 +230,15 @@ URI::$uri = ('' === $uri) ? '/' : $uri;
 */
 
 $domain = Request::foundation()->getHost();
+
+// Mark the boundaries of each phase (routing -> controller -> render).
+$rakit_timeline_route_start = microtime(true);
 Request::$route = Routing\Router::route(Request::method(), $uri, $domain);
+
+$rakit_timeline_controller_start = microtime(true);
 $response = Request::$route->call();
+
+$rakit_timeline_render_start = microtime(true);
 
 /*
 |--------------------------------------------------------------------------
@@ -204,6 +250,37 @@ $response = Request::$route->call();
 */
 
 $response->render();
+$rakit_timeline_render_done = microtime(true);
+
+/*
+|--------------------------------------------------------------------------
+| Timeline: Mark the Routing / Controller / Render Phase
+|--------------------------------------------------------------------------
+|
+| Break down the application's execution duration into phases so that
+| the debug bar's Timeline panel shows where time is spent
+| (routing, controller/action, and view rendering).
+| The bar is positioned relative to RAKIT_START.
+|
+*/
+
+if (class_exists('\System\Foundation\Oops\Debugger') && !\System\Foundation\Oops\Debugger::$productionMode) {
+    Foundation\Oops\Collectors::addTimer(
+        'Routing',
+        ($rakit_timeline_controller_start - $rakit_timeline_route_start) * 1000,
+        ($rakit_timeline_route_start - RAKIT_START) * 1000
+    );
+    Foundation\Oops\Collectors::addTimer(
+        'Controller',
+        ($rakit_timeline_render_start - $rakit_timeline_controller_start) * 1000,
+        ($rakit_timeline_controller_start - RAKIT_START) * 1000
+    );
+    Foundation\Oops\Collectors::addTimer(
+        'Render',
+        ($rakit_timeline_render_done - $rakit_timeline_render_start) * 1000,
+        ($rakit_timeline_render_start - RAKIT_START) * 1000
+    );
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -242,7 +319,7 @@ $response->send();
 |
 */
 
-Event::fire('rakit.done', [$response]);
+Hook::fire('rakit.done', [$response]);
 
 /*
 |--------------------------------------------------------------------------

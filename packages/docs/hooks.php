@@ -2,21 +2,17 @@
 
 defined('DS') or exit('No direct access.');
 
+use System\Hook;
+
 /*
 |--------------------------------------------------------------------------
-| Events
+| Hooks
 |--------------------------------------------------------------------------
 |
-| Event memberikan cara yang bagus untuk memecah keterkaitan resource dalam
+| Hook memberikan cara yang bagus untuk memecah keterkaitan resource dalam
 | aplikasi anda, sehingga kelas, library ataupun plugin tidak akan tercampur
 | dan mudah untuk diawasi.
 |
 */
 
-Event::listen('404', function () {
-    return Response::error(404);
-});
-
-Event::listen('500', function () {
-    return Response::error(500);
-});
+// ..

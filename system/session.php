@@ -57,30 +57,8 @@ class Session
             }
         }
 
-        // Override PHP session configuration
-        ini_set('session.gc_maxlifetime', $config['lifetime'] * 60);
-        ini_set('session.cookie_lifetime', $config['expire_on_close'] ? 0 : $config['lifetime'] * 60);
-        ini_set('session.cookie_path', $config['path']);
-        ini_set('session.cookie_domain', $config['domain'] ?: '');
-        ini_set('session.cookie_secure', $config['secure'] ? '1' : '0');
-        ini_set('session.cookie_httponly', '1');
-        ini_set('session.serialize_handler', $config['serialize']);
-
-        if (!is_null($config['sid_length']) && PHP_VERSION_ID >= 70100) {
-            ini_set('session.sid_length', $config['sid_length']);
-        }
-
-        // Set save path for file driver
-        if ($config['driver'] === 'file') {
-            ini_set('session.save_path', path('storage') . 'sessions' . DS);
-        }
-
         static::start($config['driver']);
         static::$instance->load(Cookie::get($config['cookie']));
-
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_regenerate_id(false);
-        }
     }
 
     /**
