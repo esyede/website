@@ -4,7 +4,7 @@
     <title>Rakit :: {{ $page }}</title>
     <meta name="description" content="Rakit :: A simple, lightweight and modular PHP framework.">
     <link rel="icon" type="image/png" href="data:;base64,iVBORw0KGgo=">
-    <link rel="stylesheet" href="{{ asset('main/css/main.min.css?v=' . RAKIT_VERSION) }}">
+    <link rel="stylesheet" href="{{ asset('main/css/theme.css?v=' . RAKIT_VERSION) }}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Rakit :: {{ $page }}">
     <meta property="og:description" content="A simple, lightweight and modular PHP framework.">

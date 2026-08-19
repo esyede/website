@@ -3,20 +3,18 @@
 
 @include('partials.header')
 
-<body class="has-background-white">
+<body>
     @include('partials.navbar')
 
-    @if (System\Str::starts_with($page, 'Home'))
-        @include('partials.hero_home')
-    @else
-        @include('partials.hero_pages')
-    @endif
+    <main class="main">
+        @if (System\Str::starts_with($page, 'Home'))
+            @include('partials.hero_home')
+        @else
+            @include('partials.hero_pages')
+        @endif
 
-    @yield('main')
-
-    <div class="divider is-white"></div>
-    <div class="divider is-white"></div>
-    <div class="divider is-white"></div>
+        @yield('main')
+    </main>
 
     @include('partials.footer')
 </body>

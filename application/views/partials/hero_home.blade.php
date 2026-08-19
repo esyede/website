@@ -1,17 +1,24 @@
-<section class="hero hero is-medium is-info hero-section py-5" id="hero-section">
-    <div class="hero-body">
-        <div id="particles-js" class="particles-js"></div>
-        <div class="container">
-            <h1 class="title has-text-centered is-block is-uppercase">RAKIT</h1>
-            <h2 class="subtitle has-text-centered is-block">A simple, lightweight and modular PHP framework.</h2>
-            <div class="has-text-centered">
-                <a href="{{ url('download') }}"
-                    class="button is-success is-inverted is-outlined">Download</a>
-                <a href="{{ url('docs') }}"
-                    class="button is-link is-inverted is-outlined">Documentation</a>
-                <br>
-                <small>Latest release: {{ RAKIT_VERSION }}</small>
-            </div>
-        </div>
+<section class="hero">
+    <span class="hero__badge">Latest release &mdash; <b>{{ RAKIT_VERSION }}</b></span>
+    <h1 class="hero__title">
+        A <em>simple, lightweight</em><br>
+        and modular PHP framework.
+    </h1>
+    <p class="hero__lead">
+        Fast URL routing, multi-protocol cache drivers, a database abstraction layer and
+        authentication &mdash; all included. Runs on PHP 5.4 through 8.x.
+    </p>
+    <div class="hero__actions">
+        <a class="btn btn--primary" href="{{ url('download') }}">
+            <svg class="btn__icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 4 L16 22 M8 16 L16 24 24 16 M4 28 L28 28" />
+            </svg>
+            Download {{ RAKIT_VERSION }}
+        </a>
+        <a class="btn btn--ghost" href="{{ url('docs') }}">Read the docs</a>
+    </div>
+    <div class="hero__cmd">
+        <code><span class="prompt">$</span> composer create-project esyede/rakit</code>
     </div>
 </section>

@@ -1,172 +1,155 @@
 @layout('layouts.main')
 
 @section('howto')
-    <div id="modal-dialog-howto" class="modal is-clipped">
+    <div id="modal-dialog-howto" class="modal">
         <div class="modal-background"></div>
         <div class="modal-content">
-            <section class="modal-card-body">
-                <p>Installing <i class="has-text-success">notyf</i> package:</p>
-                <p>
-                    <pre><code>php rakit package:install notyf</code></pre>
-                </p>
-                <br>
-                <p>Manual installation:</p>
-                <p class="notification has-text-left is-unselectable">
-                    <small>
-                        1. Download the <span class="has-text-danger">notyf</span> package<br>
-                        2. Extract it to the <span class="has-text-danger">packages/</span> folder<br>
-                        3. If the package has assets, copy the assets to
-                        <span class="has-text-danger">assets/packages/notyf/</span><br>
-                    </small>
-                </p>
-                <br>
-                <button class="button is-info" id="modal-close-howto">Okay, Got it!</button>
-            </section>
+            <h3 class="modal__title">How to install a package</h3>
+
+            <p class="modal__lead">Installing the <span class="hl">notyf</span> package:</p>
+            <div class="code">
+                <div class="code__bar">
+                    <span class="code__dot"></span>
+                    <span class="code__dot"></span>
+                    <span class="code__dot"></span>
+                    <span class="code__name">terminal</span>
+                </div>
+                <pre><code><span class="prompt">$</span> php rakit package:install <span class="arg">notyf</span></code></pre>
+            </div>
+
+            <p class="modal__lead">Or install it manually:</p>
+            <ol class="modal__steps">
+                <li>Download the <span class="hl">notyf</span> package</li>
+                <li>Extract it to the <span class="hl">packages/</span> folder</li>
+                <li>If the package has assets, copy them to <span class="hl">assets/packages/notyf/</span></li>
+            </ol>
+
+            <div class="modal__actions">
+                <button type="button" class="btn btn--primary" id="modal-close-howto">Okay, got it</button>
+            </div>
         </div>
     </div>
 @endsection
 
 @section('add-package')
-    <div id="modal-dialog-add-package" class="modal is-clipped">
+    <div id="modal-dialog-add-package" class="modal">
         <div class="modal-background"></div>
         <div class="modal-content">
-            <section class="modal-card-body">
-                <p>How to share a package:</p>
-                <p class="notification has-text-left is-unselectable">
-                    <small>
-                        1. Login to Github and edit the
-                        <a href="https://github.com/esyede/rakit/edit/master/repositories.json"
-                            target="_blank">repositories.json</a>
-                        file to add your package data.<br>
-                        2. Send a pull request of changes you made.<br>
-                        3. Create a new thread in the
-                        <a href="https://github.com/esyede/rakit/discussions" target="_blank">Paket &amp; library</a>
-                        subforum and explain the details.<br>
-                    </small>
-                </p>
-                <p>Releasing a new version:</p>
-                <p class="notification has-text-left is-unselectable">
-                    <small>
-                        1. Repeat the steps "How to share a package" above.<br>
-                        2. Edit first post of your thread and add details of the new version.<br>
-                    </small>
-                </p>
-                <br>
-                <button class="button is-success" id="modal-close-add-package">Okay, Got it!</button>
-            </section>
+            <h3 class="modal__title">Share a package</h3>
+
+            <p class="modal__lead">How to share a package:</p>
+            <ol class="modal__steps">
+                <li>Login to Github and edit the
+                    <a href="https://github.com/esyede/rakit/edit/master/repositories.json"
+                        target="_blank">repositories.json</a>
+                    file to add your package data.</li>
+                <li>Send a pull request of the changes you made.</li>
+                <li>Create a new thread in the
+                    <a href="https://github.com/esyede/rakit/discussions" target="_blank">Paket &amp; library</a>
+                    subforum and explain the details.</li>
+            </ol>
+
+            <p class="modal__lead">Releasing a new version:</p>
+            <ol class="modal__steps">
+                <li>Repeat the steps above.</li>
+                <li>Edit the first post of your thread and add details of the new version.</li>
+            </ol>
+
+            <div class="modal__actions">
+                <button type="button" class="btn btn--primary" id="modal-close-add-package">Okay, got it</button>
+            </div>
         </div>
     </div>
 @endsection
 
 @section('pages_title')
-    <br>
-    <h1 class="title">Package Repository</h1>
-    <p class="subtitle">Download and share your package with other developers</p>
-    <div class="buttons is-block">
-        <button id="show-modal-howto" class="button is-info">How to Install?</button>
-        <button id="show-modal-add-package" class="button is-success">Share a Package</button>
+    <span class="eyebrow">Package repository</span>
+    <h1 class="hero__title">Packages built by the community</h1>
+    <p class="hero__lead">Download and share your package with other developers.</p>
+    <div class="hero__actions">
+        <button type="button" id="show-modal-howto" class="btn btn--ghost">How to install?</button>
+        <button type="button" id="show-modal-add-package" class="btn btn--primary">Share a package</button>
     </div>
     @yield('howto')
     @yield('add-package')
-    <br>
 @endsection
 
 @section('listings')
-    <section class="section">
-        <div class="container">
-            <div class="columns">
-                <div class="column is-3-desktop is-3-tablet">
-                    <aside class="menu">
-                        <p class="menu-label">Categories</p>
-                        <ul class="menu-list">
-                            @foreach ($categories as $category)
-                                <li>
-                                    <a href="{{ url('repositories/' . System\Str::slug($category['name'])) }}">
-                                        {{ System\Str::title($category['name']) }}
-                                        <span class="tag is-info is-light is-rounded">
-                                            {{ $category['count'] }}
-                                        </span>
-                                    </a>
-                                </li>
-                            @endforeach
-                            <li>
-                                <a href="{{ url('repositories') }}">All
-                                    <span class="tag is-info is-light is-rounded">
-                                        {{ $count }}
-                                    </span>
-                                </a>
-                            </li>
-                        </ul>
-                    </aside>
-                </div>
-                <div class="column is-9-desktop is-9-tablet">
-                    <div class="container">
-                        <p class="menu-label is-size-6">{{ $category['name'] }}</p>
-                        <br>
-                        @for ($i = 0; $i < count($packages); $i++)
-                            <div class="box">
-                                <article class="media">
-                                    <div class="media-left">
-                                        <figure class="image is-64x64">
-                                            <img src="{{ asset('main/images/package.png') }}" alt="paket">
-                                        </figure>
-                                    </div>
-                                    <div class="media-content">
-                                        <div class="content">
-                                            <div class="is-pulled-right is-hidden-mobile">
-                                                @if ($packages[$i]['maintained'])
-                                                    <span class="button is-success is-rounded is-small"
-                                                        title="This package is still being maintained">maintained</span>
-                                                @else
-                                                    <span class="button is-warning is-rounded is-small"
-                                                        title="This package is unmaintained">unmaintained</span>
-                                                @endif
-                                            </div>
-                                            <p>
-                                                <a class="is-size-4" title="Visit package&#039;s repository"
-                                                    href="{{ $packages[$i]['repository'] }}"
-                                                    target="_blank">{{ $packages[$i]['name'] }}</a>
-                                                <br>
-                                                {!! nl2br($packages[$i]['description']) !!}
-                                            </p>
-                                            <br>
-                                            <div class="is-pulled-left">
-                                                <a class="tag is-small is-primary"
-                                                    href="{{ url('repositories/' . System\Str::slug($packages[$i]['category'])) }}"
-                                                    title="Kategori: {{ $packages[$i]['category'] }}">{{ System\Str::title($packages[$i]['category']) }}</a>
-                                            </div>
-                                            <span class="is-pulled-right is-size-7">
-                                                Compatible:
-                                                {{ implode(', ', array_keys($packages[$i]['compatibilities'])) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </article>
-                            </div>
-                        @endfor
+    <div class="band">
+        <div class="shell">
+            <div class="repo">
+                <aside class="repo__side">
+                    <h4 class="eyebrow">Categories</h4>
+                    <a class="repo__cat{{ isset($category) ? '' : ' is-current' }}" href="{{ url('repositories') }}">
+                        <span>All packages</span>
+                        <span class="repo__count">{{ $count }}</span>
+                    </a>
+                    @foreach ($categories as $item)
+                        <a class="repo__cat{{ isset($category) && $category === System\Str::slug($item['name']) ? ' is-current' : '' }}"
+                            href="{{ url('repositories/' . System\Str::slug($item['name'])) }}">
+                            <span>{{ System\Str::title($item['name']) }}</span>
+                            <span class="repo__count">{{ $item['count'] }}</span>
+                        </a>
+                    @endforeach
+                </aside>
 
-                        <nav class="pagination is-rounded" role="navigation">
-                            @if ($current > 1)
-                                <a class="pagination-previous" href="?page={{ $current - 1 }}">&laquo;
-                                    Previous</a>
-                            @else
-                                <a class="pagination-previous" href="#" disabled>&laquo;
-                                    Previous</a>
-                            @endif
-
-                            @if ($current < $last)
-                                <a class="pagination-next" href="?page={{ $current + 1 }}">Next
-                                    &raquo;</a>
-                            @else
-                                <a class="pagination-next" href="#" disabled>Next
-                                    &raquo;</a>
-                            @endif
-                        </nav>
+                <div class="repo__list">
+                    <div class="repo__bar">
+                        <h2 class="cell__title">
+                            {{ isset($category) ? System\Str::title(str_replace('-', ' ', $category)) : 'All packages' }}
+                        </h2>
+                        <span class="pager__status">Page {{ $current }} of {{ $last }}</span>
                     </div>
+
+                    @for ($i = 0; $i < count($packages); $i++)
+                        <article class="pkg">
+                            <span class="pkg__logo" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-linecap="round"
+                                    stroke-linejoin="round" stroke-width="2">
+                                    <path d="M16 3 L28 9 L28 23 L16 29 L4 23 L4 9 Z" />
+                                    <path d="M4 9 L16 15 L28 9 M16 15 L16 29" />
+                                </svg>
+                            </span>
+                            <div class="pkg__body">
+                                <div class="pkg__head">
+                                    <a class="pkg__name" title="Visit package&#039;s repository"
+                                        href="{{ $packages[$i]['repository'] }}"
+                                        target="_blank">{{ $packages[$i]['name'] }}</a>
+                                    <a class="tag"
+                                        href="{{ url('repositories/' . System\Str::slug($packages[$i]['category'])) }}">{{ $packages[$i]['category'] }}</a>
+                                </div>
+                                <p class="pkg__desc">{!! nl2br($packages[$i]['description']) !!}</p>
+                                <div class="pkg__meta">
+                                    @if ($packages[$i]['maintained'])
+                                        <span><span class="dot"></span> maintained</span>
+                                    @else
+                                        <span><span class="dot dot--warn"></span> unmaintained</span>
+                                    @endif
+                                    <span>{{ implode(', ', array_keys($packages[$i]['compatibilities'])) }}</span>
+                                </div>
+                            </div>
+                        </article>
+                    @endfor
+
+                    <nav class="pager">
+                        @if ($current > 1)
+                            <a class="pager__link" href="?page={{ $current - 1 }}">&larr; Previous</a>
+                        @else
+                            <span class="pager__link is-disabled">&larr; Previous</span>
+                        @endif
+
+                        <span class="pager__status">{{ $current }} / {{ $last }}</span>
+
+                        @if ($current < $last)
+                            <a class="pager__link" href="?page={{ $current + 1 }}">Next &rarr;</a>
+                        @else
+                            <span class="pager__link is-disabled">Next &rarr;</span>
+                        @endif
+                    </nav>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 @endsection
 
 @section('main')
