@@ -817,7 +817,10 @@ button:focus:not(:focus-visible) {
     background: var(--accent);
 }
 
-.tag {
+/* Prism memberi kelas "token tag" pada tag HTML di dalam blok kode, jadi tag
+   tersebut ikut tersapu selektor `.tag`. Token dikecualikan agar tidak
+   berubah menjadi pil kapital. */
+.tag:not(.token) {
     display: inline-flex;
     align-items: center;
     padding: 2px 9px;
@@ -830,7 +833,7 @@ button:focus:not(:focus-visible) {
     color: var(--text-dim);
 }
 
-.tag:hover {
+.tag:not(.token):hover {
     border-color: var(--text-faint);
     color: var(--text);
 }
