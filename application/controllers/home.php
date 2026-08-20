@@ -5,27 +5,34 @@ defined('DS') or exit('No direct script access.');
 class Home_Controller extends Controller
 {
     /**
-     * Slogan situs, dipakai untuk judul halaman.
+     * Site slogan.
      *
      * @var string
      */
     const SLOGAN = 'A simple, lightweight and modular PHP framework.';
 
     /**
-     * Halaman saat ini.
+     * Maximum number of files to keep in storage folders.
+     *
+     * @var int
+     */
+    const STORAGE_LIMIT = 100;
+
+    /**
+     * Current page.
      *
      * @var int
      */
     private $page;
 
     /**
-     * Buat instance controller baru.
+     * Create a new Home_Controller instance.
      */
     public function __construct()
     {
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
-        $this->page = Str::title($page) . ' | ' . self::SLOGAN;
+        $this->page = Str::title($page) . ' | ' . static::SLOGAN;
     }
 
     /**
@@ -35,12 +42,45 @@ class Home_Controller extends Controller
      */
     public function action_index()
     {
+        $this->sweep_storage();
+
         return View::make('home.index')
             ->with('page', $this->page)
             ->with('news', vsprintf('Connect with other developers through our discussion board <a href="%s" target="_blank">%s</a>', [
                 'https://github.com/esyede/rakit/discussions/categories/paket-library',
                 'Learn more..',
             ]));
+    }
+
+    /**
+     * Sweep storage folders to remove unused files.
+     *
+     * @return void
+     */
+    private function sweep_storage()
+    {
+        $keep = ['.gitignore', 'index.html'];
+        $folders = ['sessions', 'views', 'cache', 'logs'];
+
+        foreach ($folders as $folder) {
+            $files = glob(path('storage') . $folder . DS . '*');
+
+            if (!is_array($files)) {
+                continue;
+            }
+
+            $files = array_filter($files, function ($file) use ($keep) {
+                return is_file($file) && !in_array(basename($file), $keep);
+            });
+
+            if (count($files) <= static::STORAGE_LIMIT) {
+                continue;
+            }
+
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+        }
     }
 
     /**
@@ -117,16 +157,6 @@ class Home_Controller extends Controller
      */
     public function action_mock($delay = 0)
     {
-        // Hapus file tidak terpakai
-        $files = glob(path('storage') . 'sessions' . DS . '*.session.php');
-
-        if (is_array($files) && count($files) > 20) {
-            foreach ($files as $file) {
-                @unlink($file);
-            }
-            Cache::flush();
-        }
-
         if ($delay > 0) {
             sleep(intval($delay));
         }
