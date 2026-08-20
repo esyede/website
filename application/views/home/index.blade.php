@@ -9,7 +9,7 @@
                     <span class="stat__label">PHP supported</span>
                 </div>
                 <div class="stat">
-                    <span class="stat__num">&lt; 1 MB</span>
+                    <span class="stat__num">~ 1 MB</span>
                     <span class="stat__label">Zipped, docs included</span>
                 </div>
                 <div class="stat">
@@ -115,7 +115,8 @@
                     <h3 class="cell__title">Repositories</h3>
                     <p class="cell__text">Join us on
                         <a href="https://github.com/esyede/rakit" target="_blank">Github</a>
-                        to make rakit even better.</p>
+                        to make rakit even better.
+                    </p>
                 </article>
 
                 <article class="cell">
@@ -128,7 +129,8 @@
                     <h3 class="cell__title">Forum</h3>
                     <p class="cell__text">Having trouble getting started, or want to share your thoughts? Talk with
                         other developers at the
-                        <a href="https://github.com/esyede/rakit/discussions" target="_blank">discussion forum</a>.</p>
+                        <a href="https://github.com/esyede/rakit/discussions" target="_blank">discussion forum</a>.
+                    </p>
                 </article>
             </div>
         </div>
