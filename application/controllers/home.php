@@ -2,6 +2,8 @@
 
 defined('DS') or exit('No direct script access.');
 
+use Docs\Libraries\Docs;
+
 class Home_Controller extends Controller
 {
     /**
@@ -81,6 +83,43 @@ class Home_Controller extends Controller
                 @unlink($file);
             }
         }
+    }
+
+    /**
+     * Handle GET /sitemap.xml.
+     *
+     * @return Response
+     */
+    public function action_sitemap()
+    {
+        Package::boot('docs');
+
+        $views = path('app') . 'views' . DS . 'home' . DS;
+        $urls = [
+            url('/') => @filemtime($views . 'index.blade.php'),
+            rtrim(url('repositories'), '/') => @filemtime($views . 'repositories.blade.php'),
+        ];
+
+        // `/download` sengaja dilewat, ia hanya redirect ke Github.
+        foreach (Docs::pages() as $url => $mtime) {
+            $urls[$url] = $mtime;
+        }
+
+        $xml = ['<?xml version="1.0" encoding="UTF-8"?>'];
+        $xml[] = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+        foreach ($urls as $url => $mtime) {
+            $xml[] = '    <url>';
+            $xml[] = '        <loc>' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '</loc>';
+            $xml[] = '        <lastmod>' . date(DATE_W3C, $mtime ? $mtime : time()) . '</lastmod>';
+            $xml[] = '    </url>';
+        }
+
+        $xml[] = '</urlset>';
+
+        return Response::make(implode(PHP_EOL, $xml), 200, [
+            'Content-Type' => 'application/xml; charset=utf-8',
+        ]);
     }
 
     /**

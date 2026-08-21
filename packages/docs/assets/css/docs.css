@@ -1396,6 +1396,13 @@ body:has(.modal.is-active) {
     border-bottom: 1px solid var(--rule);
 }
 
+/* `.eyebrow` dipakai bertumpuk di atas judul, jadi ia bawa margin bawah.
+   Di sini ia jadi item flex, dan `align-items: center` memusatkan margin
+   box-nya, sehingga teksnya terangkat setengah margin dari tombol. */
+.docs__bar .eyebrow {
+    margin-bottom: 0;
+}
+
 .prose {
     color: var(--text-dim);
     font-size: 15.5px;

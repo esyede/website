@@ -17,3 +17,4 @@ Route::get('/', 'home@index');
 Route::any('mock', 'home@mock');
 Route::get('download', 'home@download');
 Route::get('repositories/(:any?)', 'home@repositories');
+Route::get('sitemap.xml', 'home@sitemap');
