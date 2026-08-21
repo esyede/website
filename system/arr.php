@@ -53,7 +53,7 @@ class Arr
             }
         }
 
-        return call_user_func_array('array_merge', $results);
+        return (0 === count($results)) ? [] : call_user_func_array('array_merge', $results);
     }
 
     /**
@@ -259,13 +259,14 @@ class Arr
         }
 
         foreach ($keys as $key) {
+            $array = &$original;
+
             if (static::exists($array, $key)) {
                 unset($array[$key]);
                 continue;
             }
 
             $parts = explode('.', $key);
-            $array = &$original;
 
             while (count($parts) > 1) {
                 $part = array_shift($parts);
@@ -606,8 +607,13 @@ class Arr
         $results = [];
 
         if (is_string($callback)) {
-            $callback = function ($item) use ($callback) {
-                return data_get($item, $callback);
+            $path = $callback;
+            $callback = function ($item) use ($path) {
+                return data_get($item, $path);
+            };
+        } elseif (is_null($callback)) {
+            $callback = function ($item) {
+                return $item;
             };
         }
 
@@ -640,6 +646,8 @@ class Arr
                 $value = static::recsort($value);
             }
         }
+
+        unset($value);
 
         if (static::associative($array)) {
             ksort($array);

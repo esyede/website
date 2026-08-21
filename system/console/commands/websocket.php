@@ -116,7 +116,7 @@ class Websocket extends Command
     }
 
     /**
-     * Handle the start event
+     * Handle the start event.
      *
      * @param Server $server
      *
@@ -129,7 +129,7 @@ class Websocket extends Command
     }
 
     /**
-     * Handle the crash event
+     * Handle the crash event.
      *
      * @param Server $server
      *
@@ -139,18 +139,13 @@ class Websocket extends Command
     {
         $this->log('WebSocket server crashed!', true);
 
-        if ($error = socket_last_error()) {
-            $this->log('Socket error: ' . socket_strerror($error), true);
-            socket_clear_error();
-        }
-
         if ($error = error_get_last()) {
             $this->log('PHP error: ' . $error['message'], true);
         }
     }
 
     /**
-     * Handle the stop event
+     * Handle the stop event.
      *
      * @param Server $server
      *
@@ -174,7 +169,7 @@ class Websocket extends Command
     }
 
     /**
-     * Handle the disconnect event
+     * Handle the disconnect event.
      *
      * @param Client $client
      *
@@ -182,17 +177,12 @@ class Websocket extends Command
      */
     public function disconnect(Client $client)
     {
-        if ($error = socket_last_error()) {
-            $this->log(socket_strerror($error), true);
-            socket_clear_error();
-        }
-
         $this->broadcast($client->server(), sprintf('Client #%s disconnected', $client->id()));
         $this->presence($client->server());
     }
 
     /**
-     * Handle the idle event
+     * Handle the idle event.
      *
      * @param Client $client
      *
@@ -204,7 +194,7 @@ class Websocket extends Command
     }
 
     /**
-     * Handle the receive event
+     * Handle the receive event.
      *
      * @param Client $client
      * @param int    $opcode
@@ -216,8 +206,7 @@ class Websocket extends Command
     {
         if (intval($opcode) !== Server::TEXT) {
             if (intval($opcode) === Server::PING) {
-                $pong = $client->server()->frame('', $client, 'pong');
-                @socket_write($client->socket, $pong, strlen($pong));
+                $client->send(Server::PONG);
             } else {
                 $this->log(sprintf('Client #%s sent a message with ignored opcode %s.', $client->id(), $opcode));
             }
@@ -236,7 +225,7 @@ class Websocket extends Command
                 if ($parsed['command'] === 'broadcast' && isset($parsed['message'])) {
                     $this->broadcast($client->server(), $parsed['message']);
 
-                    if ($this->config['logging_enabled']) {
+                    if ($this->logging()) {
                         $this->log("Command broadcast executed: {$parsed['message']}");
                     }
 
@@ -244,11 +233,11 @@ class Websocket extends Command
                 } elseif ($parsed['command'] === 'disconnect' && isset($parsed['client_id'])) {
                     $clients = $client->server()->clients();
 
-                    foreach ($clients as $client) {
-                        if ($client->id() == $parsed['client_id']) {
-                            $client->close();
+                    foreach ($clients as $target) {
+                        if ($target->id() == $parsed['client_id']) {
+                            $target->close();
 
-                            if ($this->config['logging_enabled']) {
+                            if ($this->logging()) {
                                 $this->log("Command disconnect executed for client {$parsed['client_id']}");
                             }
 
@@ -256,7 +245,7 @@ class Websocket extends Command
                         }
                     }
 
-                    if ($this->config['logging_enabled']) {
+                    if ($this->logging()) {
                         $this->log("Command disconnect failed: client {$parsed['client_id']} not found");
                     }
 
@@ -264,15 +253,15 @@ class Websocket extends Command
                 } elseif ($parsed['command'] == 'presence') {
                     $this->presence($client->server());
 
-                    if ($this->config['logging_enabled']) {
-                        $this->log("Command presence executed");
+                    if ($this->logging()) {
+                        $this->log('Command presence executed');
                     }
 
                     return;
                 } elseif ($parsed['command'] == 'broadcast_to_channel' && isset($parsed['channel']) && isset($parsed['message'])) {
                     $this->broadcast_to_channel($client->server(), $parsed['channel'], $parsed['message']);
 
-                    if ($this->config['logging_enabled']) {
+                    if ($this->logging()) {
                         $this->log("Command broadcast_to_channel executed to {$parsed['channel']}: {$parsed['message']}");
                     }
 
@@ -280,7 +269,7 @@ class Websocket extends Command
                 } elseif ($parsed['command'] == 'private_message' && isset($parsed['to']) && isset($parsed['message'])) {
                     $this->private_message($client->server(), $parsed['to'], $parsed['message']);
 
-                    if ($this->config['logging_enabled']) {
+                    if ($this->logging()) {
                         $this->log("Command private_message executed to {$parsed['to']}: {$parsed['message']}");
                     }
 
@@ -312,7 +301,7 @@ class Websocket extends Command
     }
 
     /**
-     * Handle the send event
+     * Handle the send event.
      *
      * @param Client $client
      * @param int    $opcode
@@ -335,10 +324,22 @@ class Websocket extends Command
      */
     private function log($message, $is_error = false)
     {
-        if ($this->config['logging_enabled']) {
+        if ($this->logging()) {
             echo $is_error ? $this->error('[' . Carbon::now() . '] ' . $message) : $this->info('[' . Carbon::now() . '] ' . $message);
             flush();
             ob_get_contents() && ob_flush();
         }
+    }
+
+    /**
+     * Whether logging is switched on.
+     *
+     * @return bool
+     */
+    private function logging()
+    {
+        return is_array($this->config)
+            && isset($this->config['logging_enabled'])
+            && $this->config['logging_enabled'];
     }
 }

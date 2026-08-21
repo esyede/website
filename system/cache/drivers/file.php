@@ -46,15 +46,22 @@ class File extends Driver
      */
     protected function retrieve($key)
     {
-        $key = $this->naming($key);
+        $path = $this->path . $this->naming($key);
 
-        if (!is_file($this->path . $key)) {
-            return;
+        if (!is_file($path)) {
+            return null;
         }
 
-        $cache = Storage::get($this->path . $key);
-        $cache = (string) $this->unguard($cache);
-        return (time() >= substr($cache, 0, 10)) ? $this->forget($key) : unserialize(substr($cache, 10));
+        $cache = (string) $this->unguard(Storage::get($path));
+
+        if (time() >= (int) substr($cache, 0, 10)) {
+            $this->forget($key);
+            return null;
+        }
+
+        $value = @unserialize(substr($cache, 10));
+
+        return (false === $value && 'b:0;' !== substr($cache, 10)) ? null : $value;
     }
 
     /**
@@ -89,7 +96,7 @@ class File extends Driver
      */
     public function forget($key)
     {
-        $key =  $this->path . $this->naming($key);
+        $key = $this->path . $this->naming($key);
         is_file($key) && Storage::delete($key);
     }
 
@@ -98,7 +105,7 @@ class File extends Driver
      */
     public function flush()
     {
-        $files = glob(path('storage') . 'cache' . DS . '*.cache.php');
+        $files = glob($this->path . '*.cache.php');
 
         if (is_array($files) && count($files) > 0) {
             foreach ($files as $file) {
@@ -116,7 +123,7 @@ class File extends Driver
      */
     protected function naming($key)
     {
-        return sprintf('%u', crc32($key)) . '.cache.php';
+        return sha1((string) $key) . '.cache.php';
     }
 
     /**

@@ -100,6 +100,9 @@ class Paginator
      */
     public static function make($results, $total, $perpage)
     {
+        $perpage = (int) $perpage;
+        $perpage = ($perpage < 1) ? 1 : $perpage;
+
         return new static($results, static::page($total, $perpage), $total, $perpage, (int) ceil($total / $perpage));
     }
 
@@ -114,6 +117,8 @@ class Paginator
     public static function page($total, $perpage)
     {
         $page = Input::get('page', 1);
+        $perpage = (int) $perpage;
+        $perpage = ($perpage < 1) ? 1 : $perpage;
 
         if (is_numeric($page) && $page > ceil($total / $perpage)) {
             $last = (int) ceil($total / $perpage);
@@ -331,7 +336,7 @@ class Paginator
     {
         return TAB . TAB . '<li ' . trim(static::attributes(['class' => $class . ' page-item'])) . '>' .
             '<a class="page-link" href="' . URI::current() . '?page=' . $page . $this->appendage($this->appends) .
-            '">' .  e($text) . '</a></li>' . LF;
+            '">' . e($text) . '</a></li>' . LF;
     }
 
     /**
@@ -348,7 +353,8 @@ class Paginator
         }
 
         $appends = empty($appends) ? [] : $appends;
-        return $this->appendage = (count($appends) <= 0) ? '&' . http_build_query($appends) : '';
+
+        return $this->appendage = (count($appends) > 0) ? '&' . http_build_query($appends) : '';
     }
 
     /**
@@ -361,6 +367,8 @@ class Paginator
     public function appends(array $values)
     {
         $this->appends = $values;
+        $this->appendage = null;
+
         return $this;
     }
 

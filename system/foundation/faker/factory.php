@@ -44,10 +44,6 @@ class Factory
             return $class;
         }
 
-        if ($class = static::findProviderClassname($provider, Config::get('application.language', 'en'))) {
-            return $class;
-        }
-
         if ($class = static::findProviderClassname($provider)) {
             return $class;
         }

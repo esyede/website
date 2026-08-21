@@ -50,6 +50,7 @@ class Packager extends Command
         }
 
         $destination = (string) Package::path($arguments[0]);
+        $stdin = null;
 
         if (is_dir($destination)) {
             echo  PHP_EOL . $this->warning('Destination directory for this package is already exists:');
@@ -62,17 +63,21 @@ class Packager extends Command
                 fclose($stdin);
                 throw new \Exception(PHP_EOL . 'Operation aborted by user.');
             }
+        }
 
-            if (true !== (bool) $remotes['maintained']) {
-                echo  PHP_EOL . $this->warning('This package is currently not maintained.');
-                echo  $this->warning('Dou you wish to install anyway? [y/N] ', false);
+        if (true !== (bool) (isset($remotes['maintained']) ? $remotes['maintained'] : false)) {
+            echo  PHP_EOL . $this->warning('This package is currently not maintained.');
+            echo  $this->warning('Dou you wish to install anyway? [y/N] ', false);
 
-                if (!in_array(strtolower(trim((string) fgets($stdin))), ['y', 'yes'])) {
-                    fclose($stdin);
-                    throw new \Exception(PHP_EOL . 'Operation aborted by user.');
-                }
+            $stdin = $stdin ? $stdin : fopen('php://stdin', 'rb');
+
+            if (!in_array(strtolower(trim((string) fgets($stdin))), ['y', 'yes'])) {
+                fclose($stdin);
+                throw new \Exception(PHP_EOL . 'Operation aborted by user.');
             }
+        }
 
+        if ($stdin) {
             fclose($stdin);
         }
 
@@ -152,12 +157,20 @@ class Packager extends Command
 
         $remotes = $this->repository->search($arguments[0]);
         $local = path('package') . $arguments[0] . DS . 'meta.json';
+
+        if (!isset($remotes['compatibilities']['v' . RAKIT_VERSION])) {
+            throw new \Exception(PHP_EOL . sprintf(
+                'Error: No compatible package for your rakit version (v%s)',
+                RAKIT_VERSION
+            ) . PHP_EOL);
+        }
+
         $latest = $remotes['compatibilities']['v' . RAKIT_VERSION];
-        $current = 0;
+        $current = '0';
 
         if (is_file($local)) {
-            $current = json_decode(Storage::get($local), true);
-            $current = isset($current['version']) ? $current['version'] : $current;
+            $meta = json_decode(Storage::get($local), true);
+            $current = (is_array($meta) && isset($meta['version'])) ? (string) $meta['version'] : '0';
         }
 
         if (true !== (bool) $remotes['maintained']) {

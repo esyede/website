@@ -48,6 +48,10 @@ class Color
 
     public static function supported()
     {
+        if (!defined('STDOUT')) {
+            return false;
+        }
+
         if (DS === '\\') {
             return (function_exists('sapi_windows_vt100_support') && @sapi_windows_vt100_support(STDOUT))
                 || (getenv('ANSICON') !== false || getenv('ConEmuANSI') === 'ON');

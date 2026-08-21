@@ -132,10 +132,9 @@ class Server
                     if ($client === false) {
                         $this->stderr('Failed: stream_socket_accept()');
                         continue;
-                    } else {
-                        $this->connect($client);
-                        $this->stdout('Client connected. ' . (int) $client);
                     }
+                    $this->connect($client);
+                    $this->stdout('Client connected. ' . (int) $client);
                 } else {
                     $this->stdout('Reading from socket ' . (int) $socket);
                     $buffer = @fread($socket, $this->config['max_buffer_size']);
@@ -232,8 +231,9 @@ class Server
                 $header = explode(':', $line, 2);
                 $headers[strtolower(trim($header[0]))] = trim($header[1]);
             } elseif (stripos($line, 'get ') !== false) {
-                preg_match('/GET (.*) HTTP/i', $buffer, $reqResource);
-                $headers['get'] = trim($reqResource[1]);
+                if (preg_match('/GET (.*) HTTP/i', $buffer, $reqResource)) {
+                    $headers['get'] = trim($reqResource[1]);
+                }
             }
         }
 
@@ -421,6 +421,8 @@ class Server
             case 'close':      $b1 = 8; break;
             case 'ping':       $b1 = 9; break;
             case 'pong':       $b1 = 10; break;
+            default:
+                throw new \InvalidArgumentException(sprintf('Unsupported frame type: %s', $type));
         }
 
         if ($continue) {
@@ -537,12 +539,22 @@ class Server
         $close = false;
 
         switch ($headers['opcode']) {
+            // continuation, text and binary frames carry application data
             case 0:
             case 1:
-            case 2:
-            case 10: break;
+            case 2:  break;
+
+            // close
             case 8:  $user->disconnecting = true; return '';
-            case 9:  $pong = true;
+
+            // ping: must be answered with a pong. Note the break - without it
+            // this fell through to 'default', which set $close and returned
+            // before the pong was ever sent, so the server never answered a ping.
+            case 9:  $pong = true; break;
+
+            // pong: a control frame, never application data
+            case 10: return false;
+
             default: $close = true; break;
         }
 
@@ -643,13 +655,14 @@ class Server
             return $payload;
         }
 
-        while (strlen($effective) < strlen($payload)) {
-            $effective .= $mask;
+        $length = strlen($payload);
+
+        if (0 === $length || '' === $mask) {
+            return $payload;
         }
 
-        while (strlen($effective) > strlen($payload)) {
-            $effective = substr($effective, 0, -1);
-        }
+        $effective = str_repeat($mask, (int) ceil($length / strlen($mask)));
+        $effective = substr($effective, 0, $length);
 
         return $effective ^ $payload;
     }

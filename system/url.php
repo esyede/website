@@ -69,7 +69,6 @@ class URL
      * </code>
      *
      * @param string $url
-     * @param bool   $https
      * @param bool   $asset
      * @param bool   $locale
      *
@@ -228,7 +227,10 @@ class URL
     {
         foreach ($parameters as $parameter) {
             if (!is_null($parameter)) {
-                $uri = preg_replace('/\(.+?\)/', $parameter, $uri, 1);
+                $parameter = (string) $parameter;
+                $uri = preg_replace_callback('/\(.+?\)/', function () use ($parameter) {
+                    return $parameter;
+                }, $uri, 1);
             }
         }
 

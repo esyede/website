@@ -208,7 +208,8 @@ class Panic
     {
         $base = basename($file);
         $dir = substr_replace($file, '', strrpos($file, $base), strlen($base));
-        $file = $dir . DIRECTORY_SEPARATOR . $base;
+        $dir = ('' === $dir) ? '.' . DIRECTORY_SEPARATOR : $dir;
+        $file = $dir . $base;
 
         if (!is_dir($dir)) {
             mkdir($dir, 0755, true);
@@ -564,7 +565,7 @@ class Panic
         foreach ($this->collapsePaths as $path) {
             $path = strtr($path, '\\', '/') . '/';
 
-            if (strncmp($file, $path, 0 === mb_strlen($path, '8bit'))) {
+            if (0 === strncmp($file, $path, mb_strlen($path, '8bit'))) {
                 return true;
             }
         }

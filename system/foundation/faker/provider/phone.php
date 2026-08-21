@@ -8,8 +8,8 @@ class Phone extends Base
 {
     protected static $formats = ['###-###-###'];
 
-    public static function phoneNumber()
+    public function phoneNumber()
     {
-        return static::numerify(static::randomElement(static::$formats));
+        return static::numerify($this->generator->parse(static::randomElement(static::$formats)));
     }
 }

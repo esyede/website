@@ -101,7 +101,7 @@ class Config
             $cached = static::$gets[$key];
 
             if (!static::$reload) {
-                return $cached['value'];
+                return $cached['found'] ? $cached['value'] : value($default);
             }
 
             $path = Package::path($package) . 'config' . DS . $file . '.php';
@@ -115,7 +115,7 @@ class Config
                     }
                 }
             } else {
-                return $cached['value'];
+                return $cached['found'] ? $cached['value'] : value($default);
             }
         }
 
@@ -124,11 +124,24 @@ class Config
         }
 
         $items = static::$items[$package][$file];
-        $result = is_null($item) ? $items : Arr::get($items, $item, $default);
+
+        if (is_null($item)) {
+            $found = true;
+            $result = $items;
+        } else {
+            $found = Arr::has($items, $item);
+            $result = $found ? Arr::get($items, $item) : null;
+        }
+
         $path = Package::path($package) . 'config' . DS . $file . '.php';
 
-        static::$gets[$key] = ['value' => $result, 'mtime' => is_file($path) ? filemtime($path) : 0];
-        return $result;
+        static::$gets[$key] = [
+            'value' => $result,
+            'found' => $found,
+            'mtime' => is_file($path) ? filemtime($path) : 0,
+        ];
+
+        return $found ? $result : value($default);
     }
 
     /**

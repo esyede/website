@@ -54,7 +54,8 @@ class Redis extends Driver
             return null;
         }
 
-        set_error_handler(function () {});
+        set_error_handler(function () {
+        });
         $value = @unserialize($cache);
         restore_error_handler();
 
@@ -145,6 +146,6 @@ class Redis extends Driver
     public function flush()
     {
         /** @disregard */
-        $this->redis->flushall();
+        $this->redis->flushdb();
     }
 }

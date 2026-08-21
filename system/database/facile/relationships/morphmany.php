@@ -49,6 +49,27 @@ class MorphMany extends HasMany
     }
 
     /**
+     * Set the constraints for an eager load of the relationship.
+     *
+     * @param array $results
+     */
+    public function eagerly_constrain(array $results)
+    {
+        $this->table->where($this->type, '=', get_class($this->base));
+        $this->table->where_in($this->id, $this->keys($results));
+    }
+
+    /**
+     * Get the column the eager loaded children are matched on.
+     *
+     * @return string
+     */
+    protected function eager_key()
+    {
+        return $this->id;
+    }
+
+    /**
      * Set the foreign key on a given model.
      *
      * @param Model $model

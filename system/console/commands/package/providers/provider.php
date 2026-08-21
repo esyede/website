@@ -38,7 +38,7 @@ abstract class Provider
             return;
         }
 
-        chmod(Storage::latest(path('package'))->getRealPath(), 0755);
+        static::relax(path('package'));
         echo PHP_EOL . Color::green('Downloading zipball...', false);
         $this->download($url, $zipball);
         echo ' done!';
@@ -53,7 +53,7 @@ abstract class Provider
             rename($packages[0], path('package') . $package['name']);
         }
 
-        chmod(Storage::latest(path('package'))->getRealPath(), 0755);
+        static::relax(path('package'));
         Storage::delete($zipball);
 
         if (is_dir($assets = path('package') . $package['name'] . DS . 'assets')) {
@@ -68,6 +68,24 @@ abstract class Provider
         }
 
         echo ' done!';
+    }
+
+    /**
+     * Make the newest entry of a directory readable.
+     *
+     * @param string $directory
+     */
+    protected static function relax($directory)
+    {
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        $latest = Storage::latest($directory);
+
+        if (!is_null($latest) && false !== ($path = $latest->getRealPath())) {
+            @chmod($path, 0755);
+        }
     }
 
     /**
@@ -167,6 +185,16 @@ abstract class Provider
         if (!$zip->open($file)) {
             echo PHP_EOL . Color::red(sprintf('Error: Could not open zip file: %s', $file));
             return;
+        }
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entry = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+
+            if (0 === strpos($entry, '/') || preg_match('#(^|/)\.\.(/|$)#', $entry)) {
+                $zip->close();
+                echo PHP_EOL . Color::red(sprintf('Error: Refusing unsafe path in archive: %s', $entry));
+                return;
+            }
         }
 
         $zip->extractTo($destination);

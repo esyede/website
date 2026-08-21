@@ -75,6 +75,15 @@ class JWT
     /**
      * Decode payload.
      *
+     * Supported options:
+     *
+     *   - 'algorithm': name (or list of names) the token is allowed to be signed
+     *                  with. Strongly recommended: without it the algorithm is
+     *                  read from the token itself.
+     *   - 'aud':       expected audience, the token must carry a matching claim.
+     *   - 'iss':       expected issuer, the token must carry a matching claim.
+     *   - 'validator': callable receiving ($payloads, $headers) for extra checks.
+     *
      * @param string $token
      * @param string $key
      * @param array  $options
@@ -130,6 +139,18 @@ class JWT
             ));
         }
 
+        if (isset($options['algorithm'])) {
+            $allowed = array_map('strtoupper', array_map('strval', (array) $options['algorithm']));
+
+            if (!in_array(strtoupper($headers->alg), $allowed, true)) {
+                throw new \Exception(sprintf(
+                    "Algorithm not allowed: '%s' (allowed: %s)",
+                    $headers->alg,
+                    implode(', ', $allowed)
+                ));
+            }
+        }
+
         if (!isset($headers->typ) || $headers->typ !== 'JWT') {
             throw new \Exception('Invalid token type');
         }
@@ -150,11 +171,11 @@ class JWT
             throw new \Exception('Expired token');
         }
 
-        if (isset($options['aud']) && isset($payloads->aud) && $payloads->aud !== $options['aud']) {
+        if (isset($options['aud']) && (!isset($payloads->aud) || $payloads->aud !== $options['aud'])) {
             throw new \Exception('Invalid audience');
         }
 
-        if (isset($options['iss']) && isset($payloads->iss) && $payloads->iss !== $options['iss']) {
+        if (isset($options['iss']) && (!isset($payloads->iss) || $payloads->iss !== $options['iss'])) {
             throw new \Exception('Invalid issuer');
         }
 

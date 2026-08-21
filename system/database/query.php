@@ -133,7 +133,6 @@ class Query
      * @param Connection   $connection
      * @param QueryGrammar $grammar
      * @param string       $table
-     *
      */
     public function __construct(Connection $connection, QueryGrammar $grammar, $table)
     {
@@ -513,20 +512,7 @@ class Query
      */
     public function debug()
     {
-        $sql = $this->to_sql(true);
-        $bindings = $this->bindings;
-
-        foreach ($bindings as $key => $value) {
-            if (is_array($value)) {
-                $value = implode(', ', $value);
-            } elseif (is_object($value)) {
-                $value = ($value instanceof \DateTime || $value instanceof Carbon) ? $value->format('Y-m-d H:i:s') : get_class($value);
-            }
-
-            $bindings[$key] = $value;
-        }
-
-        return vsprintf(str_replace('?', '%s', $sql), $bindings);
+        return $this->to_sql(true);
     }
 
     /**
@@ -574,6 +560,7 @@ class Query
         // PHP < 5.5.0 does not support yield, directly return the results of get()
         return (PHP_VERSION_ID < 50500) ? $this->get($columns) : include __DIR__ . DS . 'cursor.php';
     }
+
     /**
      * Find a record by primary key.
      *
@@ -599,8 +586,12 @@ class Query
         $values = is_array(reset($values)) ? $values : [$values];
         $bindings = [];
 
+        $columns = array_keys(reset($values));
+
         foreach ($values as $value) {
-            $bindings = array_merge($bindings, array_values($value));
+            foreach ($columns as $column) {
+                $bindings[] = array_key_exists($column, $value) ? $value[$column] : null;
+            }
         }
 
         $sql = $this->grammar->insert($this, $values);
@@ -610,7 +601,7 @@ class Query
     /**
      * Execute the INSERT query and get the inserted ID.
      *
-     * @param array $values
+     * @param array  $values
      * @param string $column
      *
      * @return int
@@ -660,7 +651,7 @@ class Query
      */
     public function increment($column, $amount = 1)
     {
-        return $this->update([$column => $this->raw($column . ' + ' . $amount)]);
+        return $this->update([$column => $this->raw($this->grammar->wrap($column) . ' + ' . $this->amount($amount))]);
     }
 
     /**
@@ -673,7 +664,28 @@ class Query
      */
     public function decrement($column, $amount = 1)
     {
-        return $this->update([$column => $this->raw($column . ' - ' . $amount)]);
+        return $this->update([$column => $this->raw($this->grammar->wrap($column) . ' - ' . $this->amount($amount))]);
+    }
+
+    /**
+     * Validate an increment / decrement amount.
+     * The value is inlined into raw SQL, so anything non numeric is rejected
+     * instead of being interpolated.
+     *
+     * @param mixed $amount
+     *
+     * @return int|float
+     */
+    protected function amount($amount)
+    {
+        if (!is_numeric($amount)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Increment / decrement amount must be numeric, %s given.',
+                gettype($amount)
+            ));
+        }
+
+        return $amount + 0;
     }
 
     /**
@@ -768,7 +780,14 @@ class Query
      */
     public function to_sql($with_bindings = false)
     {
+        $selects = $this->selects;
+
+        if (is_null($this->selects) && is_null($this->aggregate)) {
+            $this->selects = ['*'];
+        }
+
         $sql = $this->grammar->select($this);
+        $this->selects = $selects;
 
         if (!$with_bindings) {
             return $sql;
@@ -778,6 +797,10 @@ class Query
             $type = gettype($binding);
 
             switch ($type) {
+                case 'NULL':
+                    $str = 'NULL';
+                    break;
+
                 case 'boolean':
                     $str = (int) $binding;
                     $str = "$str";
@@ -789,15 +812,20 @@ class Query
                     break;
 
                 case 'string':
-                    $str = "'$binding'";
+                    $str = "'" . str_replace("'", "''", $binding) . "'";
                     break;
 
                 case 'object':
+                    if ($binding instanceof Expression) {
+                        $str = (string) $binding;
+                        break;
+                    }
+
                     if (!($binding instanceof \DateTime) && !($binding instanceof Carbon)) {
                         throw new \Exception(sprintf('Unexpected binding argument class: %s', get_class($binding)));
                     }
 
-                    $str = "'" . $binding->format('Y-m-d H:i:s');
+                    $str = "'" . $binding->format('Y-m-d H:i:s') . "'";
                     break;
 
                 default:
@@ -1032,14 +1060,14 @@ class Query
 
         if (is_null($key)) {
             return array_map(function ($result) use ($column) {
-                return $result->$column;
+                return $result->{$column};
             }, $results);
         }
 
         $list = [];
 
         foreach ($results as $result) {
-            $list[$result->$key] = $result->$column;
+            $list[$result->{$key}] = $result->{$column};
         }
 
         return $list;
@@ -1275,7 +1303,7 @@ class Query
                 return false;
             }
 
-            $last_id = $results[$counts - 1]->$alias;
+            $last_id = $results[$counts - 1]->{$alias};
         } while ($counts === $count);
 
         return true;

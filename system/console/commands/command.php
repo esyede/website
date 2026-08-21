@@ -62,8 +62,13 @@ abstract class Command
             throw new \Exception('Current progress percentage should not be greater than 100');
         }
 
-        $done = (int) floor((10 * floor(($current_percentage * 100) / 100)) / 100);
-        return $this->info(sprintf('%s%s', str_repeat('▓', $done), str_repeat('▓', 10 - $done)), false);
+        if ($current_percentage < 0) {
+            throw new \Exception('Current progress percentage should not be less than 0');
+        }
+
+        $done = (int) floor($current_percentage / 10);
+
+        return $this->info(sprintf('%s%s', str_repeat('▓', $done), str_repeat('░', 10 - $done)), false);
     }
 
     /**
@@ -95,7 +100,7 @@ abstract class Command
      */
     protected function confirm($question, $default = false)
     {
-        $answers = ['y'=> true, 'n' => false];
+        $answers = ['y' => true, 'n' => false];
         $result = null;
         $suffix = null;
 
@@ -107,9 +112,8 @@ abstract class Command
             if (!isset($answers[$answer])) {
                 echo Color::red('Please answer with: y or n.');
                 return false;
-            } else {
-                $result = $answers[$answer];
             }
+            $result = $answers[$answer];
         } while (is_null($result));
 
         return $answers[$answer];

@@ -33,9 +33,13 @@ class File extends Driver
      */
     public function load($id)
     {
-        if (is_file($path = $this->path . $this->naming($id))) {
-            return unserialize($this->unguard(file_get_contents($path)));
+        if (!is_file($path = $this->path . $this->naming($id))) {
+            return null;
         }
+
+        $session = @unserialize($this->unguard(file_get_contents($path)));
+
+        return is_array($session) ? $session : null;
     }
 
     /**
@@ -74,7 +78,7 @@ class File extends Driver
      */
     protected function naming($id)
     {
-        return sprintf('%u', crc32($id)) . '.session.php';
+        return sha1((string) $id) . '.session.php';
     }
 
     /**

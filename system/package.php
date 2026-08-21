@@ -105,8 +105,8 @@ class Package
 
         Router::$package = static::option($package, 'handles');
 
-        if (!static::routed($package) && is_file($directory . 'routes.php')) {
-            static::$routed[] = $package;
+        if (is_file($directory . 'routes.php')) {
+            static::$routed[] = strtolower((string) $package);
             require $directory . 'routes.php';
 
             // Load hook, middleware and view composer files.

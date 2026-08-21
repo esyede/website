@@ -53,15 +53,16 @@ class MorphTo extends Relationship
      */
     public function results(array $results = [])
     {
-        if (count($results) === 0) {
+        $owner = (count($results) > 0) ? head($results) : $this->base;
+
+        if (is_null($owner)) {
             return null;
         }
 
-        $results = head($results);
-        $type = $results->{$this->type};
-        $id = $results->{$this->id};
+        $type = $owner->{$this->type};
+        $id = $owner->{$this->id};
 
-        if (is_null($type) || is_null($id)) {
+        if (is_null($type) || is_null($id) || !class_exists($type)) {
             return null;
         }
 
@@ -69,13 +70,14 @@ class MorphTo extends Relationship
     }
 
     /**
-     * Get the results of the eager load of the relationship.
+     * Eager load the relationship for a whole result set.
      *
-     * @param array $results
+     * @param array  $results
+     * @param string $relationship
      *
      * @return array
      */
-    public function eager_load(array $results)
+    public function eager_load(array &$results, $relationship)
     {
         $types = [];
 
@@ -91,6 +93,10 @@ class MorphTo extends Relationship
         $loaded = [];
 
         foreach ($types as $type => $ids) {
+            if (!class_exists($type)) {
+                continue;
+            }
+
             $class = $type;
             $instance = new $class();
             $models = $instance->query()->where_in($instance->key(), array_unique($ids))->get();
@@ -106,22 +112,12 @@ class MorphTo extends Relationship
 
             if (!is_null($type) && !is_null($id)) {
                 $key = $type . '_' . $id;
-                $result->relationships[$this->relationship_name()] = isset($loaded[$key]) ? $loaded[$key] : null;
+                $result->relationships[$relationship] = isset($loaded[$key]) ? $loaded[$key] : null;
             } else {
-                $result->relationships[$this->relationship_name()] = null;
+                $result->relationships[$relationship] = null;
             }
         }
 
         return $results;
-    }
-
-    /**
-     * Get the name of the relationship.
-     *
-     * @return string
-     */
-    protected function relationship_name()
-    {
-        return $this->type;
     }
 }

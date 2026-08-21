@@ -51,7 +51,6 @@ class Migrator extends Command
             $this->install();
         }
 
-        $arguments = empty($arguments) ? [] : $arguments[0];
         $this->migrate($arguments);
     }
 
@@ -147,9 +146,9 @@ class Migrator extends Command
      */
     public function refresh(array $arguments = [])
     {
-        $this->reset();
+        $this->reset($arguments);
         echo PHP_EOL;
-        $this->migrate();
+        $this->migrate($arguments);
         echo $this->info('Done. The database was successfully refreshed.');
     }
 

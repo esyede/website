@@ -436,12 +436,12 @@ class Image
 
         imagecopy($this->image, $watermark, $dst_x, $dst_y, 0, 0, $src_w, $src_h);
 
-         if (PHP_VERSION_ID < 80000) {
-             /** @disregard */
-             imagedestroy($watermark);
-         } else {
-             $watermark = null;
-         }
+        if (PHP_VERSION_ID < 80000) {
+            /** @disregard */
+            imagedestroy($watermark);
+        } else {
+            $watermark = null;
+        }
 
         return $this;
     }
@@ -657,22 +657,29 @@ class Image
      */
     private static function rgb($color)
     {
-        $color = is_string($color) ? hexdec($color) : $color;
-        $hex = str_pad(dechex($color), (($color < 4096) ? 3 : 6), '0', STR_PAD_LEFT);
+        if (is_string($color)) {
+            $hex = ltrim(trim($color), '#');
+            $hex = (3 === strlen($hex) || 6 === strlen($hex)) ? $hex : ltrim($hex, '0');
+            $hex = ('' === $hex) ? '000' : $hex;
+        } else {
+            $color = (int) $color;
+            $hex = str_pad(dechex($color), (($color < 4096) ? 3 : 6), '0', STR_PAD_LEFT);
+        }
+
         $length = mb_strlen($hex, '8bit');
 
-        if ($length > 6) {
+        if ($length > 6 || (3 !== $length && 6 !== $length) || !ctype_xdigit($hex)) {
             throw new \Exception(sprintf('Invalid color specified: 0x%s', $hex));
         }
 
         $color = str_split($hex, (int) ($length / 3));
+        $result = [];
 
-        foreach ($color as &$hue) {
-            $hue = hexdec(str_repeat($hue, (int) (6 / $length)));
-            unset($hue);
+        foreach ($color as $hue) {
+            $result[] = hexdec(str_repeat($hue, (int) (6 / $length)));
         }
 
-        return $color;
+        return $result;
     }
 
     /**

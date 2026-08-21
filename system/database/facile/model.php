@@ -118,7 +118,8 @@ abstract class Model
     public static $perpage = 20;
 
     /**
-     * Contains global scopes that are applied to all queries for the model.
+     * Contains global scopes that are applied to all queries for the model,
+     * keyed by model class name.
      *
      * @var array
      */
@@ -866,7 +867,10 @@ abstract class Model
      */
     public function morph_to_many($model, $name, $table = null, $foreign = null, $other = null)
     {
-        return new Relationships\MorphToMany($this, $model, $name, $table, $foreign, $other);
+        $type = $name . '_type';
+        $id = $foreign ?: ($name . '_id');
+
+        return new Relationships\MorphToMany($this, $model, $type, $id, $table, $other);
     }
 
     /**
@@ -970,7 +974,7 @@ abstract class Model
     public function restore()
     {
         if (static::$soft_delete && !$this->exists && !is_null($this->deleted_at)) {
-            $result = $this->query()->where(static::$key, '=', $this->get_key())->update(['deleted_at' => null]);
+            $result = $this->query(true)->where(static::$key, '=', $this->get_key())->update(['deleted_at' => null]);
 
             if ($result) {
                 $this->deleted_at = null;
@@ -991,7 +995,7 @@ abstract class Model
     {
         if ($this->exists || !is_null($this->deleted_at)) {
             Hook::fire(['facile.deleting', 'facile.deleting: ' . get_class($this)], [$this]);
-            $result = $this->query()->where(static::$key, '=', $this->get_key())->delete();
+            $result = $this->query(true)->where(static::$key, '=', $this->get_key())->delete();
             Hook::fire(['facile.deleted', 'facile.deleted: ' . get_class($this)], [$this]);
 
             return $result;
@@ -1035,7 +1039,7 @@ abstract class Model
      */
     public static function with_trashed()
     {
-        return (new static())->query();
+        return (new static())->query(true);
     }
 
     /**
@@ -1045,7 +1049,7 @@ abstract class Model
      */
     public static function only_trashed()
     {
-        return (new static())->query()->where_not_null('deleted_at');
+        return (new static())->query(true)->where_not_null('deleted_at');
     }
 
     /**
@@ -1053,9 +1057,9 @@ abstract class Model
      *
      * @return \System\Database\Facile\Query
      */
-    public function query()
+    public function query($with_trashed = false)
     {
-        return new \System\Database\Facile\Query($this);
+        return new \System\Database\Facile\Query($this, $with_trashed);
     }
 
     /**
@@ -1065,9 +1069,9 @@ abstract class Model
      *
      * @return Query
      */
-    protected function apply_scopes($query)
+    public function apply_scopes($query)
     {
-        foreach (static::$global_scopes as $scope) {
+        foreach (static::get_global_scopes() as $scope) {
             if ($scope instanceof \Closure) {
                 $scope($query);
             } elseif (is_object($scope) && method_exists($scope, 'apply')) {
@@ -1088,12 +1092,18 @@ abstract class Model
      */
     public static function add_global_scope($scope, $implementation = null)
     {
+        $owner = get_called_class();
+
+        if (!isset(static::$global_scopes[$owner])) {
+            static::$global_scopes[$owner] = [];
+        }
+
         if (is_string($scope) && !is_null($implementation)) {
-            static::$global_scopes[$scope] = $implementation;
+            static::$global_scopes[$owner][$scope] = $implementation;
         } elseif ($scope instanceof \Closure) {
-            static::$global_scopes[spl_object_hash($scope)] = $scope;
+            static::$global_scopes[$owner][spl_object_hash($scope)] = $scope;
         } elseif (is_object($scope)) {
-            static::$global_scopes[get_class($scope)] = $scope;
+            static::$global_scopes[$owner][get_class($scope)] = $scope;
         }
     }
 
@@ -1106,7 +1116,7 @@ abstract class Model
      */
     public static function remove_global_scope($scope)
     {
-        unset(static::$global_scopes[$scope]);
+        unset(static::$global_scopes[get_called_class()][$scope]);
     }
 
     /**
@@ -1116,24 +1126,26 @@ abstract class Model
      */
     public static function get_global_scopes()
     {
-        return static::$global_scopes;
+        $owner = get_called_class();
+        return isset(static::$global_scopes[$owner]) ? static::$global_scopes[$owner] : [];
     }
 
     /**
-     * Get the base query for the model, applying soft delete filter and global scopes.
+     * Get the base query builder for the model, with the soft delete filter and
+     * the model's global scopes already applied.
      *
-     * @return Query
+     * @param bool $with_trashed
+     *
+     * @return \System\Database\Query
      */
-    protected function _query()
+    public function _query($with_trashed = false)
     {
-        $query = (new Query($this))->connection()->table($this->table());
+        $query = \System\Database::connection($this->connection())->table($this->table());
 
-        // Auto-apply soft delete filter
-        if (static::$soft_delete) {
+        if (!$with_trashed && static::$soft_delete) {
             $query->where_null('deleted_at');
         }
 
-        // Apply global scopes
         return $this->apply_scopes($query);
     }
 

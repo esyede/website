@@ -14,6 +14,13 @@ class APC extends Driver
     protected $key;
 
     /**
+     * Whether the APCu function names are the ones available.
+     *
+     * @var bool|null
+     */
+    protected static $apcu;
+
+    /**
      * Make a new APC cache driver instance.
      *
      * @param string $key
@@ -21,6 +28,30 @@ class APC extends Driver
     public function __construct($key)
     {
         $this->key = $key;
+    }
+
+    /**
+     * Check whether this runtime speaks APCu rather than the original APC.
+     *
+     * @return bool
+     */
+    protected static function apcu()
+    {
+        if (is_null(static::$apcu)) {
+            static::$apcu = function_exists('apcu_fetch');
+        }
+
+        return static::$apcu;
+    }
+
+    /**
+     * Check whether an APC (or APCu) extension is usable at all.
+     *
+     * @return bool
+     */
+    public static function usable()
+    {
+        return function_exists('apcu_fetch') || function_exists('apc_fetch');
     }
 
     /**
@@ -44,10 +75,14 @@ class APC extends Driver
      */
     protected function retrieve($key)
     {
+        $success = false;
+
         /** @disregard */
-        if (false !== ($cache = apc_fetch($this->key . $key))) {
-            return $cache;
-        }
+        $cache = static::apcu()
+            ? apcu_fetch($this->key . $key, $success)
+            : apc_fetch($this->key . $key, $success);
+
+        return $success ? $cache : null;
     }
 
     /**
@@ -67,7 +102,9 @@ class APC extends Driver
     public function put($key, $value, $minutes)
     {
         /** @disregard */
-        apc_store($this->key . $key, $value, $minutes * 60);
+        static::apcu()
+            ? apcu_store($this->key . $key, $value, $minutes * 60)
+            : apc_store($this->key . $key, $value, $minutes * 60);
     }
 
     /**
@@ -81,14 +118,14 @@ class APC extends Driver
     public function increment($key, $minutes = 1)
     {
         /** @disregard */
-        $current = apc_inc($this->key . $key);
+        $current = static::apcu() ? apcu_inc($this->key . $key) : apc_inc($this->key . $key);
 
         if ($current !== false) {
             return (int) $current;
         }
 
-        /** @disregard */
-        apc_store($this->key . $key, 1, $minutes * 60);
+        $this->put($key, 1, $minutes);
+
         return 1;
     }
 
@@ -100,7 +137,7 @@ class APC extends Driver
     public function forget($key)
     {
         /** @disregard */
-        apc_delete($this->key . $key);
+        static::apcu() ? apcu_delete($this->key . $key) : apc_delete($this->key . $key);
     }
 
     /**
@@ -108,11 +145,13 @@ class APC extends Driver
      */
     public function flush()
     {
-        /** @disregard */
-        apc_clear_cache();
+        if (static::apcu()) {
+            /** @disregard */
+            apcu_clear_cache();
+            return;
+        }
+
         /** @disregard */
         apc_clear_cache('user');
-        /** @disregard */
-        apc_clear_cache('opcode');
     }
 }

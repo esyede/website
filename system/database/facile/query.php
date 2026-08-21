@@ -32,6 +32,13 @@ class Query
     public $with = [];
 
     /**
+     * Whether soft-deleted rows should be included in the query.
+     *
+     * @var bool
+     */
+    public $with_trashed = false;
+
+    /**
      * List of query builder methods that should be passed thru directly.
      * It means the result of these methods will be returned directly instead of
      * being wrapped in the model's query builder.
@@ -41,8 +48,7 @@ class Query
     public $passthru = [
         'lists', 'only', 'get', 'first', 'find', 'find_or_fail', 'first_or_fail', 'paginate',
         'count', 'insert', 'insert_get_id', 'update', 'increment', 'delete', 'decrement',
-        'min', 'max', 'avg', 'sum', 'order_by', 'where_in', 'where_not_in', 'or_where_in',
-        'or_where_not_in', 'to_sql', 'debug', 'exists', 'doesnt_exist',
+        'min', 'max', 'avg', 'sum', 'to_sql', 'debug', 'exists', 'doesnt_exist',
     ];
 
     /**
@@ -50,9 +56,10 @@ class Query
      *
      * @param Model $model
      */
-    public function __construct($model)
+    public function __construct($model, $with_trashed = false)
     {
         $this->model = ($model instanceof Model) ? $model : new $model();
+        $this->with_trashed = (bool) $with_trashed;
         $this->table = $this->table();
     }
 
@@ -215,6 +222,12 @@ class Query
     protected function load(array &$results, $relationship, $constraints)
     {
         $query = $this->model->{$relationship}();
+
+        if (method_exists($query, 'eager_load')) {
+            $query->eager_load($results, $relationship);
+            return;
+        }
+
         $query->model->with = $this->nested_with($relationship);
         $query->table->reset_where();
         $query->eagerly_constrain($results);
@@ -276,7 +289,7 @@ class Query
      */
     protected function table()
     {
-        return $this->connection()->table($this->model->table());
+        return $this->model->_query($this->with_trashed);
     }
 
     /**

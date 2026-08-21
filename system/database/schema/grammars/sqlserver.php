@@ -141,7 +141,11 @@ class SQLServer extends Grammar
      */
     protected function comment(Table $table, Magic $column)
     {
-        throw new \Exception('Column comments are not supported in SQL Server.');
+        if (isset($column->comment) && $column->comment) {
+            throw new \Exception('Column comments are not supported in SQL Server.');
+        }
+
+        return '';
     }
 
     /**
@@ -244,7 +248,8 @@ class SQLServer extends Grammar
      */
     public function rename(Table $table, Magic $command)
     {
-        return 'ALTER TABLE ' . $this->wrap($table) . ' RENAME TO ' . $this->wrap($command->name);
+        return "EXEC sp_rename '" . str_replace("'", "''", $table->name)
+            . "', '" . str_replace("'", "''", $command->name) . "'";
     }
 
     /**
@@ -257,11 +262,9 @@ class SQLServer extends Grammar
      */
     public function drop_column(Table $table, Magic $command)
     {
-        $columns = implode(', ', array_map(function ($column) {
-            return 'DROP ' . $column;
-        }, array_map([$this, 'wrap'], $command->columns)));
+        $columns = implode(', ', array_map([$this, 'wrap'], $command->columns));
 
-        return 'ALTER TABLE ' . $this->wrap($table) . ' ' . $columns;
+        return 'ALTER TABLE ' . $this->wrap($table) . ' DROP COLUMN ' . $columns;
     }
 
     /**
@@ -274,7 +277,16 @@ class SQLServer extends Grammar
      */
     public function drop_primary(Table $table, Magic $command)
     {
-        return 'ALTER TABLE ' . $this->wrap($table) . ' DROP CONSTRAINT ' . $command->name;
+        if (isset($command->name) && '' !== (string) $command->name) {
+            return 'ALTER TABLE ' . $this->wrap($table) . ' DROP CONSTRAINT ' . $this->wrap($command->name);
+        }
+
+        $name = str_replace("'", "''", $table->name);
+
+        return 'DECLARE @rakit_pk SYSNAME;'
+            . ' SELECT @rakit_pk = [name] FROM sys.key_constraints'
+            . " WHERE [type] = 'PK' AND [parent_object_id] = OBJECT_ID('" . $name . "');"
+            . " EXEC('ALTER TABLE " . $this->wrap($table) . " DROP CONSTRAINT [' + @rakit_pk + ']')";
     }
 
     /**
@@ -514,10 +526,10 @@ class SQLServer extends Grammar
     protected function type_enum(Magic $column)
     {
         $allowed = implode(', ', array_map(function ($item) {
-            return "'" . $item . "'";
+            return "'" . str_replace("'", "''", (string) $item) . "'";
         }, $column->allowed));
 
-        return sprintf('VARCHAR(255) CHECK ("%s" IN (%s))', $column->name, $allowed);
+        return sprintf('VARCHAR(255) CHECK (%s IN (%s))', $this->wrap($column->name), $allowed);
     }
 
     /**
@@ -553,7 +565,7 @@ class SQLServer extends Grammar
      */
     protected function type_timestamp(Magic $column)
     {
-        return 'TIMESTAMP';
+        return 'DATETIME';
     }
 
     /**
@@ -806,7 +818,7 @@ class SQLServer extends Grammar
     protected function type_set(Magic $column)
     {
         $allowed = implode(', ', array_map(function ($item) {
-            return "'" . $item . "'";
+            return "'" . str_replace("'", "''", (string) $item) . "'";
         }, $column->allowed));
 
         return sprintf('NVARCHAR(255) CHECK ("%s" IN (%s))', $column->name, $allowed);

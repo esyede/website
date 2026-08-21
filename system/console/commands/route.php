@@ -31,7 +31,31 @@ class Route extends Command
         dd($route . PHP_EOL);
     }
 
-    public function list()
+    /**
+     * Dispatch 'route:list' to lists() below (for php 5.4 compat).
+     *
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        if ('list' === strtolower($method)) {
+            return call_user_func_array([$this, 'lists'], $parameters);
+        }
+
+        throw new \Exception(sprintf('Command method is not callable: %s', $method));
+    }
+
+    /**
+     * List every registered route.
+     *
+     * @param array $arguments
+     *
+     * @return void
+     */
+    public function lists(array $arguments = [])
     {
         $grouped = Router::routes();
 

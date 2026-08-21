@@ -57,8 +57,8 @@ class Curl
     private static $default_headers = [];
     private static $json_options = [];
     private static $socket_timeout;
-    private static $verify_peer = 0;
-    private static $verify_host = 0;
+    private static $verify_peer = 1;
+    private static $verify_host = 2;
     private static $auth = ['user' => '', 'pass' => '', 'method' => CURLAUTH_BASIC];
     private static $proxy = [
         'port' => false,

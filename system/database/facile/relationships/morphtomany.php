@@ -50,15 +50,11 @@ class MorphToMany extends Relationship
     {
         $this->type = $type;
         $this->id = $id;
-        $this->other = $other ?: static::foreign($associated);
-
-        if (is_null($table)) {
-            $table = $this->get_default_table_name();
-        }
-
-        $this->pivot_table = $table;
 
         parent::__construct($model, $associated, null);
+
+        $this->other = $other ?: static::foreign($this->model);
+        $this->pivot_table = $table ?: $this->get_default_table_name();
     }
 
     /**
@@ -91,7 +87,7 @@ class MorphToMany extends Relationship
      */
     public function results(array $results = [])
     {
-        return (count($results) === 0) ? [] : $this->get();
+        return $this->get();
     }
 
     /**
@@ -121,13 +117,14 @@ class MorphToMany extends Relationship
     }
 
     /**
-     * Get the results of the eager load of the relationship.
+     * Eager load the relationship for a whole result set.
      *
-     * @param array $results
+     * @param array  $results
+     * @param string $relationship
      *
      * @return array
      */
-    public function eager_load(array $results)
+    public function eager_load(array &$results, $relationship)
     {
         $keys = $this->keys($results);
         $pivot_records = $this->base->query()
@@ -172,19 +169,9 @@ class MorphToMany extends Relationship
                 }
             }
 
-            $result->relationships[$this->relationship_name()] = $related;
+            $result->relationships[$relationship] = $related;
         }
 
         return $results;
-    }
-
-    /**
-     * Get the name of the relationship.
-     *
-     * @return string
-     */
-    protected function relationship_name()
-    {
-        return $this->type;
     }
 }

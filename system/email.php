@@ -67,6 +67,7 @@ class Email
             case 'mail':     return new Email\Drivers\Mail($email);
             case 'smtp':     return new Email\Drivers\Smtp($email);
             case 'sendmail': return new Email\Drivers\Sendmail($email);
+            case 'log':
             case 'dummy':    return new Email\Drivers\Log($email);
             default:         throw new \Exception(sprintf('Unsupported email driver: %s', $driver));
         }

@@ -205,8 +205,8 @@ class Router
 
         foreach ($route as $uri) {
             if ('*' === $method) {
-                foreach (static::$methods as $method) {
-                    static::register($method, $route, $action);
+                foreach (static::$methods as $verb) {
+                    static::register($verb, $route, $action);
                 }
 
                 continue;

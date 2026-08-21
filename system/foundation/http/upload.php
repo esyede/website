@@ -904,10 +904,14 @@ class Upload extends \SplFileInfo
     {
         if (!is_dir($directory)) {
             try {
-                mkdir($directory, 0755, true);
+                $created = @mkdir($directory, 0755, true);
             } catch (\Throwable $e) {
-                throw new \Exception(sprintf('Unable to create the directory: %s', $directory));
+                $created = false;
             } catch (\Exception $e) {
+                $created = false;
+            }
+
+            if (!$created && !is_dir($directory)) {
                 throw new \Exception(sprintf('Unable to create the directory: %s', $directory));
             }
         } elseif (!is_writable($directory)) {
@@ -1032,6 +1036,7 @@ class Upload extends \SplFileInfo
         }
 
         $metric = strtolower(substr($max, -1));
+        $max = (float) $max;
 
         switch ($metric) {
             case 't': $max *= 1024; // No break (intentional)

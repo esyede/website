@@ -32,7 +32,7 @@ class Request
      *
      * @var \System\Foundation\Http\Request|null
      */
-    private static $cached_foundation = null;
+    private static $cached_foundation;
 
     /**
      * List format request.
@@ -229,9 +229,17 @@ class Request
             }
 
             foreach ($types as $ctype) {
-                $type = isset(static::$formats[$ctype]) ? static::$formats[$ctype] : $ctype;
+                $type = $ctype;
 
-                if (static::matches_type($type, $accept) || $accept === strtok($type, '/') . '/*') {
+                if (isset(static::$formats[$ctype])) {
+                    $formats = (array) static::$formats[$ctype];
+                    $type = (count($formats) > 0) ? reset($formats) : $ctype;
+                }
+
+                if (static::matches_type($type, $accept)
+                    || $accept === $type
+                    || $accept === strtok($type, '/') . '/*'
+                ) {
                     return $ctype;
                 }
             }
@@ -274,7 +282,9 @@ class Request
         }
 
         $split = explode('/', $actual);
-        return isset($split[1]) && false !== preg_match('#' . preg_quote($split[0], '#') . '/.+\+' . preg_quote($split[1], '#') . '#', $type);
+
+        return isset($split[1])
+            && 1 === preg_match('#' . preg_quote($split[0], '#') . '/.+\+' . preg_quote($split[1], '#') . '#', $type);
     }
 
     /**
@@ -439,7 +449,8 @@ class Request
      */
     public static function prefetch()
     {
-        return strcasecmp(static::server('HTTP_X_MOZ'), 'prefetch') === 0 || strcasecmp(static::header('Purpose'), 'prefetch') === 0;
+        return 0 === strcasecmp((string) static::server('HTTP_X_MOZ'), 'prefetch')
+            || 0 === strcasecmp((string) static::header('Purpose'), 'prefetch');
     }
 
     /**

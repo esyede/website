@@ -68,7 +68,7 @@ class Evaluator
     /**
      * Set an Inspector object for Repl to output return values with.
      *
-     * @param object $inspector any object the responds to inspect($v)
+     * @param object $inspector
      */
     public function inspector($inspector)
     {
@@ -89,7 +89,7 @@ class Evaluator
 
         /* Note the naming of the local variables due to shared scope with the user here */
         for (;;) {
-            declare (ticks = 1);
+            declare(ticks = 1);
             /** @disregard */
             pcntl_signal(SIGINT, SIG_IGN, true); // Do not exit on Ctrl+C
             $this->aborted = false;
@@ -103,7 +103,7 @@ class Evaluator
             /** @disregard */
             $this->prev_pid = posix_getpid();
             /** @disregard */
-            $this->pid  = pcntl_fork();
+            $this->pid = pcntl_fork();
 
             if ($this->pid < 0) {
                 throw new \RuntimeException('Failed to fork child labourer');
@@ -120,9 +120,6 @@ class Evaluator
                     $response = self::FAILED;
                 }
             } else {
-                // If the user has installed a custom exception handler, install a new
-                // one which calls it and then (if the custom handler didn't already exit) exits with the correct status.
-                // If not, leave the exception handler unset; we'll display an uncaught exception error and carry on.
                 $oldexh = set_exception_handler([$this, 'exception_handler']);
 
                 if ($oldexh && !$this->exceptor) {
@@ -139,8 +136,6 @@ class Evaluator
 
                 /** @disregard */
                 if (posix_getpid() != $pid) {
-                    // Whatever the user entered caused a forked child
-                    // (totally valid, but we don't want that child to loop and wait for input)
                     exit(0);
                 }
 
@@ -223,8 +218,8 @@ class Evaluator
         if ($this->select($read, $except) > 0) {
             if ($read) {
                 return stream_get_contents($read[0]);
-            } else if ($except) {
-                throw new \Exception("Socket error: closed");
+            } elseif ($except) {
+                throw new \Exception('Socket error: closed');
             }
         }
     }

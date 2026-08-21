@@ -23,7 +23,7 @@ class Defaults
             'JOIN', 'LEFT\s+JOIN', 'RIGHT\s+JOIN', 'INNER\s+JOIN', 'OUTER\s+JOIN',
             'FULL\s+JOIN', 'CROSS\s+JOIN', 'NATURAL\s+JOIN',
             'CREATE', 'ALTER', 'DROP', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN',
-            'GRANT', 'REVOKE', 'CALL', 'EXECUTE', 'BEGIN', 'COMMIT', 'ROLLBACK'
+            'GRANT', 'REVOKE', 'CALL', 'EXECUTE', 'BEGIN', 'COMMIT', 'ROLLBACK',
         ],
         'keywords2' => [
             // Secondary SQL keywords (clauses, functions, operators)
@@ -34,11 +34,11 @@ class Defaults
             'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'IF', 'IFNULL', 'COALESCE',
             'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'GROUP_CONCAT',
             'CAST', 'CONVERT', 'CONCAT', 'LENGTH', 'SUBSTRING',
-            'NOW', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP'
+            'NOW', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP',
         ],
     ];
 
-    private static $sqlKeywordsCache = null;
+    private static $sqlKeywordsCache;
 
     /**
      * Map panel id to the config('debugger.collectors') key so a disabled
@@ -180,7 +180,7 @@ class Defaults
             $hints[] = [
                 'severity' => 'warning',
                 'category' => 'performance',
-                'message' => 'Use <code>SELECT *</code> only if you need all columns. Specify only needed columns for better performance.'
+                'message' => 'Use <code>SELECT *</code> only if you need all columns. Specify only needed columns for better performance.',
             ];
         }
 
@@ -200,12 +200,12 @@ class Defaults
                 'severity' => 'warning',
                 'category' => 'performance',
                 'message' => 'Leading wildcard in <code>LIKE</code> pattern: <code>' . htmlspecialchars($matches[1]) . '</code>.
-                This prevents index usage and causes full table scan. Consider full-text search for better performance.'
+                This prevents index usage and causes full table scan. Consider full-text search for better performance.',
             ];
         }
 
         // OFFSET with large values
-        if (preg_match('/OFFSET\\s+(\\d+)/i', $sql, $matches) && (int)$matches[1] > 1000) {
+        if (preg_match('/OFFSET\\s+(\\d+)/i', $sql, $matches) && (int) $matches[1] > 1000) {
             $hints[] = [
                 'severity' => 'warning',
                 'category' => 'performance',
@@ -346,11 +346,11 @@ class Defaults
         $hints = [];
 
         // Very long query (>500 chars)
-        if (mb_strlen($sql) > 500) {
+        if (mb_strlen($sql, 'UTF-8') > 500) {
             $hints[] = [
                 'severity' => 'info',
                 'category' => 'readability',
-                'message' => 'Query is quite long (' . mb_strlen($sql) . ' characters). Consider breaking it into smaller parts or using views for better maintainability.',
+                'message' => 'Query is quite long (' . mb_strlen($sql, 'UTF-8') . ' characters). Consider breaking it into smaller parts or using views for better maintainability.',
             ];
         }
 
@@ -405,6 +405,22 @@ class Defaults
                 }
                 $totalTime = array_sum($times);
                 $avgTime = $totalTime / $count;
+
+                if ($totalTime <= 0) {
+                    $results[] = [
+                        'severity' => $count >= 10 ? 'error' : 'warning',
+                        'pattern' => $normalizedSql,
+                        'count' => $count,
+                        'queries' => $group,
+                        'total_time' => 0,
+                        'avg_time' => 0,
+                        'time_saved' => 0,
+                        'percentage' => 0,
+                    ];
+
+                    continue;
+                }
+
                 // Estimate time saved if optimized (using JOIN/eager load)
                 $estimatedOptimizedTime = $avgTime * 1.5; // Assume JOIN takes 1.5x single query
                 $timeSaved = $totalTime - $estimatedOptimizedTime;
@@ -463,12 +479,12 @@ class Defaults
         // Detect query type
         if (preg_match('/select\s+.*\s+from\s+(\w+)\s+where/i', $pattern, $matches)) {
             $table = $matches[1];
-            $suggestions[] = "<strong>Solutions:</strong>";
-            $suggestions[] = "1. <strong>Eager Loading (ORM):</strong> If using Facile ORM, use <code>with()</code> method:"; // Eager Loading suggestion
+            $suggestions[] = '<strong>Solutions:</strong>';
+            $suggestions[] = '1. <strong>Eager Loading (ORM):</strong> If using Facile ORM, use <code>with()</code> method:'; // Eager Loading suggestion
             $suggestions[] = "<code>Model::with('relation')->get();</code>";
             $suggestions[] = "2. <strong>Use JOIN:</strong> Combine queries using JOIN instead of {$count} separate queries:"; // JOIN suggestion
             $suggestions[] = "<code>SELECT ... FROM main_table JOIN {$table} ON ...</code>";
-            $suggestions[] = "3. <strong>Use IN clause:</strong> Fetch all at once:"; // IN clause suggestion
+            $suggestions[] = '3. <strong>Use IN clause:</strong> Fetch all at once:'; // IN clause suggestion
             $suggestions[] = "<code>SELECT * FROM {$table} WHERE id IN (?, ?, ...)</code>";
         }
 
@@ -537,9 +553,14 @@ class Defaults
         $bindings = array_map(function ($binding) {
             return call_user_func([__CLASS__, 'formatBinding'], $binding);
         }, $bindings);
-        $sql = str_replace(['%', '?'], ['%%', '%s'], $sql);
+        $formatted = str_replace(['%', '?'], ['%%', '%s'], $sql);
+        $bindings = array_values($bindings);
 
-        return '<div><code>' . nl2br(trim(vsprintf($sql, $bindings))) . '</code></div>';
+        if (substr_count($formatted, '%s') === count($bindings)) {
+            $sql = vsprintf($formatted, $bindings);
+        }
+
+        return '<div><code>' . nl2br(trim($sql)) . '</code></div>';
     }
 
     /**
@@ -583,7 +604,7 @@ class Defaults
                 . '>&lt;' . htmlspecialchars($type, ENT_NOQUOTES, 'UTF-8') . ' resource&gt;</i>';
         }
 
-        if ($binding instanceof \DateTime) {
+        if ($binding instanceof \DateTimeInterface || $binding instanceof \DateTime) {
             return '<span style="color:#d14">' . htmlspecialchars('\'' . $binding->format('Y-m-d H:i:s') . '\'', ENT_NOQUOTES, 'UTF-8') . '</span>';
         }
 
@@ -595,6 +616,10 @@ class Defaults
             return '<strong style="color:green">' . ($binding ? 'TRUE' : 'FALSE') . '</strong>';
         }
 
-        return '<span style="color:#099">' . htmlspecialchars($binding, ENT_NOQUOTES, 'UTF-8') . '</span>';
+        if (is_object($binding) && !method_exists($binding, '__toString')) {
+            return '<i>&lt;' . htmlspecialchars(get_class($binding), ENT_NOQUOTES, 'UTF-8') . '&gt;</i>';
+        }
+
+        return '<span style="color:#099">' . htmlspecialchars((string) $binding, ENT_NOQUOTES, 'UTF-8') . '</span>';
     }
 }

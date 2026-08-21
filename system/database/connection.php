@@ -85,8 +85,9 @@ class Connection
             return $this->grammar;
         }
 
-        if (isset(Database::$registrar[$this->driver()])) {
-            return $this->grammar = Database::$registrar[$this->driver()]['query']();
+        if (isset(Database::$registrar[$this->driver()]['query'])) {
+            $resolver = Database::$registrar[$this->driver()]['query'];
+            return $this->grammar = is_string($resolver) ? new $resolver($this) : $resolver($this);
         }
 
         switch ($this->driver()) {
@@ -110,10 +111,10 @@ class Connection
         $this->pdo()->beginTransaction();
 
         try {
-            call_user_func($callback);
+            call_user_func($callback, $this);
         } catch (\Throwable $e) {
             $this->pdo()->rollBack();
-            throw new \Exception($e->getMessage(), $e->getCode(), $e);
+            throw $e;
         } catch (\Exception $e) {
             $this->pdo()->rollBack();
             throw $e;

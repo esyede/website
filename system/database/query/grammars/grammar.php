@@ -433,7 +433,7 @@ class Grammar extends BaseGrammar
      */
     protected function limit(Query $query)
     {
-        return 'LIMIT ' . $query->limit;
+        return 'LIMIT ' . (int) $query->limit;
     }
 
     /**
@@ -445,7 +445,7 @@ class Grammar extends BaseGrammar
      */
     protected function offset(Query $query)
     {
-        return 'OFFSET ' . $query->offset;
+        return 'OFFSET ' . (int) $query->offset;
     }
 
     /**

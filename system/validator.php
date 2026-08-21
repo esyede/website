@@ -88,8 +88,10 @@ class Validator
     public function __construct(array $attributes, array $rules, array $messages = [])
     {
         foreach ($rules as $key => &$rule) {
-            $rule = is_string($rule) ? explode('|', $rule) : $rule;
+            $rule = is_string($rule) ? explode('|', $rule) : (array) $rule;
         }
+
+        unset($rule);
 
         $this->rules = $rules;
         $this->messages = $messages;
@@ -625,7 +627,7 @@ class Validator
     protected function validate_not_regex($attribute, $value, array $parameters)
     {
         try {
-            return 1 !== preg_match($parameters[0], (string) $value);
+            return 1 !== preg_match(implode(',', $parameters), (string) $value);
         } catch (\Throwable $e) {
             return false;
         } catch (\Exception $e) {
@@ -974,10 +976,10 @@ class Validator
     protected function size($attribute, $value)
     {
         if (is_numeric($value) && $this->has_rule($attribute, $this->numerics)) {
-            return $this->attributes[$attribute];
+            return $value;
         }
 
-        if (array_key_exists($attribute, Input::file())) {
+        if (is_array($value) && isset($value['size']) && array_key_exists($attribute, (array) Input::file())) {
             return $value['size'] / 1024;
         }
 
@@ -1257,7 +1259,7 @@ class Validator
     protected function validate_regex($attribute, $value, array $parameters)
     {
         try {
-            return 1 === preg_match($parameters[0], (string) $value);
+            return 1 === preg_match(implode(',', $parameters), (string) $value);
         } catch (\Throwable $e) {
             return false;
         } catch (\Exception $e) {
@@ -1303,12 +1305,12 @@ class Validator
             return false;
         }
 
-        if (empty($attribute)) {
+        if (0 === count($parameters)) {
             return true;
         }
 
-        $value = array_diff_key($value, array_fill_keys($parameters, ''));
-        return empty($value);
+        // With parameters the array may only carry the listed keys.
+        return 0 === count(array_diff_key($value, array_fill_keys($parameters, '')));
     }
 
     /**
@@ -1322,7 +1324,7 @@ class Validator
      */
     protected function validate_count($attribute, $value, array $parameters)
     {
-        return ($this->validate_array($attribute, $value) && $parameters[0] === count($value));
+        return $this->validate_array($attribute, $value) && (int) $parameters[0] === count($value);
     }
 
     /**

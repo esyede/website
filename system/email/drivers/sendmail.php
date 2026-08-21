@@ -15,14 +15,24 @@ class Sendmail extends Driver
     {
         try {
             $message = $this->build();
-            $retpath = (false !== $this->config['return_path']) ? $this->config['return_path'] : $this->config['from']['email'];
-            $handle = popen($this->config['sendmail_binary'] . ' -oi -f ' . $retpath . ' -t', 'w');
+            $sender = $this->envelope_sender();
+            $command = $this->config['sendmail_binary'] . ' -oi' . ((null === $sender) ? '' : ' -f ' . escapeshellarg($sender)) . ' -t';
+            $handle = popen($command, 'w');
+
+            if (!is_resource($handle)) {
+                throw new \Exception('Failed sending email through sendmail: unable to start the process');
+            }
 
             fputs($handle, $message['header']);
             fputs($handle, $message['body']);
 
-            if (-1 === pclose($handle)) {
-                throw new \Exception('Failed sending email through sendmail: process file pointer fails');
+            $status = pclose($handle);
+
+            if (0 !== $status) {
+                throw new \Exception(sprintf(
+                    'Failed sending email through sendmail: the process exited with status %d',
+                    $status
+                ));
             }
 
             return true;

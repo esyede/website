@@ -37,7 +37,9 @@ class Resolver
      */
     public function outstanding(array $arguments = [])
     {
-        $arguments = empty($arguments) ? array_merge(Package::names(), ['application']) : $arguments;
+        $arguments = empty($arguments)
+            ? array_values(array_unique(array_merge(Package::names(), [DEFAULT_PACKAGE])))
+            : $arguments;
         $migrations = [];
 
         foreach ($arguments as $package) {
@@ -81,9 +83,26 @@ class Resolver
             $name = (string) $migration['name'];
             $path = Package::path($package) . 'migrations' . DS;
 
-            require_once $path . $name . '.php';
+            if (!is_file($file = $path . $name . '.php')) {
+                throw new \Exception(sprintf(
+                    'Migration file is missing: %s (package: %s)',
+                    $name,
+                    $package
+                ));
+            }
+
+            require_once $file;
 
             $class = Package::class_prefix($package) . Str::classify(substr($name, 18));
+
+            if (!class_exists($class)) {
+                throw new \Exception(sprintf(
+                    'Migration class was not found: %s (expected in %s)',
+                    $class,
+                    $file
+                ));
+            }
+
             $migration = new $class();
             $instances[] = compact('package', 'name', 'migration');
         }
@@ -114,6 +133,7 @@ class Resolver
             $file = Str::replace_last('.php', '', basename((string) $file));
         }
 
+        unset($file);
         sort($files);
 
         return $files;

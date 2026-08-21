@@ -204,7 +204,7 @@ class Response
         $view = View::exists('error.' . $code) ? 'error.' . $code : (View::exists('error.unknown') ? 'error.unknown' : false);
 
         if (!$view) {
-            $view = Storage::get(path('system') . DS . 'foundation' . DS . 'oops' . DS . 'assets' . DS . 'debugger' . DS . '500.phtml');
+            $view = Storage::get(path('system') . 'foundation' . DS . 'oops' . DS . 'assets' . DS . 'debugger' . DS . '500.phtml');
             return static::make($view, 500, $headers);
         }
 
@@ -236,7 +236,7 @@ class Response
             throw new \Exception(sprintf('Target file does not exists: %s', $path));
         }
 
-        $response = new static(Storage::get($path), 200, array_merge($headers, [
+        $response = new static('', 200, array_merge($headers, [
             'Content-Description' => 'File Transfer',
             'Content-Type' => Storage::mime($path),
             'Content-Transfer-Encoding' => 'binary',
@@ -253,7 +253,10 @@ class Response
 
         // See: https://www.php.net/manual/en/function.fpassthru.php#55519
         session_write_close();
-        ob_end_clean();
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
 
         $response->send_headers();
 
@@ -323,10 +326,17 @@ class Response
      */
     protected function cookies()
     {
-        $reflector = new \ReflectionClass('\System\Foundation\Http\Cookie');
-
         foreach (Cookie::$jar as $name => $data) {
-            $this->foundation()->headers->setCookie($reflector->newInstanceArgs(array_values($data)));
+            $this->foundation()->headers->setCookie(new Foundation\Http\Cookie(
+                $data['name'],
+                $data['value'],
+                $data['expiration'],
+                $data['path'],
+                $data['domain'],
+                $data['secure'],
+                true,
+                isset($data['samesite']) ? $data['samesite'] : 'lax'
+            ));
         }
     }
 

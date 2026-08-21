@@ -11,7 +11,7 @@ class Memcached
      *
      * @var \Memcached
      */
-    protected static $connection;
+    public static $connection;
 
     /**
      * Get the Memcached connection instance.
@@ -31,7 +31,17 @@ class Memcached
     public static function connection()
     {
         if (!static::$connection) {
-            static::$connection = static::connect(Config::get('cache.memcached'));
+            if (!class_exists('\Memcached')) {
+                throw new \Exception('The memcached extension is not installed or not enabled.');
+            }
+
+            $servers = Config::get('cache.memcached');
+
+            if (!is_array($servers) || empty($servers)) {
+                throw new \Exception('No memcached server configured in cache.memcached.');
+            }
+
+            static::$connection = static::connect($servers);
         }
 
         return static::$connection;
@@ -50,7 +60,11 @@ class Memcached
 
         foreach ($servers as $server) {
             /** @disregard */
-            $memcached->addServer($server['host'], $server['port'], $server['weight']);
+            $memcached->addServer(
+                $server['host'],
+                $server['port'],
+                isset($server['weight']) ? $server['weight'] : 0
+            );
         }
 
         /** @disregard */

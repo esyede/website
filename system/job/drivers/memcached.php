@@ -8,14 +8,13 @@ use System\Config;
 use System\Carbon;
 use System\Hook;
 use System\Str;
-use System\Memcached as BaseMemcached;
 
 class Memcached extends Driver
 {
     /**
      * Contains the Memcached instance.
      *
-     * @var \System\Memcached
+     * @var \Memcached
      */
     protected $memcached;
 
@@ -29,10 +28,10 @@ class Memcached extends Driver
     /**
      * Constructor.
      *
-     * @param \System\Memcached |null $memcached
-     * @param string|null             $key
+     * @param \Memcached  $memcached
+     * @param string|null $key
      */
-    public function __construct(BaseMemcached $memcached, $key = null)
+    public function __construct(\Memcached $memcached, $key = null)
     {
         $this->memcached = $memcached;
         $this->key = $key ?: Config::get('job.key', 'rakit.job') . ':';
@@ -193,7 +192,7 @@ class Memcached extends Driver
 
         if ($queue) {
             /** @disregard */
-            $jobs = $this->memcached->get( $this->key . 'queue:' . $queue . ':' . $name);
+            $jobs = $this->memcached->get($this->key . 'queue:' . $queue . ':' . $name);
             $jobs = $jobs ?: [];
 
             if (!empty($jobs)) {
