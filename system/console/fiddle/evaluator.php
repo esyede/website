@@ -68,7 +68,7 @@ class Evaluator
     /**
      * Set an Inspector object for Repl to output return values with.
      *
-     * @param object $inspector
+     * @param object $inspector any object the responds to inspect($v)
      */
     public function inspector($inspector)
     {
@@ -120,6 +120,9 @@ class Evaluator
                     $response = self::FAILED;
                 }
             } else {
+                // If the user has installed a custom exception handler, install a new
+                // one which calls it and then (if the custom handler didn't already exit) exits with the correct status.
+                // If not, leave the exception handler unset; we'll display an uncaught exception error and carry on.
                 $oldexh = set_exception_handler([$this, 'exception_handler']);
 
                 if ($oldexh && !$this->exceptor) {
@@ -136,6 +139,8 @@ class Evaluator
 
                 /** @disregard */
                 if (posix_getpid() != $pid) {
+                    // Whatever the user entered caused a forked child
+                    // (totally valid, but we don't want that child to loop and wait for input)
                     exit(0);
                 }
 

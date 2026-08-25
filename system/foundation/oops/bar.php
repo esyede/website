@@ -72,6 +72,9 @@ class Bar
      */
     public function render()
     {
+        // Halaman riwayat (open.<id>) sudah mengeluarkan HTML sendiri lalu
+        // dispatch() memanggil exit; cegah shutdown handler menempelkan bar
+        // kedua untuk request ini.
         if ($this->served) {
             return;
         }
@@ -213,6 +216,11 @@ class Bar
         return $panels;
     }
 
+    /**
+     * File storage untuk riwayat request (openhandler).
+     *
+     * @return Storage
+     */
     private function storage()
     {
         if (null === $this->storage) {
@@ -223,6 +231,15 @@ class Bar
         return $this->storage;
     }
 
+    /**
+     * Simpan snapshot request saat ini ke riwayat berbasis file agar bisa
+     * dibuka lagi lewat dropdown "History" (gaya php-debugbar openhandler).
+     *
+     * @param string $content
+     * @param array  $dumps
+     *
+     * @return void
+     */
     private function saveHistory($content, $dumps)
     {
         $status = function_exists('http_response_code') ? http_response_code() : 200;
@@ -247,6 +264,15 @@ class Bar
         ]);
     }
 
+    /**
+     * Render halaman mandiri berisi debugbar sebuah request lampau. Dipanggil
+     * dari endpoint `_oops_bar=open.<id>` dan dibuka di tab baru oleh dropdown
+     * History; memuat aset lalu memanggil Oops.Debug.init dengan snapshot.
+     *
+     * @param string $id
+     *
+     * @return void
+     */
     private function renderHistoryPage($id)
     {
         $rec = $this->storage()->get($id);

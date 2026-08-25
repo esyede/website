@@ -1038,7 +1038,6 @@ class Upload extends \SplFileInfo
         }
 
         $metric = strtolower(substr($max, -1));
-        $max = (float) $max;
 
         // Note: the suffix has to be dropped before doing arithmetic. Multiplying
         // the raw '2M' works by accident but raises "A non-numeric value
