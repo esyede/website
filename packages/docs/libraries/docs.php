@@ -12,6 +12,20 @@ use System\Str;
 class Docs
 {
     /**
+     * Pattern matching the table of contents MarkdownTOC generates.
+     *
+     * @var string
+     */
+    const OUTLINE = '/<!--\s*MarkdownTOC.*?-->(.*?)<!--\s*\/MarkdownTOC\s*-->/s';
+
+    /**
+     * Cached reading order taken from the sidebar.
+     *
+     * @var array|null
+     */
+    protected static $order;
+
+    /**
      * Check if a markdown file exists.
      *
      * @param string $name
@@ -32,7 +46,7 @@ class Docs
      */
     public static function path($name)
     {
-        return dirname(__DIR__).DS.'data'.DS.str_replace(['/', '\\'], DS, $name).'.md';
+        return dirname(__DIR__) . DS . 'data' . DS . str_replace(['/', '\\'], DS, $name) . '.md';
     }
 
     /**
@@ -46,14 +60,14 @@ class Docs
     {
         $name = static::path($name);
         $mtime = filemtime($name);
-        $cache = Cache::get('docs.'.md5($name));
+        $cache = Cache::get('docs.' . md5($name));
 
-        if ($mtime > (int) (Arr::get(Arr::wrap($cache), 'mtime'))) {
-            Cache::forget('docs.'.md5($name));
-            Cache::forever('docs.'.md5($name), ['content' => Markdown::render($name), 'mtime' => $mtime]);
+        if ($mtime > intval(Arr::get(Arr::wrap($cache), 'mtime'))) {
+            Cache::forget('docs.' . md5($name));
+            Cache::forever('docs.' . md5($name), ['content' => Markdown::render($name), 'mtime' => $mtime]);
         }
 
-        $cache = Cache::get('docs.'.md5($name));
+        $cache = Cache::get('docs.' . md5($name));
         return Arr::get(Arr::wrap($cache), 'content');
     }
 
@@ -79,6 +93,9 @@ class Docs
      */
     public static function content($content)
     {
+        // The outline is rendered beside the page instead of on top of it.
+        $content = preg_replace(static::OUTLINE, '', (string) $content);
+
         $replacers = [
             '<blockquote>' => '<article class="message is-small is-primary"><div class="message-header">Note</div><div class="message-body">',
             '</blockquote>' => '</div></article>',
@@ -87,6 +104,117 @@ class Docs
         ];
 
         return str_replace(array_keys($replacers), array_values($replacers), $content);
+    }
+
+    /**
+     * Get the table of contents of a page, if it has one.
+     *
+     * @param string $content
+     *
+     * @return string
+     */
+    public static function outline($content)
+    {
+        if (!preg_match(static::OUTLINE, (string) $content, $matches)) {
+            return '';
+        }
+
+        return trim($matches[1]);
+    }
+
+    /**
+     * Get the pages before and after the given one.
+     *
+     * @param string $name
+     *
+     * @return array
+     */
+    public static function neighbours($name)
+    {
+        $order = static::reading_order();
+        $current = static::canonical($name);
+        $index = null;
+
+        foreach ($order as $position => $page) {
+            if ($page['url'] === $current) {
+                $index = $position;
+                break;
+            }
+        }
+
+        if (is_null($index)) {
+            return ['previous' => null, 'next' => null];
+        }
+
+        $section = $order[$index]['section'];
+
+        return [
+            'previous' => static::neighbour($order, $index - 1, $section),
+            'next' => static::neighbour($order, $index + 1, $section),
+        ];
+    }
+
+    /**
+     * Prepare one neighbour, naming its section only when it differs.
+     *
+     * @param array  $order
+     * @param int    $index
+     * @param string $section
+     *
+     * @return array|null
+     */
+    protected static function neighbour(array $order, $index, $section)
+    {
+        if (!isset($order[$index])) {
+            return null;
+        }
+
+        $page = $order[$index];
+        $page['section'] = ($page['section'] === $section) ? null : $page['section'];
+
+        return $page;
+    }
+
+    /**
+     * Read the page order out of the sidebar, skipping in-page anchors.
+     *
+     * @return array
+     */
+    protected static function reading_order()
+    {
+        if (!is_null(static::$order)) {
+            return static::$order;
+        }
+
+        $sidebar = static::path('000-sidebar');
+        static::$order = [];
+
+        if (!is_file($sidebar)) {
+            return static::$order;
+        }
+
+        $pattern = '/^#{3}\s*(?P<section>.+)$|\[(?P<name>[^\]]+)\]\(\/docs\/(?P<path>[^)#]+)\)/m';
+        preg_match_all($pattern, file_get_contents($sidebar), $matches, PREG_SET_ORDER);
+        $section = '';
+        $seen = [];
+
+        foreach ($matches as $match) {
+            if ('' !== trim($match['section'])) {
+                $section = trim($match['section']);
+                continue;
+            }
+
+            $url = static::canonical(trim($match['path'], '/'));
+
+            if (isset($seen[$url])) {
+                continue;
+            }
+
+            $seen[$url] = true;
+            static::$order[] = ['name' => trim($match['name']), 'url' => $url, 'section' => $section];
+        }
+
+        return static::$order;
     }
 
     /**
@@ -125,7 +253,7 @@ class Docs
         $name = trim(str_replace('\\', '/', $name), '/');
         $name = ('home' === $name) ? '' : preg_replace('/\/home$/', '', $name);
 
-        return rtrim(url('docs/'.$name), '/');
+        return rtrim(url('docs/' . $name), '/');
     }
 
     /**
@@ -192,9 +320,10 @@ class Docs
             $walked[] = $segment;
             $path = implode('/', $walked);
 
-            if (static::exists($path.'/home')) {
-                $crumbs[] = ['name' => static::title($segment), 'url' => static::canonical($path)];
-            }
+            $crumbs[] = [
+                'name' => static::title($segment),
+                'url' => static::exists($path . '/home') ? static::canonical($path) : null,
+            ];
         }
 
         $crumbs[] = ['name' => static::title($last), 'url' => static::canonical($name)];
@@ -209,11 +338,11 @@ class Docs
      */
     public static function pages()
     {
-        $srcdir = dirname(__DIR__).DS.'data';
+        $srcdir = dirname(__DIR__) . DS . 'data';
         $pages = [];
 
         foreach (static::get_markdown_files($srcdir) as $file) {
-            $name = str_replace($srcdir.DS, '', $file);
+            $name = str_replace($srcdir . DS, '', $file);
             $name = str_replace(DS, '/', substr($name, 0, -3));
 
             if (false !== strpos($name, '000-sidebar')) {
@@ -223,7 +352,7 @@ class Docs
             $url = static::canonical($name);
             $mtime = filemtime($file);
 
-            if (! isset($pages[$url]) || $pages[$url] < $mtime) {
+            if (!isset($pages[$url]) || $pages[$url] < $mtime) {
                 $pages[$url] = $mtime;
             }
         }
@@ -240,11 +369,11 @@ class Docs
      */
     public static function ensure_search_data_exists()
     {
-        $srcdir = dirname(__DIR__).DS.'data';
-        $destfile = path('storage').'docs-search-data.json';
+        $srcdir = dirname(__DIR__) . DS . 'data';
+        $destfile = path('storage') . 'docs-search-data.json';
         $mtime = static::get_directory_mtime($srcdir);
 
-        if (Cache::get('docs.search_data_mtime') !== $mtime || ! is_file($destfile)) {
+        if (Cache::get('docs.search_data_mtime') !== $mtime || !is_file($destfile)) {
             $files = static::get_markdown_files($srcdir);
             $documents = [];
 
@@ -252,8 +381,8 @@ class Docs
                 $content = file_get_contents($file);
                 preg_match('/^#\s*(.+)$/m', $content, $matches);
                 $title = isset($matches[1]) ? trim($matches[1]) : basename($file, '.md');
-                $relpath = str_replace($srcdir.DS, '', $file);
-                $url = str_replace(DS, '/', dirname($relpath).'/'.basename($relpath, '.md'));
+                $relpath = str_replace($srcdir . DS, '', $file);
+                $url = str_replace(DS, '/', dirname($relpath) . '/' . basename($relpath, '.md'));
 
                 if (strpos($url, '000-sidebar') !== false) {
                     continue;
@@ -277,8 +406,8 @@ class Docs
      */
     protected static function get_markdown_files($directory)
     {
-        $files = glob($directory.DS.'*.md');
-        $dirs = glob($directory.DS.'*', GLOB_ONLYDIR);
+        $files = glob($directory . DS . '*.md');
+        $dirs = glob($directory . DS . '*', GLOB_ONLYDIR);
 
         foreach ($dirs as $dir) {
             $files = array_merge($files, static::get_markdown_files($dir));

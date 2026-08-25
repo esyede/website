@@ -12,5 +12,5 @@ use System\Autoloader;
 */
 
 Autoloader::map([
-    'Docs\Libraries\Docs' => __DIR__.'/libraries/docs.php',
+    'Docs\Libraries\Docs' => __DIR__ . '/libraries/docs.php',
 ]);

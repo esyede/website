@@ -1812,12 +1812,6 @@ a.docs__nav-link:hover {
     background: var(--surface);
 }
 
-/* Halaman pertama dan terakhir cuma punya satu tetangga; satu-satunya
-   tautan itu memakai lebar penuh, bukan menyisakan kotak kosong. */
-.docs__nav:has(> :only-child) {
-    grid-template-columns: minmax(0, 1fr);
-}
-
 .docs__nav-link--next {
     text-align: right;
     align-items: flex-end;

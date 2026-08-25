@@ -44,10 +44,10 @@ class Docs_Home_Controller extends Controller
     public function get_page($section, $page = null)
     {
         $args = func_get_args();
-        $file = Docs::exists(rtrim(implode('/', $args), '/').'/home') ? '/home' : '';
-        $file = rtrim(implode('/', $args), '/').$file;
+        $file = Docs::exists(rtrim(implode('/', $args), '/') . '/home') ? '/home' : '';
+        $file = rtrim(implode('/', $args), '/') . $file;
 
-        abort_if(! Docs::exists($file), 404);
+        abort_if(!Docs::exists($file), 404);
 
         return $this->page_view($file);
     }
@@ -69,7 +69,9 @@ class Docs_Home_Controller extends Controller
             ->with_canonical(Docs::canonical($file))
             ->with_modified(Docs::modified($file))
             ->with_breadcrumbs(Docs::breadcrumbs($file))
+            ->with_neighbours(Docs::neighbours($file))
             ->with_sidebar(Docs::sidebar(Docs::render('000-sidebar')))
+            ->with_outline(Docs::outline($content))
             ->with_content(Docs::content($content))
             ->with_file($file);
     }
@@ -81,7 +83,7 @@ class Docs_Home_Controller extends Controller
      */
     public function get_search()
     {
-        $data = file_get_contents(path('storage').'docs-search-data.json');
+        $data = file_get_contents(path('storage') . 'docs-search-data.json');
         return Response::json(json_decode($data, true));
     }
 }
