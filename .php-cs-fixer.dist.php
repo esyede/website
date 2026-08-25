@@ -26,7 +26,7 @@ $rules = [
     'lowercase_cast' => true,
     'constant_case' => ['case' => 'lower'],
     'lowercase_keywords' => true,
-    'method_argument_space' => ['ensure_fully_multiline' => false],
+    'method_argument_space' => ['on_multiline' => 'ignore'],
     'method_chaining_indentation' => true,
     'class_attributes_separation' => true, // was method_separation in v2
     'modernize_types_casting' => true,
