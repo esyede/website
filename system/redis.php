@@ -7,7 +7,7 @@ defined('DS') or exit('No direct access.');
 class Redis
 {
     /**
-     * Contains the Redis host
+     * Contains the Redis host.
      *
      * @var string
      */
@@ -37,9 +37,13 @@ class Redis
     /**
      * Contains the list of active Redis database instances.
      *
+     * Note: public, like every other driver registry in the framework
+     * (Cache::$drivers, Job::$drivers, Database::$connections, ...), so the
+     * cached connections can be dropped in a long running process.
+     *
      * @var array
      */
-    protected static $databases = [];
+    public static $databases = [];
 
     /**
      * Constructor.
@@ -163,7 +167,7 @@ class Redis
 
     /**
      * Prepare a Redis command based on the method and parameters provided.
-     * Redis commands must follow the following format:
+     * Redis commands must follow the following format:.
      *
      *     *<arguments count> CR LF
      *     $<length of argument 1> CR LF
@@ -182,10 +186,35 @@ class Redis
     protected function command($method, array $parameters)
     {
         $method = (string) $method;
-        $command = '*' . (count($parameters) + 1) . CRLF . '$' . mb_strlen($method, '8bit') . CRLF . strtoupper($method) . CRLF;
+        $method = strtoupper($method);
+
+        // Note: an array argument is spread into individual arguments, an
+        // associative one as alternating field and value. Commands such as HMSET
+        // and MSET are written that way ($redis->hmset($key, $pairs)), and
+        // stringifying the array instead produced the literal 'Array' plus a
+        // "wrong number of arguments" error from the server.
+        $arguments = [];
 
         foreach ($parameters as $parameter) {
-            $command .= '$' . mb_strlen((string) $parameter, '8bit') . CRLF . $parameter . CRLF;
+            if (!is_array($parameter)) {
+                $arguments[] = (string) $parameter;
+                continue;
+            }
+
+            foreach ($parameter as $key => $value) {
+                if (!is_int($key)) {
+                    $arguments[] = (string) $key;
+                }
+
+                $arguments[] = (string) $value;
+            }
+        }
+
+        $command = '*' . (count($arguments) + 1) . CRLF
+            . '$' . mb_strlen($method, '8bit') . CRLF . $method . CRLF;
+
+        foreach ($arguments as $argument) {
+            $command .= '$' . mb_strlen($argument, '8bit') . CRLF . $argument . CRLF;
         }
 
         return $command;

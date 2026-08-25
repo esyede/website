@@ -107,8 +107,9 @@ class Lottery
      */
     public function __invoke(/** ...$args */)
     {
-        $args = func_get_args();
-        return $this->run_callback($args);
+        // Note: the arguments have to be spread back out, otherwise the whole
+        // list would arrive at the winner/loser callback as a single array.
+        return call_user_func_array([$this, 'run_callback'], func_get_args());
     }
 
     /**
@@ -238,8 +239,9 @@ class Lottery
     /**
      * Set the sequence to be used for determining the result.
      *
-     * @param  array  $sequence
-     * @param  callable|null  $when_missing
+     * @param array         $sequence
+     * @param callable|null $when_missing
+     *
      * @return void
      */
     public static function sequence($sequence, $when_missing = null)

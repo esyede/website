@@ -311,6 +311,7 @@ class View implements \ArrayAccess
         if (0 === static::$rendered) {
             Section::$sections = [];
             Section::$stacks = [];
+            Blade::forget_onces();
         }
 
         // Track view rendering for debugger
@@ -471,7 +472,7 @@ class View implements \ArrayAccess
     }
 
     /**
-     * ArrayAccess implementation
+     * ArrayAccess implementation.
      */
     #[\ReturnTypeWillChange]
     public function offsetExists($offset)
@@ -480,7 +481,7 @@ class View implements \ArrayAccess
     }
 
     /**
-     * ArrayAccess implementation
+     * ArrayAccess implementation.
      */
     #[\ReturnTypeWillChange]
     public function offsetGet($offset)
@@ -489,7 +490,7 @@ class View implements \ArrayAccess
     }
 
     /**
-     * ArrayAccess implementation
+     * ArrayAccess implementation.
      */
     #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value)
@@ -498,7 +499,7 @@ class View implements \ArrayAccess
     }
 
     /**
-     * ArrayAccess implementation
+     * ArrayAccess implementation.
      */
     #[\ReturnTypeWillChange]
     public function offsetUnset($offset)

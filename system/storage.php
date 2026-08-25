@@ -140,7 +140,7 @@ class Storage
         }
 
         if (static::isfile($to) && !$overwrite) {
-            throw new \Exception(sprintf('Destination file does not exists: %s', $to));
+            throw new \Exception(sprintf('Destination file already exists: %s', $to));
         }
 
         rename($from, $to);
@@ -246,11 +246,17 @@ class Storage
             }
 
             if (!$preserve) {
+                // Note: rmdir() reports failure by returning FALSE (plus a warning),
+                // it does not throw, so the return value has to be checked too.
                 try {
-                    rmdir($path);
+                    $removed = @rmdir($path);
                 } catch (\Throwable $e) {
-                    throw new \Exception(sprintf('Unable to remove path: %s', $path));
+                    $removed = false;
                 } catch (\Exception $e) {
+                    $removed = false;
+                }
+
+                if (!$removed) {
                     throw new \Exception(sprintf('Unable to remove path: %s', $path));
                 }
             }
@@ -363,7 +369,16 @@ class Storage
      */
     public static function mime($path)
     {
-        return finfo_file(finfo_open(FILEINFO_MIME_TYPE), $path);
+        // Note: finfo warns (and finfo_open may fail) instead of returning
+        // something useful when the path is not a readable file.
+        if (!static::isfile($path) || false === ($finfo = @finfo_open(FILEINFO_MIME_TYPE))) {
+            return false;
+        }
+
+        $mime = @finfo_file($finfo, $path);
+        finfo_close($finfo);
+
+        return $mime;
     }
 
     /**

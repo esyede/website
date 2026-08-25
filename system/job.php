@@ -4,9 +4,6 @@ namespace System;
 
 defined('DS') or exit('No direct access.');
 
-use System\Hook;
-use System\Memcached;
-
 class Job
 {
     /**
@@ -51,9 +48,9 @@ class Job
      *
      * </code>
      *
-     * @param string                                    $name
-     * @param array                                     $payload
-     * @param string|\System\Carbon|\DateTime|int|null  $dispatch_at
+     * @param string                                   $name
+     * @param array                                    $payload
+     * @param string|\System\Carbon|\DateTime|int|null $dispatch_at
      *
      * @return \System\Job\Pending
      */
@@ -173,6 +170,13 @@ class Job
      */
     protected static function factory($driver)
     {
+        // Note: without this, a driver registered through Job::extend() would be
+        // ignored and the switch below would report it as unsupported.
+        if (isset(static::$registrar[$driver])) {
+            $resolver = static::$registrar[$driver];
+            return $resolver();
+        }
+
         switch ($driver) {
             case 'file':      return new Job\Drivers\File(path('storage') . 'jobs' . DS);
             case 'database':  return new Job\Drivers\Database();

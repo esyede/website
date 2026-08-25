@@ -43,7 +43,7 @@ class Parser
             $rules = ['scan_use', 'scan_esc_char', 'scan_region', 'scan_state_entrant', 'scan_wsp', 'scan_char'];
 
             foreach ($rules as $method) {
-                if ($this->$method($result)) {
+                if ($this->{$method}($result)) {
                     break;
                 }
             }
@@ -166,7 +166,7 @@ class Parser
     {
         if (preg_match($this->initials, $result->buffer, $match)) {
             $result->stmt .= $match[0];
-            $result->buffer   = substr($result->buffer, strlen($match[0]));
+            $result->buffer = substr($result->buffer, strlen($match[0]));
             $result->states[] = $match[0];
             return true;
         }
@@ -187,7 +187,7 @@ class Parser
         if (empty($result->states) && ($chr == ';' || $chr == '}')) {
             if (!$this->is_lambda($result->stmt) || $chr == ';') {
                 $result->statements[] = $result->stmt;
-                $result->stmt         = '';
+                $result->stmt = '';
             }
         }
 
@@ -196,7 +196,20 @@ class Parser
 
     private function scan_use($result)
     {
-        if (preg_match("/^use (.+?);/", $result->buffer, $use)) {
+        // Note: only a real import is rewritten. Matching a bare 'use ...;' also
+        // caught the 'use (...)' clause of a closure, which was then turned into
+        // a bogus class_alias() call and mangled the whole statement. So this
+        // only fires at the start of a statement, outside of any open construct,
+        // and only when what follows 'use' looks like a class name.
+        if (!empty($result->states) || '' !== trim($result->stmt)) {
+            return false;
+        }
+
+        $pattern = '/^use\s+(\\\\?[A-Za-z_][A-Za-z0-9_]*'
+            . '(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*'
+            . '(?:\s+as\s+[A-Za-z_][A-Za-z0-9_]*)?)\s*;/';
+
+        if (preg_match($pattern, $result->buffer, $use)) {
             $result->buffer = substr($result->buffer, strlen($use[0]));
 
             if (strpos($use[0], ' as ') !== false) {
