@@ -27,9 +27,6 @@ class Outputs
     public function start()
     {
         foreach (get_included_files() as $file) {
-            // Note: the handle has to be checked and closed. fopen() answers FALSE
-            // for an unreadable file (a TypeError for fread() on PHP 8), and
-            // leaving every handle open leaks one per included file.
             $handle = @fopen($file, 'r');
 
             if (false === $handle) {
@@ -49,7 +46,14 @@ class Outputs
         ob_start([$this, 'handler'], 1);
     }
 
-    /** @internal */
+    /**
+     * @param string $s
+     * @param int    $phase
+     *
+     * @return string|null
+     *
+     * @internal
+     */
     public function handler($s, $phase)
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

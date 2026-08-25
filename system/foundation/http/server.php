@@ -30,22 +30,10 @@ class Server extends Parameter
             $headers['PHP_AUTH_PW'] = isset($this->parameters['PHP_AUTH_PW']) ? $this->parameters['PHP_AUTH_PW'] : '';
         } else {
             /**
-             * By default, php-cgi under apache eill not pass Basic Auth's user and password
-             * To resolve this, add this rules to your .htaccess file:.
+             * php-cgi under Apache does not pass the Basic Auth user and
+             * password along. Adding this line to .htaccess gets them through.
              *
-             * RewriteCond %{HTTP:Authorization} ^(.+)$
-             *
-             * <code>
-             *
-             *      RewriteEngine On
-             *      RewriteCond %{HTTP:Authorization} ^(.+)$
-             *
-             *      RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] # Add this line
-             *
-             *      RewriteCond %{REQUEST_FILENAME} !-f
-             *      RewriteRule ^(.*)$ index.php [QSA,L]
-             *
-             * <code>
+             *      RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
              */
             $authHeader = null;
 
@@ -56,7 +44,7 @@ class Server extends Parameter
             }
 
             if (null !== $authHeader && 0 === stripos((string) $authHeader, 'basic')) {
-                $exploded = explode(':', base64_decode(substr((string) $authHeader, 6)));
+                $exploded = explode(':', base64_decode(substr((string) $authHeader, 6)), 2);
 
                 if (2 === count($exploded)) {
                     list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;

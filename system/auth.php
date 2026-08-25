@@ -53,9 +53,14 @@ class Auth
         }
 
         switch ($driver) {
-            case 'magic':  return new Auth\Drivers\Magic(Config::get('auth.table'));
-            case 'facile': return new Auth\Drivers\Facile(Config::get('auth.model'));
-            default:       throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
+            case 'magic':
+                return new Auth\Drivers\Magic();
+
+            case 'facile':
+                return new Auth\Drivers\Facile();
+
+            default:
+                throw new \Exception(sprintf('Unsupported auth driver: %s', $driver));
         }
     }
 
@@ -72,16 +77,6 @@ class Auth
 
     /**
      * Magic method for calling methods on the default auth driver.
-     *
-     * <code>
-     *
-     *      // Call user() method on the default auth driver.
-     *      $user = Auth::user();
-     *
-     *      // Call check() method on the default auth driver.
-     *      Auth::check();
-     *
-     * </code>
      *
      * @param string $method
      * @param array  $parameters

@@ -16,13 +16,6 @@ class Magic
     /**
      * Create a new magic container instance.
      *
-     * <code>
-     *
-     *      // Create a new magic container instance with additional attributes.
-     *      $magic = new Magic(['name' => 'Budi']);
-     *
-     * </code>
-     *
      * @param array $attributes
      */
     public function __construct(array $attributes = [])
@@ -48,15 +41,10 @@ class Magic
     /**
      * Handle dynamic attribute setting.
      *
-     * <code>
+     * @param string $method
+     * @param array  $parameters
      *
-     *      // Set value beberapa atribut sekaligus
-     *      $magic->name('Budi')->age(25);
-     *
-     *      // Set value sebuah atribut ke true (boolean)
-     *      $magic->nullable()->name('Budi');
-     *
-     * </code>
+     * @return $this
      */
     public function __call($method, array $parameters)
     {
@@ -66,6 +54,10 @@ class Magic
 
     /**
      * Get value attribute dynamically.
+     *
+     * @param string $key
+     *
+     * @return mixed
      */
     public function __get($key)
     {
@@ -76,6 +68,9 @@ class Magic
 
     /**
      * Set value attribute dynamically.
+     *
+     * @param string $key
+     * @param mixed  $value
      */
     public function __set($key, $value)
     {
@@ -84,6 +79,10 @@ class Magic
 
     /**
      * Check dynamically if attribute value is set.
+     *
+     * @param string $key
+     *
+     * @return bool
      */
     public function __isset($key)
     {
@@ -92,6 +91,8 @@ class Magic
 
     /**
      * Unset value attribute dynamically.
+     *
+     * @param string $key
      */
     public function __unset($key)
     {

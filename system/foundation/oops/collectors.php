@@ -60,9 +60,7 @@ class Collectors
     private static $trackEvents = false;
 
     /**
-     * Determine whether a collector is enabled via config('debugger.collectors').
-     * Absent config (or an absent key) defaults to enabled, so existing setups
-     * keep every panel unless a collector is explicitly turned off.
+     * Determine whether a collector is enabled.
      *
      * @param string $name
      *
@@ -70,13 +68,6 @@ class Collectors
      */
     public static function enabled($name)
     {
-        // Cache the config lookup, but ONLY once it resolves to a real array.
-        // Early collector calls happen during boot before the config system is
-        // ready (config() returns null then) — caching that null would poison
-        // every later check, so we retry until a valid array is available. The
-        // $resolvingConfig guard prevents infinite recursion if resolving
-        // config() emits a notice that re-enters a collector (config() calls on
-        // some PHP versions surface a deprecation the debug bar itself catches).
         if (!static::$collectorConfigLoaded && !static::$resolvingConfig) {
             static::$resolvingConfig = true;
             $cfg = function_exists('config') ? config('debugger.collectors', null) : [];
@@ -256,12 +247,14 @@ class Collectors
         }
 
         // Simple pattern matching for dynamic routes
-        $pattern = preg_replace('/\(:num\)/', '([0-9]+)', $pattern);
-        $pattern = preg_replace('/\(:any\)/', '([^/]+)', $pattern);
-        $pattern = preg_replace('/\(:alpha\)/', '([a-zA-Z]+)', $pattern);
-        $pattern = preg_replace('/\(:alnum\)/', '([a-zA-Z0-9]+)', $pattern);
+        $pattern = preg_quote((string) $pattern, '#');
+        $pattern = str_replace(
+            [preg_quote('(:num)', '#'), preg_quote('(:any)', '#'), preg_quote('(:alpha)', '#'), preg_quote('(:alnum)', '#')],
+            ['([0-9]+)', '([^/]+)', '([a-zA-Z]+)', '([a-zA-Z0-9]+)'],
+            $pattern
+        );
 
-        return preg_match('#^' . $pattern . '$#', $uri);
+        return 1 === preg_match('#^' . $pattern . '$#', (string) $uri);
     }
 
     /**
@@ -385,7 +378,7 @@ class Collectors
     }
 
     /**
-     * Add a timer record (untuk panel Timeline).
+     * Add a timer record for the Timeline panel.
      *
      * @param string $name
      * @param float  $duration Durasi dalam milidetik
@@ -499,6 +492,8 @@ class Collectors
      * @param float       $duration Duration in milliseconds
      * @param int         $size     Response size in bytes
      * @param string|null $error
+     * @param array       $headers
+     * @param string|null $body
      *
      * @return void
      */

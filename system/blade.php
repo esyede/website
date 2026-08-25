@@ -19,12 +19,47 @@ class Blade
      * @var array
      */
     protected static $compilers = [
-        'extensions', 'layout', 'comment', 'verbatim', 'once', 'endonce', 'echo', 'csrf',
-        'forelse', 'empty', 'endforelse', 'structure_start', 'foreach', 'structure_end',
-        'else', 'unless', 'endunless', 'error', 'enderror', 'guest', 'endguest',
-        'auth', 'endauth', 'include', 'render_each', 'render', 'yield', 'set', 'unset',
-        'json', 'show', 'section_start', 'section_end', 'inject', 'method', 'push',
-        'endpush', 'stack', 'hassection', 'sectionmissing', 'php_block',
+        'extensions',
+        'layout',
+        'comment',
+        'verbatim',
+        'once',
+        'endonce',
+        'echo',
+        'csrf',
+        'forelse',
+        'empty',
+        'endforelse',
+        'structure_start',
+        'foreach',
+        'structure_end',
+        'else',
+        'unless',
+        'endunless',
+        'error',
+        'enderror',
+        'guest',
+        'endguest',
+        'auth',
+        'endauth',
+        'include',
+        'render_each',
+        'render',
+        'yield',
+        'set',
+        'unset',
+        'json',
+        'show',
+        'section_start',
+        'section_end',
+        'inject',
+        'method',
+        'push',
+        'endpush',
+        'stack',
+        'hassection',
+        'sectionmissing',
+        'php_block',
     ];
 
     /**
@@ -57,20 +92,10 @@ class Blade
 
     /**
      * Whether a compiled view is checked against the template's modification
-     * time before being reused.
+     * time before being reused. Costs one stat per template.
      *
-     * This stays on by default, including in production, because turning it
-     * off means an edited template is never recompiled until the cache is
-     * cleared by hand — too sharp an edge to enable behind your back. The
-     * check costs one extra stat per template, and PHP's stat cache absorbs
-     * repeats of the same file within a request.
-     *
-     * Opt out only if you are sure, by adding this to application/boot.php:
-     *
-     *     System\Blade::$reload = false;
-     *
-     * and then running `php rakit clear:views` as part of every deploy, so
-     * stale compiled templates are dropped.
+     * Turning it off leaves edited templates never recompiled, so run
+     * 'php rakit clear:views' on every deploy if you do.
      *
      * @var bool
      */
@@ -89,12 +114,6 @@ class Blade
             $compiled = static::compiled($view->path);
 
             try {
-                // is_file() before filemtime() looks like an extra syscall but
-                // is not: PHP caches stat results per path, so the two calls on
-                // $compiled share one. Folding them into a bare filemtime()
-                // would emit a warning when the file is absent, and with
-                // Debugger::$scream on (which disables '@') that warning
-                // becomes an exception on every cold view cache.
                 if (!is_file($compiled) || static::expired($view->path)) {
                     file_put_contents($compiled, static::compile($view), LOCK_EX);
                 }
@@ -111,14 +130,6 @@ class Blade
 
     /**
      * Add custom compiler.
-     *
-     * <code>
-     *
-     *      Blade::extend(function ($view) {
-     *          return str_replace('foo', 'bar', $view);
-     *      });
-     *
-     * </code>
      *
      * @param \Closure $compiler
      */
@@ -146,7 +157,7 @@ class Blade
     /**
      * Compile the given view.
      *
-     * @param string $path
+     * @param \System\View $view
      *
      * @return string
      */
@@ -421,6 +432,13 @@ class Blade
         }, $value);
     }
 
+    /**
+     * Translate @foreach.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
     protected static function compile_foreach($value)
     {
         return preg_replace_callback('/@foreach(\s*\(.*\))/', function ($matches) {
@@ -592,6 +610,8 @@ class Blade
     /**
      * Translate @show.
      *
+     * @param string $value
+     *
      * @return string
      */
     protected static function compile_show($value)
@@ -657,10 +677,6 @@ class Blade
     protected static function compile_once($value)
     {
         return preg_replace_callback('/@once(.*?)@endonce/s', function ($matches) {
-            // Note: this has to be decided at render time, not at compile time.
-            // Compiled templates are cached on disk, so stripping the block while
-            // compiling would bake the decision into the cache file and the block
-            // would stay missing on every later request.
             $key = md5($matches[1]);
 
             return '<?php if (\System\Blade::once(' . var_export($key, true) . ')): ?>'
@@ -814,17 +830,12 @@ class Blade
     /**
      * Get full path to compiled file.
      *
-     * @param string $view
+     * @param string $path
      *
      * @return string
      */
     public static function compiled($path)
     {
-        // The CRC below walks the path byte by byte in userland, so it costs
-        // roughly 8 iterations per character. It is called at least twice per
-        // view render (once directly, once through expired()), and a page made
-        // of many partials multiplies that. The result only depends on $path,
-        // so memoize it per request.
         if (isset(static::$compiles[$path])) {
             return static::$compiles[$path];
         }

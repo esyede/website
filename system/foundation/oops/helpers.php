@@ -105,6 +105,8 @@ class Helpers
     }
 
     /**
+     * @param object $obj
+     *
      * @return string
      */
     public static function getClass($obj)
@@ -113,7 +115,7 @@ class Helpers
     }
 
     /**
-     * Perbaiki stack exception.
+     * Repair the exception stack trace.
      *
      * @param object $e
      *
@@ -153,13 +155,25 @@ class Helpers
         return $e;
     }
 
-    /** @internal */
+    /**
+     * @param string $s
+     *
+     * @return string
+     *
+     * @internal
+     */
     public static function fixEncoding($s)
     {
         return htmlspecialchars_decode(htmlspecialchars($s, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES);
     }
 
-    /** @internal */
+    /**
+     * @param int $type
+     *
+     * @return string
+     *
+     * @internal
+     */
     public static function errorTypeToString($type)
     {
         $types = [
@@ -194,7 +208,13 @@ class Helpers
         return 'CLI (PID: ' . getmypid() . ')' . (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
     }
 
-    /** @internal */
+    /**
+     * @param \Throwable|\Exception $e
+     *
+     * @return void
+     *
+     * @internal
+     */
     public static function improveException($e)
     {
         $message = $e->getMessage();
@@ -250,7 +270,14 @@ class Helpers
         }
     }
 
-    /** @internal */
+    /**
+     * @param string $message
+     * @param array  $context
+     *
+     * @return string
+     *
+     * @internal
+     */
     public static function improveError($message, array $context = [])
     {
         if (preg_match('#^Undefined variable: (\w+)#', $message, $m) && $context) {
@@ -270,15 +297,21 @@ class Helpers
         return $message;
     }
 
-    /** @internal */
+    /**
+     * @param string $class
+     *
+     * @return string|null
+     *
+     * @internal
+     */
     public static function guessClassFile($class)
     {
-        $segments = explode(DIRECTORY_SEPARATOR, $class);
+        $segments = explode('\\', $class);
         $res = null;
         $max = 0;
 
         foreach (get_declared_classes() as $class) {
-            $parts = explode(DIRECTORY_SEPARATOR, $class);
+            $parts = explode('\\', $class);
 
             foreach ($parts as $i => $part) {
                 if (!isset($segments[$i]) || $part !== $segments[$i]) {
@@ -300,7 +333,10 @@ class Helpers
     }
 
     /**
-     * Temukan saran bantuan untuk pesan error.
+     * Find a suggestion to attach to an error message.
+     *
+     * @param array  $items
+     * @param string $value
      *
      * @return string|null
      *
