@@ -9,7 +9,7 @@ $files = ['*.blade.php', '*.bc.php', '_ide_helper.php', '*.phar'];
 $rules = [
     '@PSR2' => true,
     'array_syntax' => ['syntax' => 'short'],
-    'binary_operator_spaces' => ['align_equals' => false, 'align_double_arrow' => false],
+    'binary_operator_spaces' => ['default' => 'single_space'],
     // 'class_keyword_remove' => true, // REMOVED in v3
     'cast_spaces' => true,
     'combine_consecutive_unsets' => true,
