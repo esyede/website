@@ -32,7 +32,7 @@ class Docs
      */
     public static function path($name)
     {
-        return dirname(__DIR__) . DS . 'data' . DS . str_replace(['/', '\\'], DS, $name) . '.md';
+        return dirname(__DIR__).DS.'data'.DS.str_replace(['/', '\\'], DS, $name).'.md';
     }
 
     /**
@@ -46,14 +46,14 @@ class Docs
     {
         $name = static::path($name);
         $mtime = filemtime($name);
-        $cache = Cache::get('docs.' . md5($name));
+        $cache = Cache::get('docs.'.md5($name));
 
-        if ($mtime > intval(Arr::get(Arr::wrap($cache), 'mtime'))) {
-            Cache::forget('docs.' . md5($name));
-            Cache::forever('docs.' . md5($name), ['content' => Markdown::render($name), 'mtime' => $mtime]);
+        if ($mtime > (int) (Arr::get(Arr::wrap($cache), 'mtime'))) {
+            Cache::forget('docs.'.md5($name));
+            Cache::forever('docs.'.md5($name), ['content' => Markdown::render($name), 'mtime' => $mtime]);
         }
 
-        $cache = Cache::get('docs.' . md5($name));
+        $cache = Cache::get('docs.'.md5($name));
         return Arr::get(Arr::wrap($cache), 'content');
     }
 
@@ -125,7 +125,7 @@ class Docs
         $name = trim(str_replace('\\', '/', $name), '/');
         $name = ('home' === $name) ? '' : preg_replace('/\/home$/', '', $name);
 
-        return rtrim(url('docs/' . $name), '/');
+        return rtrim(url('docs/'.$name), '/');
     }
 
     /**
@@ -192,7 +192,7 @@ class Docs
             $walked[] = $segment;
             $path = implode('/', $walked);
 
-            if (static::exists($path . '/home')) {
+            if (static::exists($path.'/home')) {
                 $crumbs[] = ['name' => static::title($segment), 'url' => static::canonical($path)];
             }
         }
@@ -209,11 +209,11 @@ class Docs
      */
     public static function pages()
     {
-        $srcdir = dirname(__DIR__) . DS . 'data';
+        $srcdir = dirname(__DIR__).DS.'data';
         $pages = [];
 
         foreach (static::get_markdown_files($srcdir) as $file) {
-            $name = str_replace($srcdir . DS, '', $file);
+            $name = str_replace($srcdir.DS, '', $file);
             $name = str_replace(DS, '/', substr($name, 0, -3));
 
             if (false !== strpos($name, '000-sidebar')) {
@@ -223,7 +223,7 @@ class Docs
             $url = static::canonical($name);
             $mtime = filemtime($file);
 
-            if (!isset($pages[$url]) || $pages[$url] < $mtime) {
+            if (! isset($pages[$url]) || $pages[$url] < $mtime) {
                 $pages[$url] = $mtime;
             }
         }
@@ -240,11 +240,11 @@ class Docs
      */
     public static function ensure_search_data_exists()
     {
-        $srcdir = dirname(__DIR__) . DS . 'data';
-        $destfile = path('storage') . 'docs-search-data.json';
+        $srcdir = dirname(__DIR__).DS.'data';
+        $destfile = path('storage').'docs-search-data.json';
         $mtime = static::get_directory_mtime($srcdir);
 
-        if (Cache::get('docs.search_data_mtime') !== $mtime || !is_file($destfile)) {
+        if (Cache::get('docs.search_data_mtime') !== $mtime || ! is_file($destfile)) {
             $files = static::get_markdown_files($srcdir);
             $documents = [];
 
@@ -252,8 +252,8 @@ class Docs
                 $content = file_get_contents($file);
                 preg_match('/^#\s*(.+)$/m', $content, $matches);
                 $title = isset($matches[1]) ? trim($matches[1]) : basename($file, '.md');
-                $relpath = str_replace($srcdir . DS, '', $file);
-                $url = str_replace(DS, '/', dirname($relpath) . '/' . basename($relpath, '.md'));
+                $relpath = str_replace($srcdir.DS, '', $file);
+                $url = str_replace(DS, '/', dirname($relpath).'/'.basename($relpath, '.md'));
 
                 if (strpos($url, '000-sidebar') !== false) {
                     continue;
@@ -277,8 +277,8 @@ class Docs
      */
     protected static function get_markdown_files($directory)
     {
-        $files = glob($directory . DS . '*.md');
-        $dirs = glob($directory . DS . '*', GLOB_ONLYDIR);
+        $files = glob($directory.DS.'*.md');
+        $dirs = glob($directory.DS.'*', GLOB_ONLYDIR);
 
         foreach ($dirs as $dir) {
             $files = array_merge($files, static::get_markdown_files($dir));

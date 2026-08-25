@@ -44,10 +44,10 @@ class Docs_Home_Controller extends Controller
     public function get_page($section, $page = null)
     {
         $args = func_get_args();
-        $file = Docs::exists(rtrim(implode('/', $args), '/') . '/home') ? '/home' : '';
-        $file = rtrim(implode('/', $args), '/') . $file;
+        $file = Docs::exists(rtrim(implode('/', $args), '/').'/home') ? '/home' : '';
+        $file = rtrim(implode('/', $args), '/').$file;
 
-        abort_if(!Docs::exists($file), 404);
+        abort_if(! Docs::exists($file), 404);
 
         return $this->page_view($file);
     }
@@ -81,7 +81,7 @@ class Docs_Home_Controller extends Controller
      */
     public function get_search()
     {
-        $data = file_get_contents(path('storage') . 'docs-search-data.json');
+        $data = file_get_contents(path('storage').'docs-search-data.json');
         return Response::json(json_decode($data, true));
     }
 }

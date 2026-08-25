@@ -27,7 +27,7 @@ class Repo
 
     public static function packages()
     {
-        static::$json = static::$json ?: path('base') . 'repositories.json';
+        static::$json = static::$json ?: path('base').'repositories.json';
         static::$mtime = static::$mtime ?: Storage::modified(static::$json);
         static::$packages = static::$packages ?: json_decode(Storage::get(static::$json), true);
 
@@ -37,8 +37,9 @@ class Repo
     /**
      * Categorize an array of items by a given criteria.
      *
-     * @param  array  $array
-     * @param  mixed  $criteria
+     * @param array $array
+     * @param mixed $criteria
+     *
      * @return array
      */
     public static function categorize($array, $criteria)
@@ -46,7 +47,7 @@ class Repo
         return array_reduce($array, function ($groups, $item) use ($criteria) {
             $key = is_callable($criteria) ? $criteria($item) : $item[$criteria];
 
-            if (!array_key_exists($key, $groups)) {
+            if (! array_key_exists($key, $groups)) {
                 $groups[$key] = [];
             }
 
@@ -58,8 +59,9 @@ class Repo
     /**
      * Search an array of items for a given query.
      *
-     * @param  array  $data
-     * @param  string  $query
+     * @param array  $data
+     * @param string $query
+     *
      * @return array
      */
     public static function search(array $data, $query)
@@ -73,7 +75,7 @@ class Repo
         $needle = Str::lower($query);
 
         return array_values(array_filter($data, function ($item) use ($needle) {
-            $haystack = Str::lower($item['name'] . ' ' . $item['description'] . ' ' . $item['category']);
+            $haystack = Str::lower($item['name'].' '.$item['description'].' '.$item['category']);
             return false !== strpos($haystack, $needle);
         }));
     }
@@ -81,9 +83,10 @@ class Repo
     /**
      * Paginate an array of items.
      *
-     * @param  array  $data
-     * @param  int  $offset
-     * @param  int  $limit
+     * @param array $data
+     * @param int   $offset
+     * @param int   $limit
+     *
      * @return array
      */
     public static function paginate(array $data, $offset, $limit)

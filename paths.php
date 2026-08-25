@@ -57,16 +57,16 @@ chdir(__DIR__);
 // --------------------------------------------------------------
 // Definisikan path ke base direktori.
 // --------------------------------------------------------------
-$GLOBALS['rakit_paths']['base'] = __DIR__ . DS;
+$GLOBALS['rakit_paths']['base'] = __DIR__.DS;
 
 // --------------------------------------------------------------
 // Defininisikan konstanta lain yang belum ada.
 // --------------------------------------------------------------
 foreach ($paths as $name => $path) {
-    if (!isset($GLOBALS['rakit_paths'][$name])) {
+    if (! isset($GLOBALS['rakit_paths'][$name])) {
         $GLOBALS['rakit_paths'][$name] = ('rakit_key' === $name)
-            ? $GLOBALS['rakit_paths']['base'] . $path
-            : realpath($path) . DS;
+            ? $GLOBALS['rakit_paths']['base'].$path
+            : realpath($path).DS;
     }
 }
 
@@ -103,16 +103,23 @@ function set_path($path, $value)
 // Polyfill untuk Throwable interface (PHP < 7.0).
 // --------------------------------------------------------------
 
-if (PHP_VERSION_ID < 70000 && !interface_exists('Throwable')) {
+if (PHP_VERSION_ID < 70000 && ! interface_exists('Throwable')) {
     interface Throwable
     {
         public function getMessage();
+
         public function getCode();
+
         public function getFile();
+
         public function getLine();
+
         public function getTrace();
+
         public function getTraceAsString();
+
         public function getPrevious();
+
         public function __toString();
     }
 }
@@ -125,11 +132,17 @@ if (PHP_VERSION_ID < 80000) {
     final class Attribute
     {
         const TARGET_CLASS = 1;
+
         const TARGET_FUNCTION = 2;
+
         const TARGET_METHOD = 4;
+
         const TARGET_PROPERTY = 8;
+
         const TARGET_CLASS_CONSTANT = 16;
+
         const TARGET_PARAMETER = 32;
+
         const TARGET_ALL = 63;
     }
 }

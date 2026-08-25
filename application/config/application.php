@@ -116,5 +116,5 @@ return [
     |
     */
 
-    'composer_autoload' => path('base') . 'vendor/autoload.php',
+    'composer_autoload' => path('base').'vendor/autoload.php',
 ];

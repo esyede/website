@@ -15,7 +15,7 @@ class Inspire_Command extends Command
     {
         $confirmed = $this->confirm('Do you want to display the quote?');
 
-        if (!$confirmed) {
+        if (! $confirmed) {
             echo $this->error('Aborted.');
             return;
         }

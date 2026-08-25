@@ -34,7 +34,7 @@ class Home_Controller extends Controller
     {
         $page = URI::current();
         $page = ('/' === $page) ? 'home' : str_replace('/', ' ~ ', $page);
-        $this->page = Str::title($page) . ' | ' . static::SLOGAN;
+        $this->page = Str::title($page).' | '.static::SLOGAN;
     }
 
     /**
@@ -70,14 +70,14 @@ class Home_Controller extends Controller
         $folders = ['sessions', 'views', 'cache', 'logs'];
 
         foreach ($folders as $folder) {
-            $files = glob(path('storage') . $folder . DS . '*');
+            $files = glob(path('storage').$folder.DS.'*');
 
-            if (!is_array($files)) {
+            if (! is_array($files)) {
                 continue;
             }
 
             $files = array_filter($files, function ($file) use ($keep) {
-                return is_file($file) && !in_array(basename($file), $keep);
+                return is_file($file) && ! in_array(basename($file), $keep);
             });
 
             if (count($files) <= static::STORAGE_LIMIT) {
@@ -99,10 +99,10 @@ class Home_Controller extends Controller
     {
         Package::boot('docs');
 
-        $views = path('app') . 'views' . DS . 'home' . DS;
+        $views = path('app').'views'.DS.'home'.DS;
         $urls = [
-            url('/') => @filemtime($views . 'index.blade.php'),
-            rtrim(url('repositories'), '/') => @filemtime($views . 'repositories.blade.php'),
+            url('/') => @filemtime($views.'index.blade.php'),
+            rtrim(url('repositories'), '/') => @filemtime($views.'repositories.blade.php'),
         ];
 
         // `/download` sengaja dilewat, ia hanya redirect ke Github.
@@ -115,8 +115,8 @@ class Home_Controller extends Controller
 
         foreach ($urls as $url => $mtime) {
             $xml[] = '    <url>';
-            $xml[] = '        <loc>' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '</loc>';
-            $xml[] = '        <lastmod>' . date(DATE_W3C, $mtime ? $mtime : time()) . '</lastmod>';
+            $xml[] = '        <loc>'.htmlspecialchars($url, ENT_QUOTES, 'UTF-8').'</loc>';
+            $xml[] = '        <lastmod>'.date(DATE_W3C, $mtime ? $mtime : time()).'</lastmod>';
             $xml[] = '    </url>';
         }
 
@@ -128,14 +128,14 @@ class Home_Controller extends Controller
     }
 
     /**
-     * Handle GET /download
+     * Handle GET /download.
      *
      * @return Redirect
      */
     public function action_download()
     {
         Log::channel('downloads');
-        Log::info('Download from: ' . Request::ip());
+        Log::info('Download from: '.Request::ip());
         Log::channel(null);
 
         return Redirect::to('https://github.com/esyede/rakit/archive/main.zip');
@@ -171,7 +171,7 @@ class Home_Controller extends Controller
         if (is_null($name)) {
             $view->categories = $categories;
         } else {
-            if (!in_array($name, $keys)) {
+            if (! in_array($name, $keys)) {
                 return Response::error(404);
             }
 

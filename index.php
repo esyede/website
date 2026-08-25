@@ -22,9 +22,9 @@ define('LF', "\n");
 // --------------------------------------------------------------
 // Include konstanta path milik framework.
 // --------------------------------------------------------------
-require __DIR__ . DS . 'paths.php';
+require __DIR__.DS.'paths.php';
 
 // --------------------------------------------------------------
 // Jalankan frameworknya.
 // --------------------------------------------------------------
-require path('system') . 'boot.php';
+require path('system').'boot.php';

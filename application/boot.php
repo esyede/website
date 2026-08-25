@@ -43,11 +43,11 @@ System\Autoloader::aliases((array) System\Config::get('aliases'));
 */
 
 System\Autoloader::directories([
-    path('app') . 'controllers',
-    path('app') . 'models',
-    path('app') . 'libraries',
-    path('app') . 'commands',
-    path('app') . 'jobs',
+    path('app').'controllers',
+    path('app').'models',
+    path('app').'libraries',
+    path('app').'commands',
+    path('app').'jobs',
     // Tambahkan direktori lain disini..
 ]);
 
@@ -62,7 +62,7 @@ System\Autoloader::directories([
 */
 
 System\Hook::listen(System\View::LOADER, function ($package, $view) {
-    return System\View::file($package, $view, System\Package::path($package) . 'views');
+    return System\View::file($package, $view, System\Package::path($package).'views');
 });
 
 /*
@@ -111,7 +111,7 @@ date_default_timezone_set(System\Config::get('application.timezone', 'UTC'));
 |
 */
 
-if (!System\Request::cli() && filled(System\Config::get('session.driver'))) {
+if (! System\Request::cli() && filled(System\Config::get('session.driver'))) {
     System\Session::load();
 }
 
