@@ -138,7 +138,7 @@ class Home_Controller extends Controller
         Log::info('Download from: '.Request::ip());
         Log::channel(null);
 
-        return Redirect::to('https://github.com/esyede/rakit/archive/main.zip');
+        return Redirect::to('https://github.com/esyede/rakit/archive/main.tar.gz');
     }
 
     /**

@@ -9,8 +9,8 @@
                     <span class="stat__label">PHP supported</span>
                 </div>
                 <div class="stat">
-                    <span class="stat__num">~ 1 MB</span>
-                    <span class="stat__label">Zipped, docs included</span>
+                    <span class="stat__num">< 1 MB</span>
+                    <span class="stat__label">GZipped, docs included</span>
                 </div>
                 <div class="stat">
                     <span class="stat__num">0</span>
