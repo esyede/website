@@ -15,7 +15,11 @@ defined('DS') or exit('No direct access.');
 */
 
 $environments = [
-    'local' => ['http://localhost*', 'http://127.0.0.1*', '*.test'],
+    'local' => [
+        'http://localhost*',
+        'http://127.0.0.1*',
+        '*.test',
+    ],
     // ..
 ];
 
