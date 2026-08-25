@@ -1,4 +1,6 @@
 <section class="hero">
+    @include('partials.hero_bg')
+
     <span class="hero__badge">Latest release &mdash; <b>{{ RAKIT_VERSION }}</b></span>
     <h1 class="hero__title">
         A <em>simple, lightweight</em><br>
@@ -19,6 +21,14 @@
         <a class="btn btn--ghost" href="{{ url('docs') }}">Read the docs</a>
     </div>
     <div class="hero__cmd">
-        <code><span class="prompt">$</span> composer create-project esyede/rakit</code>
+        <code data-copy="composer create-project esyede/rakit"><span class="prompt">$</span> composer create-project esyede/rakit</code>
+        <button type="button" class="copy" data-copy="composer create-project esyede/rakit"
+            aria-label="Copy the install command">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="12" height="12" />
+                <path d="M5 15 L3 15 3 3 15 3 15 5" />
+            </svg>
+        </button>
     </div>
 </section>

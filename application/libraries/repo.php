@@ -4,8 +4,25 @@ defined('DS') or exit('No direct script access.');
 
 class Repo
 {
+    /**
+     * Cached packages.
+     *
+     * @var array
+     */
     protected static $packages;
+
+    /**
+     * Cached modified time of the packages JSON file.
+     *
+     * @var int
+     */
     protected static $mtime;
+
+    /**
+     * Path to the packages JSON file.
+     *
+     * @var string
+     */
     protected static $json;
 
     public static function packages()
@@ -17,6 +34,13 @@ class Repo
         return static::$packages;
     }
 
+    /**
+     * Categorize an array of items by a given criteria.
+     *
+     * @param  array  $array
+     * @param  mixed  $criteria
+     * @return array
+     */
     public static function categorize($array, $criteria)
     {
         return array_reduce($array, function ($groups, $item) use ($criteria) {
@@ -31,6 +55,37 @@ class Repo
         }, []);
     }
 
+    /**
+     * Search an array of items for a given query.
+     *
+     * @param  array  $data
+     * @param  string  $query
+     * @return array
+     */
+    public static function search(array $data, $query)
+    {
+        $query = trim((string) $query);
+
+        if ('' === $query) {
+            return $data;
+        }
+
+        $needle = Str::lower($query);
+
+        return array_values(array_filter($data, function ($item) use ($needle) {
+            $haystack = Str::lower($item['name'] . ' ' . $item['description'] . ' ' . $item['category']);
+            return false !== strpos($haystack, $needle);
+        }));
+    }
+
+    /**
+     * Paginate an array of items.
+     *
+     * @param  array  $data
+     * @param  int  $offset
+     * @param  int  $limit
+     * @return array
+     */
     public static function paginate(array $data, $offset, $limit)
     {
         $start = ($offset - 1) * $limit;
@@ -42,9 +97,15 @@ class Repo
             : array_slice($data, $start, ($total <= $end) ? null : ($end - $start));
     }
 
+    /**
+     * Get the current page number from the request.
+     *
+     * @return int
+     */
     public static function current()
     {
-        $qs = Request::getQueryString();
-        return (preg_match('/page=[0-9]+$/', (string) $qs) > 0) ? abs((int) last(explode('=', $qs))) : 1;
+        $page = Request::foundation()->query->get('page');
+
+        return (is_numeric($page) && (int) $page > 0) ? abs((int) $page) : 1;
     }
 }

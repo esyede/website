@@ -46,8 +46,13 @@ class Home_Controller extends Controller
     {
         $this->sweep_storage();
 
+        $packages = Repo::packages();
+
         return View::make('home.index')
             ->with('page', $this->page)
+            ->with('featured', array_slice($packages, 0, 8))
+            ->with('package_count', count($packages))
+            ->with('category_count', count(Repo::categorize($packages, 'category')))
             ->with('news', vsprintf('Connect with other developers through our discussion board <a href="%s" target="_blank">%s</a>', [
                 'https://github.com/esyede/rakit/discussions/categories/paket-library',
                 'Learn more..',
@@ -143,13 +148,15 @@ class Home_Controller extends Controller
      */
     public function action_repositories($name = null)
     {
-        $perpage = 5;
+        $perpage = 8;
+        $query = trim((string) Request::foundation()->query->get('q'));
         $packages = Repo::packages();
         $view = View::make('home.repositories');
 
         $view->brand = 'Rakit';
         $view->page = $this->page;
         $view->count = count($packages);
+        $view->query = $query;
 
         $items = Repo::categorize($packages, 'category');
         $keys = array_keys($items);
@@ -163,13 +170,6 @@ class Home_Controller extends Controller
 
         if (is_null($name)) {
             $view->categories = $categories;
-            $view->current = Repo::current();
-            $view->last = (int) ceil(count($packages) / $perpage);
-            $view->packages = Repo::paginate($packages, Repo::current(), $perpage);
-
-            if (empty($view->packages) || $view->current > $view->last) {
-                return Response::error(404);
-            }
         } else {
             if (!in_array($name, $keys)) {
                 return Response::error(404);
@@ -177,37 +177,20 @@ class Home_Controller extends Controller
 
             $view->category = Str::slug($name);
             $view->categories = $categories;
-            $view->current = Repo::current();
-            $view->last = (int) ceil(count($items[$name]) / $perpage);
-            $view->packages = Repo::paginate($items[$name], Repo::current(), $perpage);
+            $packages = $items[$name];
+        }
 
-            if (empty($view->packages) || $view->current > $view->last) {
-                return Response::error(404);
-            }
+        $packages = Repo::search($packages, $query);
+
+        $view->matched = count($packages);
+        $view->current = Repo::current();
+        $view->last = max(1, (int) ceil(count($packages) / $perpage));
+        $view->packages = Repo::paginate($packages, Repo::current(), $perpage);
+
+        if ($view->current > $view->last || ($view->current > 1 && empty($view->packages))) {
+            return Response::error(404);
         }
 
         return $view;
-    }
-
-    /**
-     * Handle mocking for testing.
-     *
-     * @return string
-     */
-    public function action_mock($delay = 0)
-    {
-        if ($delay > 0) {
-            sleep(intval($delay));
-        }
-
-        return Response::json([
-            'headers' => Request::headers(),
-            'method' => Request::method(),
-            'queries' => Request::foundation()->query->all(),
-            'data' => array_merge((array) Input::all(), [
-                'json' => Input::json(),
-                'stdin' => file_get_contents('php://input'),
-            ]),
-        ]);
     }
 }
