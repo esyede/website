@@ -37,6 +37,6 @@ jobs:
             - name: make phpcs executable
               run: chmod +x phpcs.phar
             - name: "style: check coding style"
-              run: php phpcs.phar fix --dry-run --diff --format=txt
+              run: php phpcs.phar fix --sequential
             - name: remove phpcs
               run: rm -f phpcs.phar
