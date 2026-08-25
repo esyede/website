@@ -17,7 +17,7 @@ jobs:
             - name: setup php
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: "7.2"
+                  php-version: "7.4"
                   extensions: mbstring, simplexml, dom, openssl, curl, gd
             - name: get composer cache directory
               id: composer-cache
