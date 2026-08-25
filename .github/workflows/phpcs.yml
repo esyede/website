@@ -37,7 +37,7 @@ jobs:
             - name: make phpcs executable
               run: chmod +x phpcs.phar
             - name: "style: apply coding style"
-              run: php phpcs.phar fix
+              run: php phpcs.phar fix --sequential
             - name: check for changes
               id: changes
               run: |
