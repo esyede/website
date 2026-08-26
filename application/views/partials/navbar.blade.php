@@ -14,6 +14,17 @@
             </nav>
         </div>
         <div class="nav__right">
+            <button type="button" class="theme-toggle" id="themeToggle" title="Toggle theme"
+                aria-label="Toggle theme">
+                <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+                <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+            </button>
             <a class="btn btn--primary btn--sm nav__cta" href="{{ url('download') }}">Download</a>
             <button type="button" class="navbar-burger" data-target="navMenuMore" aria-label="Menu">
                 <span></span>

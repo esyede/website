@@ -381,6 +381,10 @@
 @endsection
 
 @section('packages')
+    {{-- The hatched band dsgn.html sets between sections; used once here, to
+         mark the hand-off from the tour to the closing call to action. --}}
+    <div class="sep"></div>
+
     <div class="band">
         <div class="cta">
             <span class="eyebrow">Package repository</span>

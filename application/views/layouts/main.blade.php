@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ config('application.language') }}">
+<html lang="{{ config('application.language') }}" class="dark">
 
 @include('partials.header')
 

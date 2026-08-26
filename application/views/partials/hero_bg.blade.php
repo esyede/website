@@ -1,5 +1,4 @@
 <div class="hero__bg" aria-hidden="true">
-    <div class="hero__glow"></div>
     <div class="hero__grid"></div>
     <div class="hero__cells">
         <span class="hero__cell" style="--c: -10; --r: 2; --d: 0s"></span>
