@@ -5,13 +5,13 @@ defined('DS') or exit('No direct access.');
 return [
     /*
     |--------------------------------------------------------------------------
-    | Validation Language
+    | Validation Language Lines
     |--------------------------------------------------------------------------
     |
-    | Baris - baris bahasa berikut berisi pesan error default yang digunakan
-    | oleh kelas Validator. Beberapa aturan berisi beberapa versi, seperti
-    | ukuran (max, min, between). Versi - versi ini digunakan untuk berbagai
-    | jenis input seperti string dan file.
+    | This file contains the language strings used by the Validation library.
+    | Feel free to change them to anything you want to customize your views to
+    | better match your application. You can also change the default error
+    | messages used by the library.
     |
     */
 
@@ -96,19 +96,38 @@ return [
     'required_with_all' => 'The :attribute field is required when :values are present.',
     'required_without' => 'The :attribute field is required when :values are not present.',
     'required_without_all' => 'The :attribute field is required when none of :values are present.',
+    'after_or_equals' => 'The :attribute must be a date after or equal to :date.',
+    'after_or_equal' => 'The :attribute must be a date after or equal to :date.',
+    'before_or_equal' => 'The :attribute must be a date before or equal to :date.',
+    'lowercase' => 'The :attribute must be lowercase.',
+    'uppercase' => 'The :attribute must be uppercase.',
+    'ascii' => 'The :attribute must only contain single-byte alphanumeric characters and symbols.',
+    'decimal' => 'The :attribute must have :decimal decimal places.',
+    'multiple_of' => 'The :attribute must be a multiple of :value.',
+    'max_digits' => 'The :attribute must not have more than :max digits.',
+    'min_digits' => 'The :attribute must have at least :min digits.',
+    'doesnt_start_with' => 'The :attribute must not start with one of the following: :values.',
+    'doesnt_end_with' => 'The :attribute must not end with one of the following: :values.',
+    'contains' => 'The :attribute is missing a required value: :values.',
+    'list' => 'The :attribute must be a list.',
+    'missing' => 'The :attribute must be missing.',
+    'prohibited' => 'The :attribute is prohibited.',
+    'declined' => 'The :attribute must be declined.',
+    'mac_address' => 'The :attribute must be a valid MAC address.',
+    'ulid' => 'The :attribute must be a valid ULID.',
+    'hex_color' => 'The :attribute must be a valid hexadecimal color.',
 
     /*
     |--------------------------------------------------------------------------
-    | Custom Validation Language
+    | Custom Validation Language Lines
     |--------------------------------------------------------------------------
     |
-    | Di sini anda dapat menentukan pesan validasi kuatom untuk atribut
-    | menggunakan konvensi '[atribut] + _ + [rule]'. Ini membantu menjaga
-    | validasi kustom anda tetap bersih dan rapi.
+    | Here you may specify custom validation messages for attributes using the
+    | convention "attribute.rule" to name the lines. This makes it quick to
+    | specify a specific custom language line for a given attribute rule.
     |
-    | Jadi, katakanlah anda ingin menggunakan pesan validasi kuatom ketika
-    | memvalidasi bahwa atribut 'email' itu unik.
-    | Cukup tambahkan 'email_unique' ke array ini dengan pesan kuatom anda.
+    | For example, to specify a custom message for the 'email' attribute
+    | simple add 'email_required' to this array with your custom message.
     |
     */
 
@@ -121,12 +140,12 @@ return [
     | Validation Attribute
     |--------------------------------------------------------------------------
     |
-    | Baris - baris bahasa berikut digunakan untuk menukar atribut placeholder
-    | dengan sesuatu yang lebih ramah pembaca seperti 'alamat email'
-    | alih-alih 'email' saja sehingga pesan error anda akan lebih informatif.
+    | The following language lines are used to swap attribute place-holders
+    | with something more reader friendly such as "E-Mail Address" instead
+    | of "email". This simply helps us make messages a little cleaner.
     |
-    | Kelas validator akan secara otomatis mencari array ini, lalu mengganti
-    | placeholder :attribute di dengan value kustom yang anda tentukan disini.
+    | The class validator will automatically search this array, and replace
+    | the :attribute placeholder with the value you specify here.
     |
     */
 

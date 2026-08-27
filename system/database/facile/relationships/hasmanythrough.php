@@ -163,7 +163,7 @@ class HasManyThrough extends Relationship
     /**
      * Get the results of the relationship.
      *
-     * @return array
+     * @return \System\Collection
      */
     public function results()
     {
@@ -199,5 +199,24 @@ class HasManyThrough extends Relationship
     protected function get_through_key()
     {
         return Str::singular($this->through->table()).'_id';
+    }
+
+    /**
+     * Correlate the relational query with the parent table.
+     *
+     * @param string $parent_table
+     *
+     * @return \System\Database\Query
+     */
+    public function correlate($parent_table)
+    {
+        $this->table->reset_where();
+        $this->table->where_column(
+            $this->through->table() . '.' . $this->first_key,
+            '=',
+            $parent_table . '.' . $this->local_key
+        );
+
+        return $this->table;
     }
 }

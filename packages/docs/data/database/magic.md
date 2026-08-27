@@ -40,6 +40,7 @@
 - [Reset Query](#reset-query)
 - [Debug Query](#debug-query)
 - [Transaction](#transaction)
+- [Row Locking](#row-locking)
 - [Other Methods](#other-methods)
 
 <!-- /MarkdownTOC -->
@@ -60,13 +61,24 @@ You now have access to the Query Builder for the "users" table and can run opera
 <a id="retrieving-records"></a>
 ## Retrieving Records
 
-**Retrieve an array of records from the database:**
+**Retrieve the records from the database:**
 
 ```php
 $users = DB::table('users')->get();
 ```
 
-The `get()` method returns an array of objects whose properties match the table column names.
+The `get()` method returns a `Collection` of objects whose properties match the table column
+names. Because it is a collection, you can keep chaining on the result:
+
+```php
+$names = DB::table('users')->get()->pluck('name');
+$adults = DB::table('users')->get()->filter(function ($user) {
+    return $user->age >= 17;
+});
+```
+
+It is countable, iterable and array accessible, so `count($users)`, `foreach ($users as $user)`
+and `$users[0]` all keep working as they did before.
 
 **Retrieve a single record:**
 
@@ -87,7 +99,7 @@ $user = DB::table('users')->find_or_fail($id);
 // Throw ModelNotFoundException jika tidak ditemukan
 ```
 
-> **Note:** `first()` and `find()` return `NULL` when there is no result, while `get()` returns an empty array.
+> **Note:** `first()` and `find()` return `NULL` when there is no result, while `get()` returns an empty collection.
 
 <a id="select-columns"></a>
 ## Select Columns
@@ -977,40 +989,129 @@ These methods are very handy while debugging.
 <a id="transaction"></a>
 ## Transaction
 
-Use a transaction to keep the data consistent:
+Use a transaction to keep the data consistent. The closure receives the
+connection, and whatever it returns becomes the return value of `transaction()`:
 
 ```php
-DB::connection()->transaction(function () {
-    DB::table('accounts')
-        ->where('id', '=', 1)
-        ->update(['balance' => DB::raw('balance - 100')]);
-    
-    DB::table('accounts')
-        ->where('id', '=', 2)
-        ->update(['balance' => DB::raw('balance + 100')]);
+$user = DB::connection()->transaction(function ($connection) {
+    $connection->table('users')->update(['balance' => DB::raw('balance - 100')]);
+    $connection->table('logs')->insert(['note' => 'debited']);
+
+    return $connection->table('users')->find(1);
 });
 ```
 
-Manual transaction control:
+Anything the closure throws rolls the whole thing back and is rethrown, so there
+is nothing to catch unless you want to handle it.
+
+**Manual control:**
 
 ```php
 $connection = DB::connection();
 
 try {
     $connection->begin_transaction();
-    
-    // Query 1
+
     DB::table('users')->insert(['name' => 'John']);
-    
-    // Query 2
     DB::table('profiles')->insert(['user_id' => 1]);
-    
+
     $connection->commit();
 } catch (Exception $e) {
     $connection->rollback();
     throw $e;
 }
 ```
+
+`rollback()` and `commit()` are harmless when no transaction is open, they simply
+return `FALSE`. That makes `rollback()` safe to call from an error handler that
+is not sure whether a transaction was ever started.
+
+> **Beware:** a `return` inside the `try` block skips the `commit()` and leaves
+> the transaction open for the rest of the request. Either commit before you
+> return, or use the closure form, which cannot get this wrong.
+
+**Nested transactions:**
+
+Opening a transaction while one is already open uses a savepoint instead of a
+second real transaction, so a method that wraps its own work may safely be
+called from inside another transaction:
+
+```php
+DB::connection()->transaction(function ($connection) {
+    $connection->table('orders')->insert(['total' => 1000]);
+
+    try {
+        // Its own transaction, which becomes a savepoint here
+        Billing::charge($order);
+    } catch (Exception $e) {
+        // Only the work of the inner one is undone, the outer one carries on
+    }
+
+    $connection->table('logs')->insert(['note' => 'order placed']);
+});
+```
+
+Only the outermost `commit()` really commits. Use `transaction_level()` to ask
+how deep you are.
+
+<a id="row-locking"></a>
+## Row Locking
+
+A transaction on its own does not stop two requests from reading the same row at
+the same time. This is the pattern that breaks:
+
+```php
+// UNSAFE: both requests may read balance = 100 and both pass the check
+$user = User::find($id);
+
+if ($user->balance < $price) {
+    return 'balance is not enough';
+}
+
+User::where_key($id)->decrement('balance', $price);
+```
+
+`decrement()` is atomic, but the check before it is not, so two purchases of 100
+against a balance of 100 can both go through. `lock_for_update()` closes that
+window by holding the row until the transaction ends:
+
+```php
+DB::connection()->transaction(function () use ($id, $price) {
+    $user = User::where_key($id)->lock_for_update()->first();
+
+    if ($user->balance < $price) {
+        throw new Exception('balance is not enough');
+    }
+
+    User::where_key($id)->decrement('balance', $price);
+});
+```
+
+`shared_lock()` is the softer one, other transactions may still read the rows
+but none may change them until yours ends:
+
+```php
+$rates = DB::table('rates')->where('active', 1)->shared_lock()->get();
+```
+
+Both only hold inside a transaction, outside of one they do nothing useful.
+`lock()` takes a raw clause when a driver specific one is needed:
+
+```php
+DB::table('jobs')->lock('FOR UPDATE SKIP LOCKED')->get();
+```
+
+What each driver compiles:
+
+| Driver | `lock_for_update()` | `shared_lock()` |
+|---|---|---|
+| MySQL | `FOR UPDATE` | `LOCK IN SHARE MODE` |
+| PostgreSQL | `FOR UPDATE` | `FOR SHARE` |
+| SQL Server | `WITH (ROWLOCK, UPDLOCK, HOLDLOCK)` | `WITH (ROWLOCK, HOLDLOCK)` |
+| SQLite | *(nothing)* | *(nothing)* |
+
+SQLite locks the whole database file for the duration of a transaction, so it
+has no row level lock to ask for and the clause is left out entirely.
 
 <a id="other-methods"></a>
 ## Other Methods
@@ -1024,7 +1125,24 @@ try {
 | `where_column($column1, $operator, $column2)`     | Compare two columns to each other                               |
 | `where_time($column, $operator, $value)`          | WHERE on the time part of a column                              |
 | `aggregate($aggregator, array $columns)`          | Run any aggregate function, for example `MAX`                   |
+| `chunk($count, $callback)`                        | Process rows in chunks, returning `false` stops the iteration   |
 | `chunk_by_id($count, $callback, $column, $alias)` | Process rows in chunks, paging by id instead of by offset       |
+| `each($callback, $count)`                         | Run the callback over every single row                          |
+| `value($column)`                                  | A single column value of the first row                          |
+| `pluck($column, $key)`                            | A collection holding the values of a single column              |
+| `sole($columns)`                                  | Exactly one row, complains when there is none or more than one  |
+| `when($value, $callback, $default)`               | Apply the callback only when the value is truthy                |
+| `unless($value, $callback, $default)`             | Apply the callback only when the value is falsy                 |
+| `tap($callback)`                                  | Hand the query to the callback and keep on chaining             |
+| `where_like($column, $value)`                     | WHERE LIKE, also `or_where_like` and `where_not_like`           |
+| `select_raw($sql, $bindings)` / `add_select()`    | Raw or extra columns in the SELECT clause                       |
+| `order_by_raw()` / `group_by_raw()`               | Raw ORDER BY and GROUP BY clauses                               |
+| `having_raw($sql, $bindings)` / `or_having()`     | Raw and OR variants of the HAVING clause                        |
+| `in_random_order($seed)`                          | Order the rows randomly                                         |
+| `re_order($column, $direction)`                   | Drop every ORDER BY added so far                                |
+| `right_join()` / `cross_join()`                   | RIGHT and CROSS joins                                           |
+| `update_or_insert($attributes, $values)`          | Update the matching row, or insert it when there is none        |
+| `insert_or_ignore($values)`                       | Insert while silently skipping the rows that clash              |
 | `dd()` / `bd()`                                   | Dump the SQL and its bindings, then stop or continue            |
 
 ```php
@@ -1045,4 +1163,21 @@ DB::table('users')->chunk_by_id(500, function ($users) {
         // ..
     }
 });
+
+// Only apply the filter when it was actually asked for
+$users = DB::table('users')
+    ->when($request_role, function ($query, $role) {
+        return $query->where('role', '=', $role);
+    })
+    ->get();
+
+// A single value instead of a whole row
+$email = DB::table('users')->where('id', '=', 1)->value('email');
+
+// Update when it exists, insert when it does not
+DB::table('settings')->update_or_insert(['key' => 'theme'], ['value' => 'dark']);
 ```
+
+> **Note:** methods that Laravel provides but Rakit does not support yet, such as
+> `where_has()` or `where_json_contains()`, now raise a clear exception instead of being
+> silently compiled into a column of that name.

@@ -5,13 +5,13 @@ defined('DS') or exit('No direct access.');
 return [
     /*
     |--------------------------------------------------------------------------
-    | Validation Language
+    | Validation Language Lines
     |--------------------------------------------------------------------------
     |
-    | Baris - baris bahasa berikut berisi pesan error default yang digunakan
-    | oleh kelas Validator. Beberapa aturan berisi beberapa versi, seperti
-    | ukuran (max, min, between). Versi - versi ini digunakan untuk berbagai
-    | jenis input seperti string dan file.
+    | This file contains the language strings used by the Validation library.
+    | Feel free to change them to anything you want to customize your views to
+    | better match your application. You can also change the default error
+    | messages used by the library.
     |
     */
 
@@ -96,19 +96,38 @@ return [
     'required_with_all' => 'Bilah :attribute diperlukan ketika :values ada.',
     'required_without' => 'Bilah :attribute diperlukan ketika :values tidak ada.',
     'required_without_all' => 'Bilah :attribute diperlukan ketika tidak ada :values.',
+    'after_or_equals' => 'Bilah :attribute harus diisi tanggal setelah atau tepat :date.',
+    'after_or_equal' => 'Bilah :attribute harus diisi tanggal setelah atau tepat :date.',
+    'before_or_equal' => 'Bilah :attribute harus diisi tanggal sebelum atau tepat :date.',
+    'lowercase' => 'Bilah :attribute harus berupa huruf kecil semua.',
+    'uppercase' => 'Bilah :attribute harus berupa huruf besar semua.',
+    'ascii' => 'Bilah :attribute hanya boleh berisi karakter alfanumerik dan simbol satu byte.',
+    'decimal' => 'Bilah :attribute harus memiliki :decimal angka di belakang koma.',
+    'multiple_of' => 'Bilah :attribute harus merupakan kelipatan dari :value.',
+    'max_digits' => 'Bilah :attribute tidak boleh lebih dari :max digit.',
+    'min_digits' => 'Bilah :attribute harus minimal :min digit.',
+    'doesnt_start_with' => 'Bilah :attribute tidak boleh dimulai dengan salah satu dari: :values.',
+    'doesnt_end_with' => 'Bilah :attribute tidak boleh diakhiri dengan salah satu dari: :values.',
+    'contains' => 'Bilah :attribute belum memuat nilai yang diwajibkan: :values.',
+    'list' => 'Bilah :attribute harus berupa senarai berurutan.',
+    'missing' => 'Bilah :attribute tidak boleh ada.',
+    'prohibited' => 'Bilah :attribute dilarang diisi.',
+    'declined' => 'Bilah :attribute harus ditolak.',
+    'mac_address' => 'Bilah :attribute harus berupa alamat MAC yang sah.',
+    'ulid' => 'Bilah :attribute harus berupa ULID yang sah.',
+    'hex_color' => 'Bilah :attribute harus berupa warna heksadesimal yang sah.',
 
     /*
     |--------------------------------------------------------------------------
-    | Custom Validation Language
+    | Custom Validation Language Lines
     |--------------------------------------------------------------------------
     |
-    | Di sini anda dapat menentukan pesan validasi kuatom untuk atribut
-    | menggunakan konvensi '[atribut] + _ + [rule]'. Ini membantu menjaga
-    | validasi kustom anda tetap bersih dan rapi.
+    | Here you may specify custom validation messages for attributes using the
+    | convention "attribute.rule" to name the lines. This makes it quick to
+    | specify a specific custom language line for a given attribute rule.
     |
-    | Jadi, katakanlah anda ingin menggunakan pesan validasi kuatom ketika
-    | memvalidasi bahwa atribut 'email' itu unik.
-    | Cukup tambahkan 'email_unique' ke array ini dengan pesan kuatom anda.
+    | For example, to specify a custom message for the 'email' attribute
+    | simple add 'email_required' to this array with your custom message.
     |
     */
 
@@ -121,12 +140,12 @@ return [
     | Validation Attribute
     |--------------------------------------------------------------------------
     |
-    | Baris - baris bahasa berikut digunakan untuk menukar atribut placeholder
-    | dengan sesuatu yang lebih ramah pembaca seperti 'alamat email'
-    | alih-alih 'email' saja sehingga pesan error anda akan lebih informatif.
+    | The following language lines are used to swap attribute place-holders
+    | with something more reader friendly such as "E-Mail Address" instead
+    | of "email". This simply helps us make messages a little cleaner.
     |
-    | Kelas validator akan secara otomatis mencari array ini, lalu mengganti
-    | placeholder :attribute di dengan value kustom yang anda tentukan disini.
+    | The class validator will automatically search this array, and replace
+    | the :attribute placeholder with the value you specify here.
     |
     */
 

@@ -21,7 +21,7 @@ class Grammar extends BaseGrammar
      *
      * @var array
      */
-    protected $components = ['aggregate', 'selects', 'from', 'joins', 'wheres', 'groupings', 'havings', 'unions', 'orderings', 'limit', 'offset'];
+    protected $components = ['aggregate', 'selects', 'from', 'joins', 'wheres', 'groupings', 'havings', 'unions', 'orderings', 'limit', 'offset', 'lock'];
 
     /**
      * Compile the SELECT statement.
@@ -140,9 +140,14 @@ class Grammar extends BaseGrammar
                 );
             }
 
+            if (0 === count($clauses)) {
+                $sql[] = $join->type . ' JOIN ' . $table;
+                continue;
+            }
+
             $clauses[0] = str_replace(['AND ', 'OR '], '', $clauses[0]);
             $clauses = implode(' ', $clauses);
-            $sql[] = $join->type.' JOIN '.$table.' ON '.$clauses;
+            $sql[] = $join->type . ' JOIN ' . $table . ' ON ' . $clauses;
         }
 
         return implode(' ', $sql);
@@ -379,11 +384,18 @@ class Grammar extends BaseGrammar
         }
 
         foreach ($query->havings as $having) {
+            $connector = isset($having['connector']) ? $having['connector'] : 'AND';
+
+            if (isset($having['type']) && 'having_raw' === $having['type']) {
+                $sql[] = $connector . ' ' . $having['sql'];
+                continue;
+            }
+
             $parameter = $this->parameter($having['value']);
-            $sql[] = 'AND '.$this->wrap($having['column']).' '.$having['operator'].' '.$parameter;
+            $sql[] = $connector . ' ' . $this->wrap($having['column']) . ' ' . $having['operator'] . ' ' . $parameter;
         }
 
-        return 'HAVING '.preg_replace('/AND /', '', implode(' ', $sql), 1);
+        return 'HAVING ' . preg_replace('/^(AND|OR) /', '', implode(' ', $sql), 1);
     }
 
     /**
@@ -399,7 +411,7 @@ class Grammar extends BaseGrammar
 
         foreach ($query->orderings as $ordering) {
             $ordering['direction'] = strtoupper((string) $ordering['direction']);
-            $sql[] = $this->wrap($ordering['column']).' '.$ordering['direction'];
+            $sql[] = rtrim($this->wrap($ordering['column']) . ' ' . $ordering['direction']);
         }
 
         return 'ORDER BY '.implode(', ', $sql);
@@ -446,6 +458,87 @@ class Grammar extends BaseGrammar
     protected function offset(Query $query)
     {
         return 'OFFSET '.(int) $query->offset;
+    }
+
+    /**
+     * Compile the statement that opens a savepoint.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function savepoint($name)
+    {
+        return 'SAVEPOINT ' . $name;
+    }
+
+    /**
+     * Compile the statement that releases a savepoint.
+     * An empty string means the driver has nothing to release.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function release_savepoint($name)
+    {
+        return 'RELEASE SAVEPOINT ' . $name;
+    }
+
+    /**
+     * Compile the statement that rolls back to a savepoint.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function rollback_savepoint($name)
+    {
+        return 'ROLLBACK TO SAVEPOINT ' . $name;
+    }
+
+    /**
+     * Compile the row locking clause.
+     *
+     * @param Query $query
+     *
+     * @return string
+     */
+    protected function lock(Query $query)
+    {
+        if (is_string($query->lock)) {
+            return $query->lock;
+        }
+
+        return $query->lock ? 'FOR UPDATE' : 'FOR SHARE';
+    }
+
+    /**
+     * Get the sql used to order the results randomly.
+     *
+     * @param string $seed
+     *
+     * @return string
+     */
+    public function random($seed = '')
+    {
+        return 'RANDOM()';
+    }
+
+    /**
+     * Compile an INSERT statement that silently skips clashing records.
+     *
+     * @param Query $query
+     * @param array $values
+     *
+     * @return string
+     */
+    public function insert_ignore(Query $query, array $values)
+    {
+        throw new \Exception(sprintf(
+            'This database driver does not support insert_or_ignore(): %s',
+            get_class($this)
+        ));
     }
 
     /**
