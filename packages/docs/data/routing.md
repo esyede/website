@@ -403,6 +403,11 @@ Route::group(['prefix' => 'admin'], function () {
 });
 ```
 
+> A route asking for a middleware that was never registered throws
+> `Undefined middleware: <name>` instead of running unprotected, so a typo in
+> the name shows up right away. The global `before` and `after` middlewares are
+> the exception: those are a convention and may simply not exist.
+
 <a id="nested-groups"></a>
 ### Nested Groups
 
@@ -834,11 +839,15 @@ Route::resource('posts');
 Route::resource('posts', ['only' => ['index', 'show']]);
 
 // Exclude specific methods
-Route::resource('posts', ['except' => ['destroy']]);
+Route::resource('posts', ['except' => ['delete']]);
 
 // Custom controller
 Route::resource('posts', ['controller' => 'blog.post']);
 ```
+
+> The action names are the ones in the table above, so `except` takes `delete`,
+> not `destroy`. Passing anything other than `only`, `except` and `controller`
+> replaces the whole route table with what you hand over.
 
 <a id="route-for-package"></a>
 ## Route for Package

@@ -286,6 +286,32 @@ class Query
      *
      * @return Query
      */
+    public function where_raw($where, array $bindings = [], $connector = 'AND')
+    {
+        return $this->raw_where($where, $bindings, $connector);
+    }
+
+    /**
+     * Add a raw WHERE clause joined with OR.
+     * Named to match having_raw(), select_raw(), order_by_raw() and group_by_raw().
+     *
+     * @param string $where
+     * @param array  $bindings
+     *
+     * @return Query
+     */
+    public function or_where_raw($where, array $bindings = [])
+    {
+        return $this->raw_where($where, $bindings, 'OR');
+    }
+
+    /**
+     * @param string $where
+     * @param array  $bindings
+     * @param string $connector
+     *
+     * @return Query
+     */
     public function raw_where($where, array $bindings = [], $connector = 'AND')
     {
         $this->wheres[] = ['type' => 'where_raw', 'connector' => $connector, 'sql' => $where];
@@ -327,6 +353,8 @@ class Query
             $value = $operator;
             $operator = '=';
         }
+
+        $this->validate_operator($operator);
 
         $type = 'where';
         $this->wheres[] = compact('type', 'column', 'operator', 'value', 'connector');
@@ -464,6 +492,21 @@ class Query
      */
     public function where_exists($query, $connector = 'AND', $not = false)
     {
+        // A closure is handed a query of its own to build the subquery with,
+        // the way where_nested() does it.
+        if ($query instanceof \Closure) {
+            $callback = $query;
+            $query = new static($this->connection, $this->grammar, $this->from);
+
+            call_user_func($callback, $query);
+
+            // A subquery the closure left without a SELECT still has to be a
+            // complete statement once it lands inside EXISTS ( .. ).
+            if (is_null($query->selects)) {
+                $query->select(['*']);
+            }
+        }
+
         $type = $not ? 'where_not_exists' : 'where_exists';
         $this->wheres[] = compact('type', 'query', 'connector');
         $this->bindings = array_merge($this->bindings, $query->bindings);
@@ -696,6 +739,7 @@ class Query
      *
      * @param string $column
      * @param int    $amount
+     * @param array  $extra
      *
      * @return int
      */
@@ -711,6 +755,7 @@ class Query
      *
      * @param string $column
      * @param int    $amount
+     * @param array  $extra
      *
      * @return int
      */
@@ -775,7 +820,6 @@ class Query
         'where_all' => 'is not supported yet',
         'where_any' => 'is not supported yet',
         'where_none' => 'is not supported yet',
-        'where_raw' => 'does not exist, use raw_where() instead',
         'where_key' => 'only exists on a facile model query',
         'where_key_not' => 'only exists on a facile model query',
     ];
@@ -907,6 +951,20 @@ class Query
      *
      * @return Query
      */
+    /**
+     * Set the table the query runs against.
+     *
+     * @param string $table
+     *
+     * @return Query
+     */
+    public function from($table)
+    {
+        $this->from = $table;
+
+        return $this;
+    }
+
     public function where_nested(\Closure $callback, $connector = 'AND')
     {
         $query = new static($this->connection, $this->grammar, $this->from);
@@ -1133,11 +1191,14 @@ class Query
      * @param string $column
      * @param string $operator
      * @param mixed  $value
+     * @param string $connector
      *
      * @return Query
      */
     public function having($column, $operator, $value, $connector = 'AND')
     {
+        $this->validate_operator($operator);
+
         $type = 'having';
         $this->havings[] = compact('type', 'column', 'operator', 'value', 'connector');
         $this->bindings[] = $value;
@@ -1757,8 +1818,30 @@ class Query
      */
     public function order_by($column, $direction = 'asc')
     {
+        $direction = strtolower(trim((string) $direction));
+
+        if ('asc' !== $direction && 'desc' !== $direction) {
+            throw new \InvalidArgumentException(sprintf(
+                'Order direction must be "asc" or "desc", %s given.',
+                $direction
+            ));
+        }
+
         $this->orderings[] = compact('column', 'direction');
         return $this;
+    }
+
+    /**
+     * Make sure an operator is one the grammar knows, so it never reaches the
+     * SQL as something the caller wrote.
+     *
+     * @param string $operator
+     */
+    protected function validate_operator($operator)
+    {
+        if (! in_array(strtolower((string) $operator), $this->operators)) {
+            throw new \InvalidArgumentException(sprintf('Unsupported SQL operator: %s', $operator));
+        }
     }
 
     /**

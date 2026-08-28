@@ -105,6 +105,45 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Hosts
+    |--------------------------------------------------------------------------
+    |
+    | Host names this application answers to. The Host header comes from the
+    | client, and when 'url' above is left empty it is what generated URLs are
+    | built from — so a request carrying someone else's host would put that host
+    | into, say, a password reset link. Filling this in refuses those requests.
+    |
+    | A name may start with '*.' to cover its subdomains as well as itself.
+    | Leave it empty to accept any host, which is fine in development.
+    |
+    */
+
+    'trusted_hosts' => [
+        // 'contoh.test',
+        // '*.contoh.test',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | IP addresses of the reverse proxies that sit in front of the application,
+    | for example a load balancer or Cloudflare. Only when this list is filled
+    | in are the headers those proxies add (X-Forwarded-For, CF-Connecting-IP,
+    | and friends) read; until then the peer address is used as-is, because a
+    | client can send those headers itself.
+    |
+    | Leave it empty when the application is reached directly.
+    |
+    */
+
+    'trusted_proxies' => [
+        // '192.0.2.1',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Composer Autoload
     |--------------------------------------------------------------------------
     |

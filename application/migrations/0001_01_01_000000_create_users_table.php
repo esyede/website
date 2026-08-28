@@ -5,7 +5,7 @@ defined('DS') or exit('No direct access.');
 class Create_Users_Table
 {
     /**
-     * Buat perubahan di database.
+     * Run the migrations.
      *
      * @return void
      */
@@ -16,6 +16,7 @@ class Create_Users_Table
             $table->string('name', 191);
             $table->string('email', 191)->unique();
             $table->string('password', 60);
+            $table->string('remember_token', 100)->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
@@ -29,7 +30,7 @@ class Create_Users_Table
     }
 
     /**
-     * Urungkan perubahan di database.
+     * Reverse the migrations.
      *
      * @return void
      */

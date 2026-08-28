@@ -81,7 +81,10 @@ class Image
         $this->height = 0;
         $this->quality = $this->level($quality, 0, 100, 'quality');
 
-        $this->load($path);
+        // The resolved path, not the one that came in: path() anchors it to the
+        // project base, and reading it back relative to the working directory
+        // would look somewhere else entirely.
+        $this->load($this->path);
     }
 
     /**
@@ -94,9 +97,11 @@ class Image
      */
     public static function open($path, $quality = 75)
     {
-        if (! is_null(self::$singleton)) {
+        // Releasing the previous image is the point of holding on to it, but
+        // the one being asked for still has to be loaded: returning the reset
+        // instance handed back a blank object that no operation could work on.
+        if (! is_null(static::$singleton)) {
             static::$singleton->reset();
-            return static::$singleton;
         }
 
         return static::$singleton = new static($path, $quality);
@@ -128,13 +133,17 @@ class Image
         }
 
         switch ($this->type) {
-            case IMAGETYPE_JPEG: $this->image = imagecreatefromjpeg($path);
+            case IMAGETYPE_JPEG:
+                $this->image = imagecreatefromjpeg($path);
                 break;
-            case IMAGETYPE_PNG:  $this->image = imagecreatefrompng($path);
+            case IMAGETYPE_PNG:
+                $this->image = imagecreatefrompng($path);
                 break;
-            case IMAGETYPE_GIF:  $this->image = imagecreatefromgif($path);
+            case IMAGETYPE_GIF:
+                $this->image = imagecreatefromgif($path);
                 break;
-            default:             throw new \Exception('Attempting to load unsupported image type.');
+            default:
+                throw new \Exception('Attempting to load unsupported image type.');
         }
 
         return $this;
@@ -151,6 +160,9 @@ class Image
     {
         $value = (int) $value;
         $height = (int) (($value / $this->width) * $this->height);
+
+        $this->dimension($value, $height);
+
         $canvas = imagecreatetruecolor($value, $height);
 
         imagecopyresampled($canvas, $this->image, 0, 0, 0, 0, $value, $height, $this->width, $this->height);
@@ -172,6 +184,9 @@ class Image
     {
         $value = (int) $value;
         $width = (int) (($value / $this->height) * $this->width);
+
+        $this->dimension($width, $value);
+
         $canvas = imagecreatetruecolor($width, $value);
 
         imagecopyresampled($canvas, $this->image, 0, 0, 0, 0, $width, $value, $this->width, $this->height);
@@ -218,6 +233,8 @@ class Image
         if (($left + $width) > $this->width || ($top + $height) > $this->height) {
             throw new \Exception('The cropping selection is out of bounds.');
         }
+
+        $this->dimension($width, $height);
 
         $canvas = imagecreatetruecolor($width, $height);
         imagecopy($canvas, $this->image, 0, 0, $left, $top, $width, $height);
@@ -425,13 +442,17 @@ class Image
 
         switch ($extension) {
             case 'jpg':
-            case 'jpeg': $watermark = imagecreatefromjpeg($watermark);
+            case 'jpeg':
+                $watermark = imagecreatefromjpeg($watermark);
                 break;
-            case 'png':  $watermark = imagecreatefrompng($watermark);
+            case 'png':
+                $watermark = imagecreatefrompng($watermark);
                 break;
-            case 'gif':  $watermark = imagecreatefromgif($watermark);
+            case 'gif':
+                $watermark = imagecreatefromgif($watermark);
                 break;
-            default:     throw new \Exception('Only png, jpg and gif images are supported');
+            default:
+                throw new \Exception('Only png, jpg and gif images are supported');
         }
 
         imagealphablending($this->image, true);
@@ -466,13 +487,16 @@ class Image
         $this->maintain();
         $this->path = $this->path($path);
 
-        if (is_file($path) && ! $overwrite) {
+        if (is_file($this->path) && ! $overwrite) {
             throw new \Exception(sprintf('Destination file already exists: %s', $this->path));
         }
 
-        $extension = Storage::extension($this->path);
+        // Lower cased, because 'photo.JPG' names a JPEG just as much as
+        // 'photo.jpg' does, and 'jpeg' is the spelling most tools write.
+        $extension = strtolower(Storage::extension($this->path));
 
         switch ($extension) {
+            case 'jpeg':
             case 'jpg':
                 if (! imagejpeg($this->image, $this->path, $this->quality)) {
                     throw new \Exception('The JPG file could not be saved!');
@@ -489,7 +513,7 @@ class Image
                 break;
 
             case 'gif':
-                if (! imagegif($this->image, $this->path, $this->quality)) {
+                if (! imagegif($this->image, $this->path)) {
                     throw new \Exception('The GIF file could not be saved.');
                 }
                 break;
@@ -506,9 +530,26 @@ class Image
      */
     public function dump()
     {
-        $result = imagepng($this->image);
+        $result = static::render($this->image);
         $this->reset();
-        return $result;
+
+        return Response::make($result, 200, ['Content-Type' => 'image/png']);
+    }
+
+    /**
+     * Get the PNG bytes of an image resource. Without a path imagepng() writes
+     * straight to the output buffer and answers a bool, so it has to be caught.
+     *
+     * @param resource|\GdImage $image
+     *
+     * @return string
+     */
+    protected static function render($image)
+    {
+        ob_start();
+        imagepng($image);
+
+        return (string) ob_get_clean();
     }
 
     /**
@@ -521,13 +562,17 @@ class Image
         $type = null;
 
         switch ($this->type) {
-            case IMAGETYPE_JPEG: $type = 'image/jpeg';
+            case IMAGETYPE_JPEG:
+                $type = 'image/jpeg';
                 break;
-            case IMAGETYPE_PNG:  $type = 'image/png';
+            case IMAGETYPE_PNG:
+                $type = 'image/png';
                 break;
-            case IMAGETYPE_GIF:  $type = 'image/gif';
+            case IMAGETYPE_GIF:
+                $type = 'image/gif';
                 break;
-            default:             throw new \Exception('Only jpg, png and gif image are supported');
+            default:
+                throw new \Exception('Only jpg, png and gif image are supported');
         }
 
         return [
@@ -646,7 +691,7 @@ class Image
         }
 
         imagesavealpha($image, true);
-        $result = imagepng($image);
+        $result = static::render($image);
 
         if (PHP_VERSION_ID < 80000) {
             /* @disregard */
@@ -693,6 +738,23 @@ class Image
     }
 
     /**
+     * Make sure a size GD is about to be handed is one it can work with.
+     *
+     * @param int $width
+     * @param int $height
+     */
+    protected function dimension($width, $height)
+    {
+        if ((int) $width < 1 || (int) $height < 1) {
+            throw new \Exception(sprintf(
+                'The resulting image size must be at least 1x1, %dx%d given.',
+                $width,
+                $height
+            ));
+        }
+    }
+
+    /**
      * Helper method to maintain image dimensions.
      */
     protected function maintain()
@@ -710,7 +772,7 @@ class Image
      */
     public function path($path)
     {
-        return path('base').str_replace(['/', '\\'], DS, ltrim(ltrim($path, '/'), '\\'));
+        return path('base') . str_replace(['/', '\\'], DS, ltrim(ltrim($path, '/'), '\\'));
     }
 
     /**

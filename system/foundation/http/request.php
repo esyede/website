@@ -60,6 +60,9 @@ class Request
 
     protected static $trustedProxies = [];
 
+    /** @var array */
+    protected static $trustedHosts = [];
+
     protected static $trustedHeaders = [
         self::HEADER_CLIENT_IP => 'X_FORWARDED_FOR',
         self::HEADER_CLIENT_HOST => 'X_FORWARDED_HOST',
@@ -354,6 +357,59 @@ class Request
     {
         self::$trustedProxies = $proxies;
         self::$trustProxy = count($proxies) > 0;
+    }
+
+    /**
+     * Set the host names this application answers to. The Host header is
+     * written by the client, so a request naming anything else is refused once
+     * this list is filled in. An empty list accepts whatever arrives.
+     *
+     * A name may start with '*.' to cover its subdomains as well as itself.
+     *
+     * @param array $hosts
+     */
+    public static function setTrustedHosts(array $hosts)
+    {
+        self::$trustedHosts = [];
+
+        foreach ($hosts as $host) {
+            $host = strtolower(trim((string) $host));
+
+            if ('' !== $host) {
+                self::$trustedHosts[] = $host;
+            }
+        }
+    }
+
+    /**
+     * Check a host name against the list of the ones this application answers to.
+     *
+     * @param string $host
+     *
+     * @return bool
+     */
+    protected static function trustedHost($host)
+    {
+        if (empty(self::$trustedHosts)) {
+            return true;
+        }
+
+        foreach (self::$trustedHosts as $trusted) {
+            if ($host === $trusted) {
+                return true;
+            }
+
+            if (0 === strpos($trusted, '*.')) {
+                $suffix = substr($trusted, 1);
+
+                if ($host === substr($suffix, 1)
+                    || $suffix === substr($host, -mb_strlen($suffix, '8bit'))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -729,6 +785,10 @@ class Request
             throw new \UnexpectedValueException(sprintf('Invalid host: %s', $host));
         }
 
+        if ($host && ! static::trustedHost($host)) {
+            throw new \UnexpectedValueException(sprintf('Untrusted host: %s', $host));
+        }
+
         return $host;
     }
 
@@ -741,6 +801,17 @@ class Request
     {
         $this->method = null;
         $this->server->set('REQUEST_METHOD', $method);
+    }
+
+    /**
+     * Get the request method as the server reported it, ignoring any spoofing
+     * done through '_method' or the 'X-Http-Method-Override' header.
+     *
+     * @return string
+     */
+    public function getRealMethod()
+    {
+        return strtoupper((string) $this->server->get('REQUEST_METHOD', 'GET'));
     }
 
     /**

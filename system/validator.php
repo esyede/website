@@ -162,6 +162,8 @@ class Validator
     {
         $this->errors = new Messages();
 
+        $this->rules = $this->expand_rules($this->rules);
+
         foreach ($this->rules as $attribute => $rules) {
             foreach ($rules as $rule) {
                 $this->check($attribute, $rule);
@@ -169,6 +171,89 @@ class Validator
         }
 
         return 0 === count($this->errors->messages);
+    }
+
+    /**
+     * Replace every attribute holding '*' with the concrete attributes it
+     * stands for, so the rest of the class only ever sees real attributes.
+     *
+     * @param array $rules
+     *
+     * @return array
+     */
+    protected function expand_rules(array $rules)
+    {
+        $expanded = [];
+
+        foreach ($rules as $attribute => $set) {
+            if (false === strpos((string) $attribute, '*')) {
+                $expanded[$attribute] = $set;
+                continue;
+            }
+
+            foreach ($this->expand($attribute) as $target) {
+                $expanded[$target] = isset($expanded[$target])
+                    ? array_merge($expanded[$target], $set)
+                    : $set;
+
+                $this->inherit_messages($attribute, $target);
+            }
+        }
+
+        return $expanded;
+    }
+
+    /**
+     * Let a message written for 'items.*' answer for 'items.0' as well.
+     *
+     * @param string $wildcard
+     * @param string $target
+     */
+    protected function inherit_messages($wildcard, $target)
+    {
+        foreach ($this->messages as $key => $message) {
+            if (0 === strpos((string) $key, $wildcard.'_')) {
+                $inherited = $target.substr((string) $key, mb_strlen($wildcard, '8bit'));
+
+                if (! array_key_exists($inherited, $this->messages)) {
+                    $this->messages[$inherited] = $message;
+                }
+            }
+        }
+    }
+
+    /**
+     * Turn an attribute holding '*' into the concrete attributes it stands for.
+     * An attribute without one is its own only target.
+     *
+     * @param string $attribute
+     *
+     * @return array
+     */
+    protected function expand($attribute)
+    {
+        if (false === strpos($attribute, '*')) {
+            return [$attribute];
+        }
+
+        list($before, $after) = explode('*', $attribute, 2);
+
+        $before = rtrim($before, '.');
+        $after = ltrim($after, '.');
+        $values = ('' === $before) ? $this->attributes : Arr::get($this->attributes, $before);
+
+        if (! is_array($values)) {
+            return [];
+        }
+
+        $targets = [];
+
+        foreach (array_keys($values) as $key) {
+            $target = ('' === $before) ? (string) $key : $before.'.'.$key;
+            $targets = array_merge($targets, $this->expand(('' === $after) ? $target : $target.'.'.$after));
+        }
+
+        return $targets;
     }
 
     /**
@@ -262,6 +347,10 @@ class Validator
         }
 
         if (! is_null(Input::file($attribute)) && is_array($value) && '' === trim((string) $value['tmp_name'])) {
+            return false;
+        }
+
+        if ((is_array($value) || $value instanceof \Countable) && count($value) < 1) {
             return false;
         }
 
@@ -658,7 +747,7 @@ class Validator
      */
     protected function validate_filled($attribute, $value)
     {
-        return ! empty($value);
+        return $this->validate_required($attribute, $value);
     }
 
     /**
@@ -824,11 +913,9 @@ class Validator
      */
     protected function validate_in_array($attribute, $value, array $parameters)
     {
-        if (! array_key_exists($parameters[0], $this->attributes)) {
-            return false;
-        }
+        // 'colors.*' names the values of 'colors', which is the array to look in.
+        $other = Arr::get($this->attributes, rtrim(rtrim($parameters[0], '*'), '.'));
 
-        $other = $this->attributes[$parameters[0]];
         return is_array($other) && in_array($value, $other);
     }
 
@@ -981,6 +1068,10 @@ class Validator
 
         if (is_array($value) && isset($value['size']) && array_key_exists($attribute, (array) Input::file())) {
             return $value['size'] / 1024;
+        }
+
+        if (is_array($value) || $value instanceof \Countable) {
+            return count($value);
         }
 
         return Str::length(trim((string) $value));
@@ -1165,9 +1256,16 @@ class Validator
      *
      * @return bool
      */
-    protected function validate_image($attribute, $value)
+    protected function validate_image($attribute, $value, array $parameters = [])
     {
-        return $this->validate_mimes($attribute, $value, ['jpeg', 'png', 'gif', 'bmp', 'svg', 'webp']);
+        $types = ['jpeg', 'png', 'gif', 'bmp', 'webp'];
+
+        // SVG can carry script, so it is only allowed when asked for by name.
+        if (in_array('allow_svg', $parameters)) {
+            $types[] = 'svg';
+        }
+
+        return $this->validate_mimes($attribute, $value, $types);
     }
 
     /**
@@ -1914,8 +2012,19 @@ class Validator
      */
     protected function validate_date_format($attribute, $value, array $parameters)
     {
-        return (is_string($parameters[0]) || is_numeric($parameters[0]))
-            && false !== date_create_from_format($parameters[0], $value);
+        if (! is_string($parameters[0]) && ! is_numeric($parameters[0])) {
+            return false;
+        }
+
+        if (! is_string($value) && ! is_numeric($value)) {
+            return false;
+        }
+
+        $date = date_create_from_format($parameters[0], (string) $value);
+
+        // A loose parser accepts '2026-1-1' for 'Y-m-d', so the formatted date
+        // has to read back the same as what came in.
+        return false !== $date && $date->format($parameters[0]) === (string) $value;
     }
 
     /**
@@ -1961,9 +2070,17 @@ class Validator
      */
     protected function size_message($package, $attribute, $rule)
     {
-        $line = $this->has_rule($attribute, $this->numerics)
-            ? 'numeric'
-            : (array_key_exists($attribute, Input::file()) ? 'file' : 'string');
+        $value = Arr::get($this->attributes, $attribute);
+
+        if ($this->has_rule($attribute, $this->numerics)) {
+            $line = 'numeric';
+        } elseif (array_key_exists($attribute, Input::file())) {
+            $line = 'file';
+        } elseif (is_array($value) || $value instanceof \Countable) {
+            $line = 'array';
+        } else {
+            $line = 'string';
+        }
 
         return Lang::line($package.'validation.'.$rule.'.'.$line)->get($this->language);
     }

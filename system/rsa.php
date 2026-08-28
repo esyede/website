@@ -34,15 +34,17 @@ class RSA
         $key_details = openssl_pkey_get_details($pubkey);
         $length = (int) ceil($key_details['bits'] / 8) - ($padding === OPENSSL_PKCS1_OAEP_PADDING ? 42 : 11);
         $data = (string) $data;
+        $total = mb_strlen($data, '8bit');
         $result = '';
 
-        while ($data) {
-            $chunk = mb_substr($data, 0, $length, '8bit');
-            $data = mb_substr($data, $length, null, '8bit');
+        // Walking with an offset rather than shrinking the string: a remainder
+        // of '0' is falsy, and testing it would drop the last chunk.
+        for ($offset = 0; $offset < $total; $offset += $length) {
+            $chunk = mb_substr($data, $offset, $length, '8bit');
             $temp = '';
 
             if (! openssl_public_encrypt($chunk, $temp, $pubkey, $padding)) {
-                throw new \Exception('Failed to encrypt the data: '.static::get_openssl_errors());
+                throw new \Exception('Failed to encrypt the data: ' . static::get_openssl_errors());
             }
 
             $result .= $temp;
@@ -69,21 +71,21 @@ class RSA
         static::generate();
 
         if (! ($privkey = openssl_pkey_get_private(static::$details['private_key']))) {
-            throw new \Exception('Failed to obtain private key: '.static::get_openssl_errors());
+            throw new \Exception('Failed to obtain private key: ' . static::get_openssl_errors());
         }
 
         $key = openssl_pkey_get_details($privkey);
         $length = (int) ceil($key['bits'] / 8);
+        $encrypted = (string) $encrypted;
+        $total = mb_strlen($encrypted, '8bit');
         $result = '';
 
-        while ($encrypted) {
-            $encrypted = (string) $encrypted;
-            $chunk = mb_substr($encrypted, 0, $length, '8bit');
-            $encrypted = mb_substr($encrypted, $length, null, '8bit');
+        for ($offset = 0; $offset < $total; $offset += $length) {
+            $chunk = mb_substr($encrypted, $offset, $length, '8bit');
             $temp = '';
 
             if (! openssl_private_decrypt($chunk, $temp, $privkey, $padding)) {
-                throw new \Exception('Failed to decrypt the data: '.static::get_openssl_errors());
+                throw new \Exception('Failed to decrypt the data: ' . static::get_openssl_errors());
             }
 
             $result .= $temp;
@@ -105,10 +107,10 @@ class RSA
     private static function generate()
     {
         if (! static::$details['private_key'] || ! static::$details['public_key']) {
-            $config = path('storage').'openssl.conf';
-            $rnd = path('storage').'.rnd';
+            $config = path('storage') . 'openssl.conf';
+            $rnd = path('storage') . '.rnd';
             static::$details['options'] = ['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'config' => $config];
-            static::$details['config'] = 'HOME='.path('storage').LF.'RANDFILE='.$rnd.LF.'[req]'.LF.'default_bits=2048'.LF.'[v3_ca]'.LF;
+            static::$details['config'] = 'HOME=' . path('storage') . LF . 'RANDFILE=' . $rnd . LF . '[req]' . LF . 'default_bits=2048' . LF . '[v3_ca]' . LF;
             is_file($config) && unlink($config);
             file_put_contents($config, static::$details['config'], LOCK_EX);
 
@@ -119,15 +121,17 @@ class RSA
                     $errors = null;
 
                     while (false !== ($message = openssl_error_string())) {
-                        $errors .= $message.PHP_EOL;
+                        $errors .= $message . PHP_EOL;
                     }
 
                     throw new \Exception(sprintf('Failed to export private key: %s', $errors));
                 }
             }
 
+            $privkey = null;
+
             if (! static::$details['public_key']) {
-                if (! isset($privkey)) {
+                if (is_null($privkey)) {
                     $privkey = openssl_pkey_get_private(static::$details['private_key']);
                 }
 
@@ -141,8 +145,10 @@ class RSA
             }
 
             if ((static::$details['private_key'] || static::$details['public_key']) && PHP_VERSION_ID < 80000) {
-                /* @disregard */
-                openssl_free_key($privkey);
+                if (! is_null($privkey)) {
+                    /* @disregard */
+                    openssl_free_key($privkey);
+                }
             }
 
             is_file($config) && unlink($config);
@@ -168,7 +174,7 @@ class RSA
             $privkey = openssl_pkey_get_private($private_key);
 
             if (! $privkey) {
-                throw new \Exception('Invalid private key: '.static::get_openssl_errors());
+                throw new \Exception('Invalid private key: ' . static::get_openssl_errors());
             }
 
             $details = openssl_pkey_get_details($privkey);
@@ -213,7 +219,7 @@ class RSA
         $errors = '';
 
         while (false !== ($message = openssl_error_string())) {
-            $errors .= $message.PHP_EOL;
+            $errors .= $message . PHP_EOL;
         }
 
         return trim($errors);

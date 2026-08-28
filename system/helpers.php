@@ -12,7 +12,7 @@ if (! function_exists('e')) {
      */
     function e($value)
     {
-        return htmlentities((string) $value, ENT_QUOTES, 'UTF-8', false);
+        return htmlentities((string) $value, ENT_QUOTES, 'UTF-8', true);
     }
 }
 
@@ -551,7 +551,7 @@ if (! function_exists('session')) {
     {
         if (is_array($key)) {
             foreach ($key as $name => $value) {
-                \System\Session::set($name, $value);
+                \System\Session::put($name, $value);
             }
 
             return true;
@@ -643,7 +643,7 @@ if (! function_exists('old')) {
      *
      * @return mixed
      */
-    function old($key, $default = null)
+    function old($key = null, $default = null)
     {
         return \System\Input::old($key, $default);
     }
@@ -884,7 +884,7 @@ if (! function_exists('yield_section')) {
      *
      * @return string
      */
-    function yield_section($section)
+    function yield_section($section = null)
     {
         return \System\Section::yield_section($section);
     }

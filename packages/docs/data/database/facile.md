@@ -508,7 +508,20 @@ class User extends Facile
 $user = User::create(Input::all());
 ```
 
+Use `'*'` to close everything and open the model up through `$fillable` alone:
+
+```php
+class User extends Facile
+{
+    public static $guarded = ['*'];
+    public static $fillable = ['name', 'email'];
+}
+```
+
 > **Note:** If `$fillable` is not set, all attributes can be mass-assigned (except those in `$guarded`).
+> That default is permissive on purpose, but it does mean `Model::create(Input::all())` will
+> happily write any column the request names. Declare `$fillable`, or guard with `'*'`, on any
+> model that holds something a visitor should not be able to set.
 
 <a id="model-validation"></a>
 ## Model Validation
@@ -1212,14 +1225,22 @@ $user->roles()->sync([1, 2, 3]);
 
 **Access pivot data:**
 
+A pivot column other than the two keys is read only when you ask for it, the way
+`withPivot()` works in Laravel:
+
 ```php
 $user = User::find(1);
 
-foreach ($user->roles as $role) {
+foreach ($user->roles()->with(['expires_at', 'created_by'])->get() as $role) {
     echo $role->pivot->expires_at;
     echo $role->pivot->created_by;
 }
 ```
+
+> The pivot table needs nothing but the two key columns. Ask for `id`,
+> `created_at` or anything else the same way. To have `attach()` fill timestamps
+> on every pivot table, set `System\Database\Facile\Pivot::$timestamps = true`
+> in `application/boot.php` — the columns have to exist for that to work.
 
 **Insert with pivot data:**
 
