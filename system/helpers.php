@@ -12,6 +12,12 @@ if (! function_exists('e')) {
      */
     function e($value)
     {
+        // A value that says it is already html is printed as it is, which is
+        // what lets {{ $slot }} and {{ $attributes }} carry markup.
+        if ($value instanceof \System\Htmlable) {
+            return $value->to_html();
+        }
+
         return htmlentities((string) $value, ENT_QUOTES, 'UTF-8', true);
     }
 }
@@ -669,7 +675,7 @@ if (! function_exists('abort')) {
             $message = json_encode(compact('status', 'message'));
             $headers = array_merge($headers, ['Content-Type' => 'application/json']);
         } else {
-            $view = \System\View::exists('error.'.$code) ? 'error.'.$code : 'error.unknown';
+            $view = \System\View::exists('error.' . $code) ? 'error.' . $code : 'error.unknown';
             $message = \System\View::make($view)->render();
         }
 
@@ -745,7 +751,7 @@ if (! function_exists('csrf_field')) {
      */
     function csrf_field()
     {
-        return sprintf('<input type="hidden" name="%s" value="%s">'.PHP_EOL, csrf_name(), csrf_token());
+        return sprintf('<input type="hidden" name="%s" value="%s">' . PHP_EOL, csrf_name(), csrf_token());
     }
 }
 
@@ -1064,7 +1070,7 @@ if (! function_exists('get_cli_option')) {
         foreach ($arguments as $argument) {
             $argument = (string) $argument;
 
-            if (0 === strpos($argument, '--'.$option.'=')) {
+            if (0 === strpos($argument, '--' . $option . '=')) {
                 return substr($argument, mb_strlen($option, '8bit') + 3);
             }
         }
@@ -1093,12 +1099,13 @@ if (! function_exists('has_cli_flag')) {
         foreach ($arguments as $argument) {
             $argument = (string) $argument;
 
-            if ('-'.$flag === $argument || '--'.$flag === $argument) {
+            if ('-' . $flag === $argument || '--' . $flag === $argument) {
                 return true;
             }
 
             // Single letter flags may also be given as a bundle (e.g. '-abc').
-            if (1 === strlen($flag)
+            if (
+                1 === strlen($flag)
                 && '-' === substr($argument, 0, 1)
                 && '--' !== substr($argument, 0, 2)
                 && false !== strpos(substr($argument, 1), $flag)
@@ -1119,7 +1126,7 @@ if (! function_exists('system_os')) {
      */
     function system_os()
     {
-        if ('\\' === DIRECTORY_SEPARATOR) {
+        if ('\\' === DS) {
             return 'Windows';
         }
 
@@ -1158,6 +1165,6 @@ if (! function_exists('human_filesize')) {
         $bytes = round($bytes / pow(1024, $power), $precision);
         $bytes = $negative ? -$bytes : $bytes;
 
-        return sprintf('%.'.$precision.'f %s', $bytes, $units[$power]);
+        return sprintf('%.' . $precision . 'f %s', $bytes, $units[$power]);
     }
 }
