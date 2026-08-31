@@ -66,7 +66,7 @@ class Memcached extends Driver
         ];
 
         /* @disregard */
-        $this->memcached->set($this->key.'data:'.$id, $data, 0); // 0 = tidak pernah expired
+        $this->memcached->set($this->key.'data:'.$id, $data, 0); // 0 = never expires
         /** @disregard */
         $jobs = $this->memcached->get($this->key.'queue:'.$queue.':'.$name);
         $jobs = $jobs ?: [];
