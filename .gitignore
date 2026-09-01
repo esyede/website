@@ -8,8 +8,34 @@ _ide_helper.php
 .idea
 *.iml
 
-# Netbeans
+# IDEs and AI tools
 nbproject
+.vscode
+*.code-workspace
+.zed
+.claude
+.cursor
+.c9
+*.launch
+
+# AI coding agents
+.commandcode
+.opencode
+.mimo
+.mimocode
+.cline
+.roo
+.windsurf
+.codeium
+.continue
+.aider
+.aider.*
+.codex
+.gemini
+.qwen
+.trae
+.cascade
+.pi
 
 # Zend studio eclipse
 .buildpath
@@ -24,7 +50,7 @@ nbproject
 # Vscode
 .vscode
 
-# Cache thumbnail windows
+# Windows Thumbs.db
 Thumbs.db
 
 # Composer
@@ -40,12 +66,16 @@ phpunit.phar
 phpunit.xml
 .phpunit.result.cache
 
-# Nodejs
+# NodeJS
 /node_modules
 npm-debug.log
 yarn-error.log
 .env.backup
 .env
+nul
 
 # Others
 *.phar
+
+# Docs search index (auto-generated)
+storage/docs-search-data.json
