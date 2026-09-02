@@ -2,7 +2,7 @@
     <div class="shell shell--flush">
         <div class="footer__grid">
             <div class="footer__col">
-                <a class="footer__brand" href="{{ URL::home() }}">Rakit</a>
+                <a class="footer__brand" href="{{ URL::home() }}">RAKIT</a>
                 <p class="footer__credit">
                     Made with
                     <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true">
@@ -35,7 +35,7 @@
             </div>
         </div>
     </div>
-    <p class="footer__base">Rakit {{ RAKIT_VERSION }} &mdash; PHP 5.4 to 8.x</p>
+    <p class="footer__base">RAKIT {{ RAKIT_VERSION }} &mdash; PHP 5.4 to 8.x</p>
 </footer>
 
 <script type="text/javascript" src="{{ asset('main/js/main.min.js?v=' . RAKIT_VERSION) }}"></script>

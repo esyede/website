@@ -1,7 +1,7 @@
 <header class="nav">
     <div class="shell nav__inner">
         <div class="nav__left">
-            <a class="nav__brand" href="{{ URL::home() }}">Rakit</a>
+            <a class="nav__brand" href="{{ URL::home() }}">RAKIT</a>
             <nav id="navMenuMore" class="nav__links">
                 <a class="nav__link{{ System\Str::starts_with($page, 'Home') ? ' is-current' : '' }}"
                     href="{{ URL::home() }}">Home</a>
