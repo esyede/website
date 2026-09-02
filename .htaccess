@@ -9,7 +9,7 @@ RewriteCond %{REQUEST_URI} (.+)/$
 RewriteRule ^ %1 [L,R=301]
 
 RewriteRule ^(application|cgi-bin|packages|storage|system|vendor)/(.*)?$ / [F,L]
-RewriteRule ^composer\.(lock|json)$ / [F,L]
+RewriteRule ^(key\.php|composer\.(lock|json))$ / [F,L]
 RewriteRule ^\.ftp-deploy - [F,L]
 
 RewriteCond %{REQUEST_FILENAME} !-f
