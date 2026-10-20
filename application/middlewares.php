@@ -33,8 +33,22 @@ Route::middleware('auth', function () {
     }
 });
 
-Route::middleware('throttle', function ($limit, $minutes) {
-    if (Throttle::exceeded($limit, $minutes)) {
-        return Throttle::error();
+Route::middleware('can', function ($ability, $model = null) {
+    // 'can:create,Post' passes the class to its policy; 'can:admin' a plain ability.
+    if (Gate::denies($ability, is_null($model) ? [] : [$model])) {
+        return Response::error(403);
+    }
+});
+
+Route::middleware('throttle', function ($limit, $minutes = 1) {
+    // 'throttle:60,1' counts per route and client; 'throttle:api' runs the limiter
+    // defined with Throttle::define('api', ...).
+    return Throttle::attempt($limit, $minutes);
+});
+
+Route::middleware('signed', function ($relative = null) {
+    // 'signed:relative' ignores the scheme and host, e.g. behind a proxy that changes them.
+    if (! URL::has_valid_signature('relative' !== $relative)) {
+        return Response::error(403);
     }
 });

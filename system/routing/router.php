@@ -98,6 +98,20 @@ class Router
     protected static $compiled = [];
 
     /**
+     * Names and actions find() and uses() looked up in vain, until a route is added.
+     *
+     * @var array
+     */
+    protected static $misses = [];
+
+    /**
+     * The regex splitting a route on its wildcards, with the tokens it was built for.
+     *
+     * @var array|null
+     */
+    protected static $splitter;
+
+    /**
      * List of supported regex patterns.
      *
      * @var array
@@ -218,16 +232,47 @@ class Router
                 ? static::$group['domain']
                 : null;
             $route_key = $group_domain ? ($group_domain.'||'.$uri) : $uri;
-            $routes[$method][$route_key] = is_array($action) ? $action : static::action($action);
-
-            if (! is_null(static::$group)) {
-                $routes[$method][$route_key] += static::$group;
-            }
+            $routes[$method][$route_key] = static::grouped(is_array($action) ? $action : static::action($action));
+            static::$misses = [];
 
             if (isset($routes[$method][$route_key]['domain'])) {
                 static::$domains = true;
             }
         }
+    }
+
+    /**
+     * Apply the current group to a route's action. The group's middleware runs before
+     * the route's own, never instead of it, and the group's 'as' prefixes the route's
+     * name; any other group attribute fills what the route does not set.
+     *
+     * @param array $action
+     *
+     * @return array
+     */
+    protected static function grouped(array $action)
+    {
+        if (is_null(static::$group)) {
+            return $action;
+        }
+
+        $group = static::$group;
+
+        foreach (['before', 'after'] as $event) {
+            if (isset($group[$event]) && isset($action[$event])) {
+                $action[$event] = static::join_middlewares($group[$event], $action[$event]);
+            }
+        }
+
+        if (isset($group['as'])) {
+            if (isset($action['as']) && '' !== (string) $action['as']) {
+                $action['as'] = $group['as'].$action['as'];
+            }
+
+            unset($group['as']);
+        }
+
+        return $action + $group;
     }
 
     /**
@@ -249,6 +294,8 @@ class Router
                     $merged[$key] = static::join_prefix(Arr::get($merged, $key, ''), $value);
                 } elseif ('before' === $key || 'after' === $key) {
                     $merged[$key] = static::join_middlewares(Arr::get($merged, $key), $value);
+                } elseif ('as' === $key) {
+                    $merged[$key] = Arr::get($merged, $key, '').$value;
                 } else {
                     $merged[$key] = $value;
                 }
@@ -373,6 +420,11 @@ class Router
             return static::$names[$name];
         }
 
+        // URL::home() asks for 'home' on every call: remember that there is none.
+        if (isset(static::$misses['name:'.$name])) {
+            return null;
+        }
+
         if (0 === count(static::$names)) {
             $packages = Package::names();
 
@@ -390,6 +442,8 @@ class Router
                 }
             }
         }
+
+        static::$misses['name:'.$name] = true;
     }
 
     /**
@@ -405,6 +459,10 @@ class Router
             return static::$uses[$action];
         }
 
+        if (isset(static::$misses['uses:'.$action])) {
+            return null;
+        }
+
         Package::routes(Package::name($action));
 
         $routings = static::routes();
@@ -416,6 +474,8 @@ class Router
                 }
             }
         }
+
+        static::$misses['uses:'.$action] = true;
     }
 
     /**
@@ -504,14 +564,21 @@ class Router
             $route = static::uri($route_key);
 
             if (! isset(static::$compiled[$route])) {
+                // The literal text before the first wildcard, without the slash an
+                // optional wildcard starts with: 'users/(:num?)' still matches 'users'.
+                $prefix = rtrim((string) substr($route, 0, (int) strpos($route, '(')), '/');
                 static::$compiled[$route] = (false !== strpos($route, '('))
-                    ? '#^'.static::wildcards($route).'$#u'
+                    ? ['#^'.static::wildcards($route).'$#u', $prefix, strlen($prefix)]
                     : false;
             }
 
+            $compiled = static::$compiled[$route];
+
+            // A cheap prefix comparison skips most routes before running a regex.
             if (
-                false !== static::$compiled[$route]
-                && preg_match(static::$compiled[$route], $uri, $parameters)
+                false !== $compiled
+                && (0 === $compiled[2] || 0 === strncmp($uri, $compiled[1], $compiled[2]))
+                && preg_match($compiled[0], $uri, $parameters)
             ) {
                 return new Route($method, $route, $action, array_slice($parameters, 1));
             }
@@ -552,9 +619,16 @@ class Router
     protected static function wildcards($key)
     {
         $tokens = array_merge(static::$optional, static::$patterns);
-        $split = '#('.implode('|', array_map(function ($token) {
-            return preg_quote($token, '#');
-        }, array_keys($tokens))).')#';
+        $names = implode("\0", array_keys($tokens));
+
+        // Built once per set of tokens, not once per route: Route::bind() adds tokens.
+        if (is_null(static::$splitter) || static::$splitter[0] !== $names) {
+            static::$splitter = [$names, '#('.implode('|', array_map(function ($token) {
+                return preg_quote($token, '#');
+            }, array_keys($tokens))).')#'];
+        }
+
+        $split = static::$splitter[1];
 
         $pieces = preg_split($split, $key, -1, PREG_SPLIT_DELIM_CAPTURE);
         $regex = '';

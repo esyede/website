@@ -26,7 +26,22 @@ class Postgres extends Grammar
      */
     public function insert_get_id(Query $query, array $values, $column)
     {
-        return $this->insert($query, $values).' RETURNING '.$column;
+        return $this->insert($query, $values).' RETURNING '.$this->wrap($column);
+    }
+
+    /**
+     * Compile an INSERT that updates the records already there.
+     *
+     * @param Query $query
+     * @param array $values
+     * @param array $unique_by
+     * @param array $update
+     *
+     * @return string
+     */
+    public function upsert(Query $query, array $values, array $unique_by, array $update)
+    {
+        return $this->upsert_on_conflict($query, $values, $unique_by, $update);
     }
 
     /**

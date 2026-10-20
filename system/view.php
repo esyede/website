@@ -77,6 +77,13 @@ class View implements \ArrayAccess
     public static $rendered = 0;
 
     /**
+     * View paths file() has found during this request.
+     *
+     * @var array
+     */
+    public static $files = [];
+
+    /**
      * Constructor.
      *
      * @param string $view
@@ -220,15 +227,21 @@ class View implements \ArrayAccess
     public static function file($package, $view, $directory)
     {
         $directory = Str::finish($directory, DS);
+        $key = $directory.$view;
+
+        // A partial included in a loop is looked up once. Only hits are kept, and
+        // the worker bridge empties them per request, so new files are still found.
+        if (isset(static::$files[$key])) {
+            return static::$files[$key];
+        }
 
         if (is_file($path = $directory.$view.'.php')) {
-            return $path;
+            return static::$files[$key] = $path;
         }
 
         if (is_file($path = $directory.$view.'.blade.php')) {
-            return $path;
+            return static::$files[$key] = $path;
         }
-
     }
 
     /**
@@ -337,8 +350,10 @@ class View implements \ArrayAccess
 
         // Track view rendering for debugger
         if (
-            class_exists('\System\Foundation\Oops\Debugger')
-            && class_exists('\System\Foundation\Oops\Collectors')
+            // Debugger first, without autoload: in production (and on the CLI, where it
+            // is never booted) the collectors are not even loaded.
+            class_exists('\System\Foundation\Oops\Debugger', false)
+            && ! \System\Foundation\Oops\Debugger::$productionMode
         ) {
             if (! \System\Foundation\Oops\Debugger::$productionMode) {
                 $rakit_view_done = microtime(true);

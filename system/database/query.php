@@ -7,6 +7,7 @@ defined('DS') or exit('No direct access.');
 use System\Carbon;
 use System\Collection;
 use System\Paginator;
+use System\Paginator\Cursor;
 use System\Database\Query\Grammars\Grammar as QueryGrammar;
 
 class Query
@@ -940,8 +941,18 @@ class Query
     {
         $sql = $this->grammar->insert_get_id($this, $values, $column);
         // An INSERT has no WHERE: bindings added by scopes must stay out of it.
-        $this->connection->query($sql, array_values($values));
-        $id = $this->connection->pdo()->lastInsertId($sequence);
+        $result = $this->connection->query($sql, array_values($values));
+        $row = (is_array($result) && isset($result[0])) ? $result[0] : null;
+
+        // PostgreSQL returns the row's own key; lastInsertId() would read lastval(),
+        // the last value of any sequence, a trigger's insert elsewhere included.
+        if (is_object($row) && isset($row->{$column})) {
+            $id = $row->{$column};
+        } elseif (is_array($row) && isset($row[$column])) {
+            $id = $row[$column];
+        } else {
+            $id = $this->connection->pdo()->lastInsertId($sequence);
+        }
 
         if (! $id) {
             return null;
@@ -1810,7 +1821,8 @@ class Query
     }
 
     /**
-     * Lock the selected rows. A lock only holds inside a transaction.
+     * Lock the selected rows. A lock only holds inside a transaction. A string is
+     * written into the SQL as is, like raw(): never pass input to it.
      *
      * @param bool|string $value
      *
@@ -2118,6 +2130,178 @@ class Query
     }
 
     /**
+     * Insert records, or update the ones that already exist, in one query. A record
+     * exists when it matches on the unique_by columns, which need a unique index (or
+     * the primary key) on every driver but MySQL, which uses any unique key.
+     *
+     * @param array        $values    one record, or a list of them
+     * @param array|string $unique_by
+     * @param array|null   $update    the columns to update; NULL for every inserted one
+     *
+     * @return bool
+     */
+    public function upsert(array $values, $unique_by, $update = null)
+    {
+        if (0 === count($values)) {
+            return true;
+        }
+
+        $values = is_array(reset($values)) ? array_values($values) : [$values];
+        $unique_by = (array) $unique_by;
+        $columns = array_keys(reset($values));
+        $update = is_null($update) ? $columns : (array) $update;
+
+        if (0 === count($update)) {
+            return $this->insert_or_ignore($values);
+        }
+
+        $bindings = [];
+
+        foreach ($values as $value) {
+            foreach ($columns as $column) {
+                $bindings[] = array_key_exists($column, $value) ? $value[$column] : null;
+            }
+        }
+
+        $this->connection->query($this->grammar->upsert($this, $values, $unique_by, $update), $bindings);
+
+        return true;
+    }
+
+    /**
+     * Paginate without counting: fetch one row more than a page to know whether
+     * another page follows. Cheaper on big tables; the paginator's total is NULL and
+     * its links only reach the next page.
+     *
+     * @param int      $perpage
+     * @param array    $columns
+     * @param string   $page_name
+     * @param int|null $page
+     *
+     * @return Paginator
+     */
+    public function simple_paginate($perpage = 20, array $columns = ['*'], $page_name = 'page', $page = null)
+    {
+        $perpage = max(1, (int) $perpage);
+        $page = is_null($page) ? \System\Input::get($page_name, 1) : $page;
+        $page = (is_scalar($page) && (int) $page > 0) ? (int) $page : 1;
+
+        $results = $this->skip(($page - 1) * $perpage)->take($perpage + 1)->get($columns);
+        $items = ($results instanceof Collection) ? $results->all() : (array) $results;
+        $more = count($items) > $perpage;
+        $items = array_slice($items, 0, $perpage);
+
+        // A total that makes the next page, and only that one, exist.
+        $total = (($page - 1) * $perpage) + count($items) + ($more ? 1 : 0);
+        $paginator = Paginator::make(new Collection($items), $total, $perpage, $page_name, $page);
+        $paginator->total = null;
+
+        return $paginator;
+    }
+
+    /**
+     * Paginate by position instead of page number: each page starts after the last row of
+     * the one before, so deep pages cost as little as the first and rows added meanwhile
+     * never shift a page. The ORDER BY columns (the 'id' when none) must be plain columns,
+     * selected, never NULL, and together unique (end with the primary key).
+     *
+     * @param int         $perpage
+     * @param array       $columns
+     * @param string      $cursor_name
+     * @param string|null $cursor
+     *
+     * @return Cursor
+     */
+    public function cursor_paginate($perpage = 20, array $columns = ['*'], $cursor_name = 'cursor', $cursor = null)
+    {
+        $perpage = max(1, (int) $perpage);
+
+        if (empty($this->orderings)) {
+            $this->order_by('id');
+        }
+
+        $orderings = [];
+
+        foreach ($this->orderings as $ordering) {
+            if (! is_string($ordering['column'])) {
+                throw new \Exception('cursor_paginate() needs plain ORDER BY columns, not raw expressions.');
+            }
+
+            $orderings[$ordering['column']] = $ordering['direction'];
+        }
+
+        // The row attribute of 'users.id' is 'id'.
+        $keys = array_map(function ($column) {
+            $dot = strrpos($column, '.');
+            return (false === $dot) ? $column : substr($column, $dot + 1);
+        }, array_keys($orderings));
+
+        $cursor = is_null($cursor) ? \System\Input::get($cursor_name) : $cursor;
+        $position = Cursor::decode($cursor, $keys);
+        $backwards = $position && $position[1];
+
+        if ($position) {
+            $values = array_values($position[0]);
+            $columns_ = array_keys($orderings);
+
+            // (a > x) OR (a = x AND b > y) OR ..., each comparison in its column's direction.
+            $this->where(function ($query) use ($orderings, $columns_, $values, $backwards) {
+                foreach ($columns_ as $i => $column) {
+                    $query->or_where(function ($query) use ($orderings, $columns_, $values, $backwards, $i, $column) {
+                        for ($j = 0; $j < $i; ++$j) {
+                            $query->where($columns_[$j], '=', $values[$j]);
+                        }
+
+                        $query->where($column, (('asc' === $orderings[$column]) xor $backwards) ? '>' : '<', $values[$i]);
+                    });
+                }
+            });
+        }
+
+        if ($backwards) {
+            foreach ($this->orderings as $index => $ordering) {
+                $this->orderings[$index]['direction'] = ('asc' === $ordering['direction']) ? 'desc' : 'asc';
+            }
+        }
+
+        $results = $this->take($perpage + 1)->get($columns);
+        $items = ($results instanceof Collection) ? $results->all() : (array) $results;
+        $more = count($items) > $perpage;
+        $items = array_slice($items, 0, $perpage);
+        $items = $backwards ? array_reverse($items) : $items;
+
+        $at = function ($item) use ($keys) {
+            $values = [];
+
+            foreach ($keys as $key) {
+                $value = is_array($item) ? (isset($item[$key]) ? $item[$key] : null) : (isset($item->{$key}) ? $item->{$key} : null);
+
+                if (! is_scalar($value)) {
+                    throw new \Exception(sprintf('cursor_paginate() needs the "%s" column selected and never NULL.', $key));
+                }
+
+                $values[$key] = $value;
+            }
+
+            return $values;
+        };
+
+        $next = $previous = null;
+
+        if (! empty($items)) {
+            if ($backwards || $more) {
+                $next = Cursor::encode($at(end($items)), false);
+            }
+
+            if ($backwards ? $more : (bool) $position) {
+                $previous = Cursor::encode($at(reset($items)), true);
+            }
+        }
+
+        return Cursor::cursor(new Collection($items), $perpage, $next, $previous, $cursor_name);
+    }
+
+    /**
      * Paginate the query results.
      *
      * @param int    $perpage
@@ -2154,7 +2338,9 @@ class Query
         $this->offset = null;
 
         $columns = $this->without_select_aliases($columns);
-        $grouped = (! empty($this->groupings) || ! empty($this->havings));
+        // DISTINCT counts too: COUNT(*) would count the duplicates distinct() removes,
+        // and COUNT(DISTINCT a, b) is MySQL only, so count the rows of the query itself.
+        $grouped = (! empty($this->groupings) || ! empty($this->havings) || $this->distinct);
         $total = $grouped ? $this->count_grouped($columns) : $this->aggregate('COUNT', $columns);
 
         $this->orderings = $orderings;

@@ -46,6 +46,10 @@ class Blade extends System\Blade
 {
 }
 
+class Broadcast extends System\Broadcast
+{
+}
+
 class Cache extends System\Cache
 {
 }
@@ -63,6 +67,10 @@ class Component extends System\Blade\Component
 }
 
 class Command extends System\Console\Commands\Command
+{
+}
+
+class Concurrency extends System\Concurrency
 {
 }
 
@@ -111,6 +119,10 @@ class Facile extends System\Database\Facile\Model
 }
 
 class Faker extends System\Foundation\Faker\Factory
+{
+}
+
+class Gate extends System\Gate
 {
 }
 
@@ -163,6 +175,10 @@ class Mailer extends System\Email\Drivers\Driver
     }
 }
 
+class Mailable extends System\Email\Mailable
+{
+}
+
 class Markdown extends System\Markdown
 {
 }
@@ -171,11 +187,19 @@ class Middleware extends System\Routing\Middleware
 {
 }
 
+class Notification extends System\Notification
+{
+}
+
 class Package extends System\Package
 {
 }
 
 class Paginator extends System\Paginator
+{
+}
+
+class Process extends System\Process
 {
 }
 
@@ -204,6 +228,10 @@ class RSA extends System\RSA
 }
 
 class Schema extends System\Database\Schema
+{
+}
+
+class Schedule extends System\Schedule
 {
 }
 

@@ -36,17 +36,23 @@
 -   [Cache Configuration](/docs/cache/config)
 -   [Using Cache](/docs/cache/usage)
 -   [Job (Queues & Scheduling)](/docs/job)
+-   [Task Scheduling](/docs/schedule)
 -   [Email](/docs/email)
+-   [Notifications](/docs/notifications)
+-   [Broadcasting](/docs/broadcasting)
 -   [Storage](/docs/storage)
 -   [HTTP Client (Curl)](/docs/curl)
+-   [Processes & Concurrency](/docs/process)
 -   [Localization](/docs/localization)
 -   [WebSocket](/docs/websocket)
 -   [Workers](/docs/workers)
+-   [HTTP Tests](/docs/testing)
 
 ### Security
 
 -   [Authentication Configuration](/docs/auth/config)
 -   [Using Authentication](/docs/auth/usage)
+-   [Authorization](/docs/auth/authorization)
 -   [Encryption](/docs/crypter)
 -   [RSA Encryption](/docs/rsa)
 -   [Hashing](/docs/hash)

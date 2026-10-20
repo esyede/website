@@ -17,6 +17,20 @@ abstract class Jobable
     protected $data = [];
 
     /**
+     * Attempts before the job is stored as failed; NULL for the configured retries.
+     *
+     * @var int|null
+     */
+    public static $tries;
+
+    /**
+     * Seconds to wait between attempts; NULL for the configured sleep.
+     *
+     * @var int|null
+     */
+    public static $backoff;
+
+    /**
      * Constructor.
      *
      * @param array $data
@@ -103,6 +117,16 @@ abstract class Jobable
     protected function get($key, $default = null)
     {
         return isset($this->data[$key]) ? $this->data[$key] : $default;
+    }
+
+    /**
+     * Get the batch this job runs in, e.g. to stop early: if ($this->batch()->cancelled()).
+     *
+     * @return Batch|null
+     */
+    protected function batch()
+    {
+        return Batch::current();
     }
 
     /**

@@ -15,18 +15,6 @@ require __DIR__.DS.'init.php';
 
 /*
 |--------------------------------------------------------------------------
-| Load Helpers and Autoloader
-|--------------------------------------------------------------------------
-| Before the core, so the debugger can initialize early.
-*/
-
-require path('system').'helpers.php';
-require_once path('system').'autoloader.php';
-spl_autoload_register(['\System\Autoloader', 'load']);
-\System\Autoloader::namespaces(['System' => path('system')]);
-
-/*
-|--------------------------------------------------------------------------
 | Run the Core Boot
 |--------------------------------------------------------------------------
 | Registers the autoloader and the packages. The framework is usable
@@ -54,6 +42,9 @@ Debugger::enable(null, path('storage').'logs');
 |--------------------------------------------------------------------------
 | The default package, which loads the core configuration of the framework.
 */
+
+// Decided before the package boots, so application/boot.php runs with it too.
+Config::$reload = (bool) Config::get('debugger.activate', false);
 
 Package::boot(DEFAULT_PACKAGE);
 
@@ -182,6 +173,22 @@ Routing\Router::register('*', '(:all)', function () {
 */
 
 if (defined('RAKIT_WORKER_MODE')) {
+    return;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Maintenance Mode
+|--------------------------------------------------------------------------
+| 'php rakit down' answers every request with a 503, except for allowed IPs
+| and visitors holding the bypass cookie.
+*/
+
+if (! is_null($response = Maintenance::check())) {
+    $response->render();
+    $response->send();
+    $response->foundation()->finish();
+
     return;
 }
 
@@ -320,3 +327,17 @@ Hook::fire('rakit.done', [$response]);
 */
 
 $response->foundation()->finish();
+
+/*
+|--------------------------------------------------------------------------
+| Terminate
+|--------------------------------------------------------------------------
+| The client has its response: run the deferred session sweep, then let
+| 'rakit.terminated' listeners do slow work nobody has to wait for.
+*/
+
+if (Config::get('session.driver')) {
+    Session::terminate();
+}
+
+Hook::fire('rakit.terminated', [$response]);

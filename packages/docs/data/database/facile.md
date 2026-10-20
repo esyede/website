@@ -417,9 +417,8 @@ class User extends Facile
 }
 
 $admins = User::role('admin')->order_by('name')->get();
+$admins = User::where('active', '=', 1)->role('admin')->verified()->get(); // scopes chain anywhere
 ```
-
-> A local scope must be the first call in the chain (`User::role(...)`); it cannot be chained after another query method.
 
 <a id="timestamps"></a>
 
@@ -607,6 +606,23 @@ $comments = Post::find(1)->comments;
 $parent = Comment::find(1)->commentable; // a Post, Video, ...
 ```
 
+The `{name}_type` column stores the parent's class name. `morph_to()` only turns it back into a
+Facile model: a value naming any other class, or no class, gives `null`, and that class is never
+loaded nor created.
+
+To store short names instead, independent of the class names, register a morph map once, in
+`application/boot.php`. Parents are then stored under their alias, and the aliases resolve back:
+
+```php
+Facile::morph_map([
+    'post' => 'Post',
+    'video' => 'Video',
+]);
+```
+
+Map every model before rows are written with the alias; existing rows that hold a class name keep
+working.
+
 <a id="relationship-queries"></a>
 <a id="querying-relationships"></a>
 
@@ -632,6 +648,23 @@ foreach (User::with_count('posts')->get() as $user) {
     echo $user->posts_count;
 }
 ```
+
+The other aggregates of a related column work the same way, and take a closure to constrain them:
+
+```php
+$users = User::with_sum('posts', 'votes')   // posts_sum_votes
+    ->with_avg('posts', 'votes')            // posts_avg_votes
+    ->with_min('posts', 'votes')            // posts_min_votes
+    ->with_max('posts', 'votes')            // posts_max_votes
+    ->with_exists('posts')                  // posts_exists: 1 or 0
+    ->get();
+
+User::with_sum(['posts' => function ($query) {
+    $query->where('published', '=', 1);
+}], 'votes')->get();
+```
+
+A sum, average, minimum or maximum over no related row is `null`.
 
 ```sql
 SELECT * FROM "users" WHERE EXISTS (
@@ -678,10 +711,17 @@ On `belongs_to_many`, manage the pivot rows. `attach()` and `detach()` accept an
 $user->roles()->attach($role_id);
 $user->roles()->detach($role_id);
 $user->roles()->sync([1, 2, 3]);   // attach missing, detach the rest
+$user->roles()->sync([1, 2 => ['level' => 'lead']]); // with pivot attributes
+$user->roles()->sync_without_detaching([4]);          // attach only
+$user->roles()->toggle([1, 5]);    // detach the attached ones, attach the others
+$user->roles()->update_existing_pivot(2, ['level' => 'senior']);
 $user->roles()->delete();          // detach all
 
 $user->roles()->insert(['name' => 'Editor']); // create the role and attach it
 ```
+
+`sync()`, `sync_without_detaching()` and `toggle()` return the IDs they changed, as
+`['attached' => [...], 'detached' => [...], 'updated' => [...]]`, and attach in one `INSERT`.
 
 <a id="working-with-pivot-tables"></a>
 <a id="pivot-tables"></a>
@@ -719,7 +759,30 @@ foreach ($posts as $post) {
 $posts = Post::with(['user', 'comments.user'])->get(); // several and nested
 ```
 
-Relations listed in the model's `$with` property are always eager loaded.
+A nested relation loads its parents too: `with('comments.user')` loads `comments`, then their
+`user`. Relations listed in the model's `$with` property are always eager loaded.
+
+Models already fetched can load relations afterwards, in one query per relation for the whole
+collection. `load_missing()` skips what is loaded already:
+
+```php
+$user = User::find(1)->load('posts');
+
+$users = User::where('active', '=', 1)->get();
+$users->load(['posts', 'roles']);
+$users->load_missing('posts.comments');
+```
+
+To catch N+1 queries during development, make lazy loading throw a
+`System\Exceptions\LazyLoadingException` for models fetched together with others. A single
+model, such as `User::find(1)->posts`, still loads lazily:
+
+```php
+// application/boot.php
+if (! Debugger::$productionMode) {
+    Facile::prevent_lazy_loading();
+}
+```
 
 > When all parent keys are integers they are written straight into the SQL (`IN (1, 2, 3)`) instead of being bound, so large result sets don't hit the driver's bound-parameter limit. Whether keys come back as integers depends on the PDO driver and PHP version (SQLite only on PHP 8.1+, SQL Server returns strings by default). String keys and polymorphic id columns always use bound parameters.
 

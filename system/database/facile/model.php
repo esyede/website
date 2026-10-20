@@ -177,6 +177,28 @@ abstract class Model implements \JsonSerializable
     public static $timestamps = true;
 
     /**
+     * The morph map, shared by every model: see morph_map().
+     *
+     * @var array
+     */
+    public static $morph_map = [];
+
+    /**
+     * Whether lazy loading a relationship of a model fetched with others throws: the
+     * N+1 query pattern, caught in development. See prevent_lazy_loading().
+     *
+     * @var bool
+     */
+    public static $prevent_lazy_loading = false;
+
+    /**
+     * Whether this model was fetched along with others, so lazy loading it is N+1.
+     *
+     * @var bool
+     */
+    public $fetched_with_others = false;
+
+    /**
      * Contains the table name that is associated with the model.
      *
      * @var string
@@ -363,8 +385,8 @@ abstract class Model implements \JsonSerializable
             }
 
             if (is_array(static::$fillable)) {
-                if (in_array($key, static::$fillable)) {
-                    $this->{$key} = $value;
+                if (in_array((string) $key, static::$fillable, true)) {
+                    $this->__set($key, $value);
                 }
 
                 continue;
@@ -381,7 +403,9 @@ abstract class Model implements \JsonSerializable
                 continue;
             }
 
-            $this->{$key} = $value;
+            // Through __set(), never a direct property write: a key named after a
+            // declared property ("attributes", "exists") would overwrite model state.
+            $this->__set($key, $value);
         }
 
         return $this;
@@ -556,6 +580,14 @@ abstract class Model implements \JsonSerializable
 
         if (! ($relationship instanceof Relationships\Relationship)) {
             return;
+        }
+
+        if (self::$prevent_lazy_loading && $this->fetched_with_others) {
+            throw new \System\Exceptions\LazyLoadingException(sprintf(
+                'Attempted to lazy load [%s] on model [%s]: eager load it with with().',
+                $key,
+                get_class($this)
+            ));
         }
 
         $this->relationships[$key] = $relationship->results();
@@ -1534,6 +1566,129 @@ abstract class Model implements \JsonSerializable
     }
 
     /**
+     * Make lazy loading a relationship of a model fetched with others throw, to catch
+     * N+1 queries. Call it in development, e.g. in application/boot.php.
+     *
+     * @param bool $prevent
+     */
+    public static function prevent_lazy_loading($prevent = true)
+    {
+        self::$prevent_lazy_loading = (bool) $prevent;
+    }
+
+    /**
+     * Eager load relationships onto this model, already fetched.
+     *
+     * @param array|string $relationships
+     *
+     * @return $this
+     */
+    public function load($relationships)
+    {
+        $this->query()->eager_load_into([$this], is_array($relationships) ? $relationships : func_get_args());
+        return $this;
+    }
+
+    /**
+     * Eager load the relationships this model has not loaded yet.
+     *
+     * @param array|string $relationships
+     *
+     * @return $this
+     */
+    public function load_missing($relationships)
+    {
+        $missing = static::missing_relationships([$this], is_array($relationships) ? $relationships : func_get_args());
+
+        if (count($missing) > 0) {
+            $this->query()->eager_load_into([$this], $missing);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Keep the relationships that one of the models has not loaded.
+     *
+     * @param array $models
+     * @param array $relationships
+     *
+     * @return array
+     */
+    public static function missing_relationships(array $models, array $relationships)
+    {
+        $missing = [];
+
+        foreach ($relationships as $key => $value) {
+            $name = is_string($key) ? $key : $value;
+            $top = strtok((string) $name, '.');
+
+            foreach ($models as $model) {
+                if (! array_key_exists($top, $model->relationships) || false !== strpos((string) $name, '.')) {
+                    is_string($key) ? $missing[$key] = $value : $missing[] = $value;
+                    break;
+                }
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Get or extend the morph map: the alias stored in "*_type" columns => model class.
+     * With a map, a model is stored under its alias, so renaming the class does not
+     * break the rows that point at it.
+     *
+     * @param array|null $map
+     *
+     * @return array
+     */
+    public static function morph_map($map = null)
+    {
+        if (is_array($map)) {
+            self::$morph_map = array_merge(self::$morph_map, $map);
+        }
+
+        return self::$morph_map;
+    }
+
+    /**
+     * Get the value stored in a "*_type" column for this model: its alias in the
+     * morph map, or its class name.
+     *
+     * @return string
+     */
+    public function morph_class()
+    {
+        $alias = array_search(get_class($this), self::$morph_map, true);
+        return (false === $alias) ? get_class($this) : (string) $alias;
+    }
+
+    /**
+     * Get the model class a "*_type" value stands for, or NULL. The value comes from
+     * the database, so only a mapped alias or a Facile model class is accepted:
+     * any other class is never loaded nor created.
+     *
+     * @param mixed $type
+     *
+     * @return string|null
+     */
+    public static function morph_resolve($type)
+    {
+        if (! is_string($type) || '' === $type) {
+            return null;
+        }
+
+        $class = isset(self::$morph_map[$type]) ? ltrim((string) self::$morph_map[$type], '\\') : ltrim($type, '\\');
+
+        if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*$/', $class)) {
+            return null;
+        }
+
+        return (class_exists($class) && is_subclass_of($class, __CLASS__)) ? $class : null;
+    }
+
+    /**
      * Get the query for a polymorphic morph-to relationship.
      *
      * @param string $name
@@ -1546,7 +1701,8 @@ abstract class Model implements \JsonSerializable
     {
         $type = is_null($type) ? $name . '_type' : $type;
         $id = is_null($id) ? $name . '_id' : $id;
-        $model = $this->get_attribute($type);
+        // The type column is data: resolve it to a model class, or to nothing at all.
+        $model = static::morph_resolve($this->get_attribute($type));
         return new Relationships\MorphTo($this, (string) $model, $type, $id);
     }
 
@@ -1677,11 +1833,11 @@ abstract class Model implements \JsonSerializable
                     $this->updated_at = $values['updated_at'] = $this->deleted_at;
                 }
 
-                $this->query()->where(static::$key, '=', $this->get_key())->update($values);
+                $this->query()->where(static::$key, '=', $this->original_key())->update($values);
                 $this->exists = false;
                 $this->fire_model_event('deleted');
             } else { // Hard delete
-                $this->query()->where(static::$key, '=', $this->get_key())->delete();
+                $this->query()->where(static::$key, '=', $this->original_key())->delete();
                 $this->exists = false;
                 $this->fire_model_event('deleted');
             }
@@ -1707,7 +1863,7 @@ abstract class Model implements \JsonSerializable
             return false;
         }
 
-        $result = $this->query(true)->where(static::$key, '=', $this->get_key())->update(['deleted_at' => null]);
+        $result = $this->query(true)->where(static::$key, '=', $this->original_key())->update(['deleted_at' => null]);
 
         if ($result) {
             $this->deleted_at = null;
@@ -1732,7 +1888,7 @@ abstract class Model implements \JsonSerializable
                 return false;
             }
 
-            $result = $this->query(true)->where(static::$key, '=', $this->get_key())->force_delete();
+            $result = $this->query(true)->where(static::$key, '=', $this->original_key())->force_delete();
             $this->fire_model_event('deleted');
 
             return $result;
@@ -1890,7 +2046,20 @@ abstract class Model implements \JsonSerializable
     {
         return \System\Database::connection($this->connection())
             ->table($this->table())
-            ->where(static::$key, '=', $this->get_key());
+            ->where(static::$key, '=', $this->original_key());
+    }
+
+    /**
+     * Get the primary key the record was loaded with, so a changed (or mass-assigned)
+     * key never retargets an UPDATE or DELETE at another row.
+     *
+     * @return mixed
+     */
+    protected function original_key()
+    {
+        return array_key_exists(static::$key, $this->original)
+            ? $this->original[static::$key]
+            : $this->get_key();
     }
 
     /**

@@ -52,6 +52,8 @@ class Blade
         'endguest',
         'auth',
         'endauth',
+        'can',
+        'endcan',
         'include',
         'render_each',
         'render',
@@ -121,8 +123,15 @@ class Blade
             $compiled = static::compiled($view->path);
 
             try {
-                if (! is_file($compiled) || static::expired($view->path)) {
-                    file_put_contents($compiled, static::GUARD.static::compile($view), LOCK_EX);
+                if (static::stale($view->path, $compiled)) {
+                    // Write aside, then rename: require takes no lock, so a request
+                    // racing the write could include a half-written file.
+                    $temp = $compiled.'.'.uniqid('', true).'.tmp';
+                    file_put_contents($temp, static::GUARD.static::compile($view));
+
+                    if (! rename($temp, $compiled)) {
+                        unlink($temp);
+                    }
                 }
             } catch (\Throwable $e) {
                 return ltrim($view->get());
@@ -152,6 +161,28 @@ class Blade
     public static function extend(\Closure $compiler)
     {
         static::$extensions[] = $compiler;
+    }
+
+    /**
+     * Check whether the compiled file is missing or, with reload on, older than its
+     * template. filemtime() right after is_file() on the same file is served from
+     * PHP's stat cache, so this costs two stats where is_file() plus expired() cost
+     * three. No '@': scream mode would report a silenced warning anyway.
+     *
+     * @param string $path
+     * @param string $compiled
+     *
+     * @return bool
+     */
+    protected static function stale($path, $compiled)
+    {
+        if (! is_file($compiled)) {
+            return true;
+        }
+
+        $time = filemtime($compiled);
+
+        return static::$reload && filemtime($path) > $time;
     }
 
     /**
@@ -730,6 +761,33 @@ class Blade
     protected static function compile_endauth($value)
     {
         return preg_replace('/(?<!@)@endauth\b/', '<?php endif; ?>', $value);
+    }
+
+    /**
+     * Translate @can, @cannot and @canany.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_can($value)
+    {
+        $value = preg_replace(static::matcher('canany'), '$1<?php if (\System\Gate::any$2): ?>', $value);
+        $value = preg_replace(static::matcher('cannot'), '$1<?php if (\System\Gate::denies$2): ?>', $value);
+
+        return preg_replace(static::matcher('can'), '$1<?php if (\System\Gate::allows$2): ?>', $value);
+    }
+
+    /**
+     * Translate @endcan, @endcannot and @endcanany.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected static function compile_endcan($value)
+    {
+        return preg_replace('/(?<!@)@end(?:canany|cannot|can)\b/', '<?php endif; ?>', $value);
     }
 
     /**

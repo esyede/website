@@ -32,6 +32,11 @@ class Server
     const MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
     /**
+     * The path the application connects to when it broadcasts (see System\Broadcast).
+     */
+    const PUBLISHER = '/rakit-broadcast';
+
+    /**
      * Contains the "websocket" configuration.
      *
      * @var array
@@ -427,9 +432,14 @@ class Server
             $response = 'HTTP/1.1 426 Upgrade Required'.CRLF.'Sec-WebSocketVersion: 13';
         }
 
+        // The application's own broadcasts come from the server side, with no browser origin;
+        // they carry no session and each message must be signed (see publish_signature()).
+        $publisher = isset($headers['get']) && static::is_publisher($headers['get']);
+
         if (
-            ($this->config['origin_required'] && ! isset($headers['origin']))
-            || ($this->config['origin_required'] && ! $this->check_origin($headers['origin']))
+            ! $publisher
+            && (($this->config['origin_required'] && ! isset($headers['origin']))
+            || ($this->config['origin_required'] && ! $this->check_origin($headers['origin'], $headers['host'])))
         ) {
             $response = 'HTTP/1.1 403 Forbidden';
         }
@@ -488,11 +498,20 @@ class Server
      *
      * @return bool
      */
-    protected function check_origin($origin)
+    protected function check_origin($origin, $host = null)
     {
-        return empty($this->config['allowed_origins'])
-            ? true
-            : in_array($origin, $this->config['allowed_origins']);
+        if (! empty($this->config['allowed_origins'])) {
+            return in_array($origin, $this->config['allowed_origins']);
+        }
+
+        // No list: same host only, the port aside (the socket listens on its own
+        // port). Accepting every origin let any site open a socket with the
+        // visitor's cookies.
+        $origin = parse_url((string) $origin, PHP_URL_HOST);
+        $host = trim(preg_replace('/:\d+$/', '', trim((string) $host)), '[]');
+        $origin = is_string($origin) ? trim($origin, '[]') : '';
+
+        return '' !== $origin && 0 === strcasecmp($origin, $host);
     }
 
     /**
@@ -1034,6 +1053,31 @@ class Server
     public static function sign($client_id, $channel)
     {
         return hash_hmac('sha256', $client_id.':'.$channel, RAKIT_KEY);
+    }
+
+    /**
+     * Sign a broadcast the application publishes.
+     *
+     * @param int    $time
+     * @param string $payload the JSON of [channels, event, data]
+     *
+     * @return string
+     */
+    public static function publish_signature($time, $payload)
+    {
+        return hash_hmac('sha256', 'publish|'.(int) $time.'|'.$payload, RAKIT_KEY);
+    }
+
+    /**
+     * Check whether a request path is the application's broadcast connection.
+     *
+     * @param string|null $uri
+     *
+     * @return bool
+     */
+    public static function is_publisher($uri)
+    {
+        return static::PUBLISHER === strtok((string) $uri, '?');
     }
 
     /**

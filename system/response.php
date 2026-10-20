@@ -6,6 +6,8 @@ defined('DS') or exit('No direct access.');
 
 class Response
 {
+    use Macroable;
+
     /**
      * Contains the response content.
      *
@@ -116,7 +118,13 @@ class Response
         }
 
         $headers['Content-Type'] = 'application/javascript; charset=utf-8';
-        return new static($callback.'('.json_encode($data).');', $status, $headers);
+        $headers['X-Content-Type-Options'] = 'nosniff';
+
+        // The leading comment defeats the Rosetta Flash attack, which needs the body to
+        // start with the callback; the HEX flags keep </script> and quotes out of it.
+        $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
+        return new static('/**/'.$callback.'('.$json.');', $status, $headers);
     }
 
     /**
@@ -290,9 +298,15 @@ class Response
      */
     public function render()
     {
-        $this->content = (is_object($this->content) && method_exists($this->content, '__toString'))
-            ? $this->content->__toString()
-            : (string) $this->content;
+        // A view through render(), not __toString(): before PHP 7.4 an exception thrown
+        // inside __toString() is a fatal error, abort() and find_or_fail() included.
+        if ($this->content instanceof View) {
+            $this->content = $this->content->render();
+        } elseif (is_object($this->content) && method_exists($this->content, '__toString')) {
+            $this->content = $this->content->__toString();
+        } else {
+            $this->content = (string) $this->content;
+        }
 
         $this->foundation()->setContent($this->content);
         return $this->content;
@@ -401,6 +415,18 @@ class Response
         }
 
         if (!$inside) {
+            throw new \Exception(sprintf('Target file is outside allowed directory: %s', $path));
+        }
+
+        // The project root is an allowed root, which holds the encryption key and the
+        // config: never serve those, whatever path the caller built.
+        $key = realpath(path('rakit_key'));
+        $config = realpath(path('app').'config');
+
+        if (
+            ($key && $real === $key)
+            || ($config && 0 === strpos($real, $config.DS))
+        ) {
             throw new \Exception(sprintf('Target file is outside allowed directory: %s', $path));
         }
 

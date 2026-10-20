@@ -162,6 +162,23 @@ if (! function_exists('trans')) {
     }
 }
 
+if (! function_exists('trans_choice')) {
+    /**
+     * Get a language line for a count, see Lang::choice().
+     *
+     * @param string      $key
+     * @param int|float   $count
+     * @param array       $replacements
+     * @param string|null $language
+     *
+     * @return string
+     */
+    function trans_choice($key, $count, array $replacements = [], $language = null)
+    {
+        return \System\Lang::choice($key, $count, $replacements, $language);
+    }
+}
+
 if (! function_exists('__')) {
     /**
      * Alias for trans().
@@ -677,6 +694,13 @@ if (! function_exists('abort')) {
         }
 
         $response = new \System\Response($message, $code, $headers);
+
+        // In a worker, exit would end the process serving every later request: hand
+        // the response to the worker loop instead, which saves the session and sends it.
+        if (class_exists('System\Worker\Worker', false) && \System\Worker\Worker::$handling) {
+            throw new \System\Exceptions\HttpResponseException($response);
+        }
+
         $response->render();
 
         if (\System\Config::get('session.driver')) {
@@ -686,6 +710,12 @@ if (! function_exists('abort')) {
         $response->send();
         \System\Hook::fire('rakit.done', [$response]);
         $response->foundation()->finish();
+
+        if (\System\Config::get('session.driver')) {
+            \System\Session::terminate();
+        }
+
+        \System\Hook::fire('rakit.terminated', [$response]);
 
         exit;
     }
